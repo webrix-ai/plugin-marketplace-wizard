@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Marketplace Wizard
+
+A visual tool for creating and managing agent plugin marketplace packages. Scan your local machine for MCP servers and skills, search external registries, and assemble plugins using a drag-and-drop flow canvas.
+
+## Features
+
+- **Local Scanner** — Discovers MCP server configs and skills from Cursor, Claude, Windsurf, VS Code, Zed, and other tools
+- **Registry Search** — Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for additional MCPs and skills
+- **Visual Canvas** — ReactFlow-based drag-and-drop interface for assembling plugins
+- **Auto-save** — Automatically persists plugins to the output folder on every change
+- **Load on Start** — Previously exported plugins are loaded from the output folder on startup
+- **Marketplace Export** — Generates the full plugin file structure (`.cursor-plugin/`, `.claude-plugin/`, `.mcp.json`, `skills/`)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the URL shown in the terminal (typically `http://localhost:3000`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Set output directory** — Configure the output folder in the header (default: `./marketplace-output`)
+2. **Browse MCPs & Skills** — Use the sidebar to browse local items or search registries
+3. **Create plugins** — Click "New Plugin" on the canvas to create a plugin node
+4. **Drag & drop** — Drag MCPs and skills from the sidebar onto plugin nodes
+5. **Export** — Click "Export All" or enable auto-save to persist to disk
 
-## Learn More
+## Output Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+<output-dir>/
+  .cursor-plugin/
+    marketplace.json        # Marketplace manifest
+  plugins/
+    <plugin-slug>/
+      .cursor-plugin/
+        plugin.json         # Cursor plugin manifest
+      .claude-plugin/
+        plugin.json         # Claude plugin manifest
+      .mcp.json             # MCP server configurations
+      skills/
+        <skill-name>/
+          SKILL.md           # Skill content
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 16** (Turbopack) — Framework
+- **React 19** — UI
+- **@xyflow/react** — Flow canvas
+- **Zustand** — State management
+- **Tailwind CSS 4** — Styling
+- **Lucide React** — Icons
