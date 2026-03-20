@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { registryMcpToLocal, registrySkillToLocal } from "@/lib/services/registry";
 import { cn, truncate, parseSkillFrontmatter } from "@/lib/utils";
-import type { McpServer, Skill, DragPayload, RegistryMcpServer, RegistrySkillEntry } from "@/lib/types";
+import type { McpServer, Skill, DragPayload, RegistryMcpServer, RegistrySkillEntry, CustomGitHubSkill } from "@/lib/types";
 import McpLogo from "@/components/logo/McpLogo";
 import SkillLogo from "@/components/logo/SkillLogo";
 import { Badge } from "@/components/ui/badge";
@@ -208,6 +208,51 @@ export function RegistrySkillItem({
         <p className="truncate text-xs font-medium">{entry.name}</p>
         <p className="truncate text-[10px] text-muted-foreground">
           {entry.source} · {entry.installs.toLocaleString()} installs
+        </p>
+      </div>
+      <Badge variant="outline" className="h-4 text-[9px] opacity-0 transition group-hover:opacity-100">
+        Drag
+      </Badge>
+    </div>
+  );
+}
+
+export function CustomGitHubSkillItem({
+  skill,
+  onSelect,
+}: {
+  skill: CustomGitHubSkill;
+  onSelect: () => void;
+}) {
+  const handleDragStart = (e: React.DragEvent) => {
+    const localSkill: Skill = {
+      id: `github:${skill.source}:${skill.dirName}`,
+      name: skill.name,
+      description: skill.description,
+      sourceApplication: "github",
+      sourceFilePath: `${skill.repository}/tree/HEAD/skills/${skill.dirName}`,
+      scope: "global",
+      content: skill.content,
+    };
+    const payload: DragPayload = { type: "skill", item: localSkill };
+    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      onClick={onSelect}
+      className="group flex cursor-grab items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2 transition-all hover:border-violet-500/20 hover:bg-violet-500/5 active:cursor-grabbing"
+    >
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-violet-500/10">
+        <SkillLogo size={16} color="#a78bfa" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium">{skill.name}</p>
+        <p className="truncate text-[10px] text-muted-foreground">
+          {skill.description ? truncate(skill.description, 40) : skill.source}
         </p>
       </div>
       <Badge variant="outline" className="h-4 text-[9px] opacity-0 transition group-hover:opacity-100">

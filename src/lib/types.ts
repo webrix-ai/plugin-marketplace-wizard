@@ -105,7 +105,7 @@ export interface ExportResult {
 }
 
 // ---------------------------------------------------------------------------
-// Registry (official MCP registry + skills.sh)
+// Registry (MCP registry + skills.sh)
 // ---------------------------------------------------------------------------
 
 export interface RegistryMcpServer {
@@ -166,6 +166,24 @@ export interface CustomRegistry {
   name: string;
   servers: RegistryMcpServer[];
   total: number;
+  loading: boolean;
+  error?: string;
+}
+
+export interface CustomGitHubSkill {
+  name: string;
+  description: string;
+  dirName: string;
+  content: string;
+  source: string;
+  repository: string;
+}
+
+export interface CustomSkillRepo {
+  url: string;
+  owner: string;
+  repo: string;
+  skills: CustomGitHubSkill[];
   loading: boolean;
   error?: string;
 }

@@ -7,7 +7,7 @@ import type { DetailItem } from "@/components/DetailPanel";
 import { Input } from "@/components/ui/input";
 import { RegistryMcpItem, RegistrySkillItem } from "./SidebarItems";
 
-export function OfficialContent({
+export function RegistryContent({
   tab,
   onSelectItem,
 }: {

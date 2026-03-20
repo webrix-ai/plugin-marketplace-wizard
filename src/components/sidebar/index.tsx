@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LocalContent } from "./LocalContent";
-import { OfficialContent } from "./OfficialContent";
+import { RegistryContent } from "./OfficialContent";
 import { CustomContent } from "./CustomContent";
 import { CreatePluginDialog } from "@/components/CreatePluginDialog";
 
@@ -88,8 +88,8 @@ function SourceTabs({
   source,
   onChange,
 }: {
-  source: "local" | "official" | "custom";
-  onChange: (s: "local" | "official" | "custom") => void;
+  source: "local" | "registry" | "custom";
+  onChange: (s: "local" | "registry" | "custom") => void;
 }) {
   return (
     <div className="flex rounded-lg border p-0.5">
@@ -103,13 +103,13 @@ function SourceTabs({
         Local
       </Button>
       <Button
-        variant={source === "official" ? "secondary" : "ghost"}
+        variant={source === "registry" ? "secondary" : "ghost"}
         size="sm"
         className="flex-1 gap-1 px-2 text-[11px]"
-        onClick={() => onChange("official")}
+        onClick={() => onChange("registry")}
       >
         <Globe className="size-3" />
-        Official
+        Registry
       </Button>
       <Button
         variant={source === "custom" ? "secondary" : "ghost"}
@@ -143,8 +143,8 @@ export function Sidebar() {
           {sidebarSource === "local" && (
             <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
           )}
-          {sidebarSource === "official" && (
-            <OfficialContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+          {sidebarSource === "registry" && (
+            <RegistryContent tab={sidebarTab} onSelectItem={setSelectedItem} />
           )}
           {sidebarSource === "custom" && (
             <CustomContent tab={sidebarTab} onSelectItem={setSelectedItem} />

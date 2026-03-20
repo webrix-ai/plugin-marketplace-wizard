@@ -28,8 +28,9 @@ export default function Home() {
   const isFirstRender = useRef(true);
   const lastExportedSnapshot = useRef("");
 
-  const prefetchOfficialRegistry = useWizardStore((s) => s.prefetchOfficialRegistry);
+  const prefetchRegistry = useWizardStore((s) => s.prefetchRegistry);
   const addCustomRegistry = useWizardStore((s) => s.addCustomRegistry);
+  const addCustomSkillRepo = useWizardStore((s) => s.addCustomSkillRepo);
 
   useEffect(() => {
     if (hasInit.current) return;
@@ -44,7 +45,7 @@ export default function Home() {
     connectPluginStream();
     scan();
 
-    prefetchOfficialRegistry();
+    prefetchRegistry();
 
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.customRegistries);
@@ -54,10 +55,18 @@ export default function Home() {
       }
     } catch {}
 
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.customSkillRepos);
+      if (raw) {
+        const urls: string[] = JSON.parse(raw);
+        for (const url of urls) addCustomSkillRepo(url);
+      }
+    } catch {}
+
     return () => {
       disconnectPluginStream();
     };
-  }, [connectPluginStream, disconnectPluginStream, scan, setAutoSave, detectExportTargets, prefetchOfficialRegistry, addCustomRegistry]);
+  }, [connectPluginStream, disconnectPluginStream, scan, setAutoSave, detectExportTargets, prefetchRegistry, addCustomRegistry, addCustomSkillRepo]);
 
   useEffect(() => {
     if (isFirstRender.current) {

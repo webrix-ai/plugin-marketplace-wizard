@@ -9,6 +9,7 @@ export const WATCHER_DEBOUNCE_MS = 10_000;
 export const STORAGE_KEYS = {
   autoSave: "pmw:autoSave",
   customRegistries: "pmw:customRegistries",
+  customSkillRepos: "pmw:customSkillRepos",
   exportTargets: "pmw:exportTargets",
 } as const;
 

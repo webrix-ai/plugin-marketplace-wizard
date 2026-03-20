@@ -9,14 +9,15 @@ import {
   RefreshCw,
   Link,
   AlertCircle,
+  Github,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import type { CustomRegistry } from "@/lib/types";
+import type { CustomRegistry, CustomSkillRepo, CustomGitHubSkill, Skill } from "@/lib/types";
 import type { DetailItem } from "@/components/DetailPanel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RegistryMcpItem, CollapsibleSection } from "./SidebarItems";
+import { RegistryMcpItem, CustomGitHubSkillItem, CollapsibleSection } from "./SidebarItems";
 
 function CustomRegistrySection({
   registry,
@@ -103,6 +104,94 @@ function CustomRegistrySection({
   );
 }
 
+function CustomSkillRepoSection({
+  repo,
+  onSelectItem,
+  onRemove,
+  onRefresh,
+}: {
+  repo: CustomSkillRepo;
+  onSelectItem: (item: DetailItem) => void;
+  onRemove: () => void;
+  onRefresh: () => void;
+}) {
+  const title = repo.owner && repo.repo ? `${repo.owner}/${repo.repo}` : repo.url;
+
+  function ghSkillToLocal(skill: CustomGitHubSkill): Skill {
+    return {
+      id: `github:${skill.source}:${skill.dirName}`,
+      name: skill.name,
+      description: skill.description,
+      sourceApplication: "github",
+      sourceFilePath: `${skill.repository}/tree/HEAD/skills/${skill.dirName}`,
+      scope: "global",
+      content: skill.content,
+    };
+  }
+
+  return (
+    <CollapsibleSection
+      title={title}
+      count={repo.loading ? -1 : repo.skills.length}
+    >
+      <div className="mb-1 flex items-center gap-1 px-1">
+        <span className="truncate text-[9px] text-muted-foreground/70">{repo.url}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto h-5 w-5 shrink-0 p-0"
+          onClick={onRefresh}
+          disabled={repo.loading}
+        >
+          <RefreshCw className={cn("size-3", repo.loading && "animate-spin")} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-5 w-5 shrink-0 p-0 text-destructive hover:text-destructive"
+          onClick={onRemove}
+        >
+          <Trash2 className="size-3" />
+        </Button>
+      </div>
+
+      {repo.loading ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="size-4 animate-spin text-violet-500" />
+          <span className="ml-2 text-[11px] text-muted-foreground">Loading skills...</span>
+        </div>
+      ) : repo.error ? (
+        <div className="flex flex-col items-center gap-1.5 px-3 py-4 text-center">
+          <AlertCircle className="size-4 text-destructive" />
+          <p className="text-[11px] text-destructive">{repo.error}</p>
+          <Button variant="outline" size="sm" className="mt-1 h-6 text-[10px]" onClick={onRefresh}>
+            Retry
+          </Button>
+        </div>
+      ) : repo.skills.length === 0 ? (
+        <div className="px-3 py-4 text-center">
+          <p className="text-[11px] text-muted-foreground">No skills found in skills/ folder</p>
+        </div>
+      ) : (
+        <>
+          {repo.skills.map((skill) => (
+            <CustomGitHubSkillItem
+              key={`${skill.source}:${skill.dirName}`}
+              skill={skill}
+              onSelect={() =>
+                onSelectItem({
+                  kind: "skill",
+                  data: ghSkillToLocal(skill),
+                })
+              }
+            />
+          ))}
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+
 export function CustomContent({
   tab,
   onSelectItem,
@@ -117,10 +206,75 @@ export function CustomContent({
     addCustomRegistry,
     removeCustomRegistry,
     refreshCustomRegistry,
+    customSkillRepos,
+    addCustomSkillRepo,
+    removeCustomSkillRepo,
+    refreshCustomSkillRepo,
   } = useWizardStore();
 
   const [newUrl, setNewUrl] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  if (tab === "skills") {
+    const handleAddRepo = async () => {
+      if (!newUrl.trim()) return;
+      setIsAdding(true);
+      await addCustomSkillRepo(newUrl);
+      setNewUrl("");
+      setIsAdding(false);
+    };
+
+    return (
+      <>
+        <div className="space-y-2 px-3 pb-2">
+          <div className="flex gap-1.5">
+            <Input
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              placeholder="github.com/owner/repo"
+              className="h-8 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAddRepo();
+              }}
+            />
+            <Button
+              size="sm"
+              className="h-8 shrink-0 gap-1 px-2 text-[11px]"
+              onClick={handleAddRepo}
+              disabled={!newUrl.trim() || isAdding}
+            >
+              {isAdding ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
+              Add
+            </Button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {customSkillRepos.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
+              <Github className="size-6 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">No custom skill repos</p>
+              <p className="text-[10px] text-muted-foreground/70">
+                Add a GitHub repo URL with a skills/ folder in the root
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {customSkillRepos.map((repo) => (
+                <CustomSkillRepoSection
+                  key={repo.url}
+                  repo={repo}
+                  onSelectItem={onSelectItem}
+                  onRemove={() => removeCustomSkillRepo(repo.url)}
+                  onRefresh={() => refreshCustomSkillRepo(repo.url)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
 
   const handleAdd = async () => {
     if (!newUrl.trim()) return;
@@ -129,18 +283,6 @@ export function CustomContent({
     setNewUrl("");
     setIsAdding(false);
   };
-
-  if (tab === "skills") {
-    return (
-      <div className="flex flex-1 flex-col items-center gap-2 px-4 py-12 text-center">
-        <Link className="size-6 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground">Custom registries support MCP servers only</p>
-        <p className="text-[10px] text-muted-foreground/70">
-          Switch to the MCP tab to manage custom registries
-        </p>
-      </div>
-    );
-  }
 
   return (
     <>

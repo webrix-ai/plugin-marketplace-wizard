@@ -13,6 +13,8 @@ import type {
   RegistrySkillEntry,
   GitDefaults,
   CustomRegistry,
+  CustomSkillRepo,
+  CustomGitHubSkill,
   PluginScalarUpdate,
 } from "./types";
 import { createDefaultMarketplaceSettings } from "./default-marketplace-settings";
@@ -42,7 +44,7 @@ interface WizardState {
   selectedItemType: "mcp" | "skill" | null;
   searchQuery: string;
   sidebarTab: "mcps" | "skills";
-  sidebarSource: "local" | "official" | "custom";
+  sidebarSource: "local" | "registry" | "custom";
   isScanning: boolean;
   isPluginsLoading: boolean;
   isExporting: boolean;
@@ -61,10 +63,12 @@ interface WizardState {
   registrySkills: RegistrySkillEntry[];
   registrySkillsLoading: boolean;
   registryQuery: string;
-  officialPrefetched: boolean;
+  registryPrefetched: boolean;
 
   customRegistries: CustomRegistry[];
   customRegistryQuery: string;
+
+  customSkillRepos: CustomSkillRepo[];
 
   scan: () => Promise<void>;
   loadPlugins: () => Promise<void>;
@@ -82,7 +86,7 @@ interface WizardState {
   setSelectedItemInPlugin: (itemId: string | null, itemType: "mcp" | "skill" | null) => void;
   setSearchQuery: (query: string) => void;
   setSidebarTab: (tab: "mcps" | "skills") => void;
-  setSidebarSource: (source: "local" | "official" | "custom") => void;
+  setSidebarSource: (source: "local" | "registry" | "custom") => void;
   setRegistryQuery: (q: string) => void;
   setAutoSave: (on: boolean) => void;
   setExportTargets: (targets: Partial<ExportTargets>) => void;
@@ -90,13 +94,17 @@ interface WizardState {
   deleteExportFolders: (targets: string[]) => Promise<void>;
   searchRegistryMcps: (query: string) => Promise<void>;
   searchRegistrySkills: (query: string) => Promise<void>;
-  prefetchOfficialRegistry: () => void;
+  prefetchRegistry: () => void;
   fetchRegistrySkillContent: (entry: RegistrySkillEntry) => Promise<Skill>;
 
   addCustomRegistry: (url: string) => Promise<void>;
   removeCustomRegistry: (url: string) => void;
   refreshCustomRegistry: (url: string) => Promise<void>;
   setCustomRegistryQuery: (q: string) => void;
+
+  addCustomSkillRepo: (repoUrl: string) => Promise<void>;
+  removeCustomSkillRepo: (repoUrl: string) => void;
+  refreshCustomSkillRepo: (repoUrl: string) => Promise<void>;
 
   undo: () => void;
   redo: () => void;
@@ -162,12 +170,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   registrySkills: [],
   registrySkillsLoading: false,
   registryQuery: "",
-  officialPrefetched: false,
+  registryPrefetched: false,
 
   skillImportError: null,
 
   customRegistries: [],
   customRegistryQuery: "",
+
+  customSkillRepos: [],
 
   refreshGitDefaults: async () => {
     try {
@@ -505,9 +515,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     }
   },
 
-  prefetchOfficialRegistry: () => {
-    if (get().officialPrefetched) return;
-    set({ officialPrefetched: true });
+  prefetchRegistry: () => {
+    if (get().registryPrefetched) return;
+    set({ registryPrefetched: true });
   },
 
   fetchRegistrySkillContent: async (entry: RegistrySkillEntry): Promise<Skill> => {
@@ -625,6 +635,113 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       set({
         customRegistries: get().customRegistries.map((r) =>
           r.url === registryUrl
+            ? { ...r, loading: false, error: err instanceof Error ? err.message : "Failed" }
+            : r
+        ),
+      });
+    }
+  },
+
+  addCustomSkillRepo: async (rawUrl: string) => {
+    const trimmed = rawUrl.trim().replace(/\/+$/, "").replace(/\.git$/, "");
+    if (!trimmed) return;
+
+    const existing = get().customSkillRepos;
+    if (existing.some((r) => r.url === trimmed)) {
+      sonnerToast.info("Repository already added");
+      return;
+    }
+
+    const entry: CustomSkillRepo = {
+      url: trimmed,
+      owner: "",
+      repo: "",
+      skills: [],
+      loading: true,
+    };
+
+    set({ customSkillRepos: [...existing, entry] });
+
+    try {
+      const url = new URL("/api/registry/github-skills", window.location.origin);
+      url.searchParams.set("repo", trimmed);
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+
+      set({
+        customSkillRepos: get().customSkillRepos.map((r) =>
+          r.url === trimmed
+            ? {
+                ...r,
+                owner: data.owner || "",
+                repo: data.repo || "",
+                skills: data.skills || [],
+                loading: false,
+              }
+            : r
+        ),
+      });
+
+      try {
+        const urls = get().customSkillRepos.map((r) => r.url);
+        localStorage.setItem(STORAGE_KEYS.customSkillRepos, JSON.stringify(urls));
+      } catch {}
+
+      sonnerToast.success(`Loaded ${data.skills?.length || 0} skills from ${data.owner}/${data.repo}`);
+    } catch (err) {
+      set({
+        customSkillRepos: get().customSkillRepos.map((r) =>
+          r.url === trimmed
+            ? { ...r, loading: false, error: err instanceof Error ? err.message : "Failed" }
+            : r
+        ),
+      });
+      sonnerToast.error(`Failed to load skills: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  },
+
+  removeCustomSkillRepo: (repoUrl: string) => {
+    set({ customSkillRepos: get().customSkillRepos.filter((r) => r.url !== repoUrl) });
+    try {
+      const urls = get().customSkillRepos.map((r) => r.url);
+      localStorage.setItem(STORAGE_KEYS.customSkillRepos, JSON.stringify(urls));
+    } catch {}
+  },
+
+  refreshCustomSkillRepo: async (repoUrl: string) => {
+    set({
+      customSkillRepos: get().customSkillRepos.map((r) =>
+        r.url === repoUrl ? { ...r, loading: true, error: undefined } : r
+      ),
+    });
+
+    try {
+      const url = new URL("/api/registry/github-skills", window.location.origin);
+      url.searchParams.set("repo", repoUrl);
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+
+      set({
+        customSkillRepos: get().customSkillRepos.map((r) =>
+          r.url === repoUrl
+            ? {
+                ...r,
+                owner: data.owner || r.owner,
+                repo: data.repo || r.repo,
+                skills: data.skills || [],
+                loading: false,
+              }
+            : r
+        ),
+      });
+    } catch (err) {
+      set({
+        customSkillRepos: get().customSkillRepos.map((r) =>
+          r.url === repoUrl
             ? { ...r, loading: false, error: err instanceof Error ? err.message : "Failed" }
             : r
         ),
