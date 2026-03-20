@@ -2,15 +2,7 @@
 
 A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
 
-### Works with
-
-<p>
-  <a href="https://cursor.com/docs/plugins"><img src="public/cursor.svg" alt="Cursor" height="28" /></a>
-  &nbsp;&nbsp;
-  <a href="https://code.claude.com/docs/en/discover-plugins"><img src="public/claude.svg" alt="Claude Code" height="28" /></a>
-</p>
-
-Generates valid marketplace packages for [Cursor Plugins](https://cursor.com/docs/plugins) and [Claude Code Plugins](https://code.claude.com/docs/en/discover-plugins).
+Generates valid marketplace packages for [<img src="https://icons.webrix.workers.dev/ai-hosts/cursor.svg" alt="Cursor" height="20" style="vertical-align:middle" /> Cursor Plugins](https://cursor.com/docs/plugins) and [<img src="https://icons.webrix.workers.dev/ai-hosts/claude-web.svg" alt="Claude Code" height="20" style="vertical-align:middle" /> Claude Code Plugins](https://code.claude.com/docs/en/discover-plugins).
 
 ### Deployment guides
 
