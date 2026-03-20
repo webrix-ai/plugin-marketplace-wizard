@@ -6,6 +6,7 @@ import {
   X,
   Trash2,
   GripVertical,
+  Loader2,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,12 @@ import {
 import McpLogo from "./logo/McpLogo";
 import SkillLogo from "./logo/SkillLogo";
 import type { PluginData, DragPayload } from "@/lib/types";
+
+const SKILL_FILE_EXTENSIONS = [".zip", ".skill"];
+function isSkillFile(name: string) {
+  const lower = name.toLowerCase();
+  return SKILL_FILE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
 
 export type PluginNodeType = Node<PluginData, "plugin">;
 
@@ -36,6 +43,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
     setSelectedItemInPlugin,
     selectedItemId,
     fetchRegistrySkillContent,
+    importSkillFileToPlugin,
   } = useWizardStore();
 
   const [isOver, setIsOver] = useState(false);
@@ -60,6 +68,12 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
       e.preventDefault();
       e.stopPropagation();
       setIsOver(false);
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && isSkillFile(files[0].name)) {
+        importSkillFileToPlugin(id, files[0]);
+        return;
+      }
 
       try {
         const raw = e.dataTransfer.getData("application/json");
@@ -86,7 +100,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
         // invalid drag data
       }
     },
-    [id, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin]
+    [id, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin, importSkillFileToPlugin]
   );
 
   const handleClick = useCallback(() => {
@@ -198,36 +212,49 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                 Skills
               </p>
               <div className="flex flex-col gap-0.5">
-                {data.skills.map((skill) => (
-                  <div
-                    key={skill.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isSelected) setSelectedPluginId(id);
-                      setSelectedItemInPlugin(skill.id, "skill");
-                    }}
-                    className={cn(
-                      "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
-                      isSelected && selectedItemId === skill.id && "bg-violet-500/10 ring-1 ring-violet-500/30"
-                    )}
-                  >
-                    <div className="size-1.5 rounded-full bg-violet-500/60" />
-                    <span className="flex-1 truncate text-[11px]">
-                      {skill.name}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
+                {data.skills.map((skill) => {
+                  const loading = !!skill._loading;
+                  return (
+                    <div
+                      key={skill.id}
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeSkillFromPlugin(id, skill.id);
+                        if (loading) return;
+                        if (!isSelected) setSelectedPluginId(id);
+                        setSelectedItemInPlugin(skill.id, "skill");
                       }}
-                      className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                      className={cn(
+                        "nodrag group/item flex items-center gap-2 rounded-lg px-2 py-1.5 transition",
+                        loading
+                          ? "opacity-45"
+                          : "cursor-pointer hover:bg-accent",
+                        !loading && isSelected && selectedItemId === skill.id && "bg-violet-500/10 ring-1 ring-violet-500/30"
+                      )}
                     >
-                      <X className="size-3" />
-                    </Button>
-                  </div>
-                ))}
+                      {loading ? (
+                        <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+                      ) : (
+                        <div className="size-1.5 rounded-full bg-violet-500/60" />
+                      )}
+                      <span className="flex-1 truncate text-[11px]">
+                        {skill.name}
+                      </span>
+                      {!loading && (
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSkillFromPlugin(id, skill.id);
+                          }}
+                          className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                        >
+                          <X className="size-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

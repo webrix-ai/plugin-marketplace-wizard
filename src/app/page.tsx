@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/sidebar";
 import { Canvas } from "@/components/Canvas";
 import { PluginEditorPanel } from "@/components/plugin-editor";
+import { SkillImportErrorDialog } from "@/components/SkillImportDialog";
 import { useWizardStore } from "@/lib/store";
 import { STORAGE_KEYS } from "@/lib/constants";
 
@@ -100,6 +101,7 @@ export default function Home() {
           <PluginEditorPanel />
         </div>
       </div>
+      <SkillImportErrorDialog />
       <Toaster position="bottom-right" richColors />
     </ReactFlowProvider>
   );

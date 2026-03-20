@@ -64,7 +64,7 @@ function PluginSkeleton({ style }: { style?: React.CSSProperties }) {
 }
 
 export function Canvas() {
-  const { plugins, addPlugin, addMcpToPlugin, addSkillToPlugin, updateSkillInPlugin, fetchRegistrySkillContent } =
+  const { plugins, addPlugin, addMcpToPlugin, addSkillToPlugin, updateSkillInPlugin, fetchRegistrySkillContent, importSkillFileToPlugin } =
     useWizardStore();
   const isPluginsLoading = useWizardStore((s) => s.isPluginsLoading);
   const [nodes, setNodes, onNodesChange] = useNodesState<PluginNodeType>([]);
@@ -112,6 +112,37 @@ export function Canvas() {
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+
+      const files = e.dataTransfer.files;
+      const hasSkillFile =
+        files.length > 0 &&
+        /\.(zip|skill)$/i.test(files[0].name);
+
+      if (hasSkillFile) {
+        const file = files[0];
+        const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+
+        const currentNodes = getNodes();
+        const hitNode = currentNodes.find((node) => {
+          const el = document.querySelector(`[data-id="${node.id}"]`);
+          if (!el) return false;
+          const rect = el.getBoundingClientRect();
+          return (
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom
+          );
+        });
+
+        if (hitNode) return;
+
+        const baseName = file.name.replace(/\.(zip|skill)$/i, "");
+        const pluginId = addPlugin(`Plugin with ${baseName}`, "");
+        positionsRef.current.set(pluginId, flowPos);
+        setTimeout(() => importSkillFileToPlugin(pluginId, file), 0);
+        return;
+      }
 
       let payload: DragPayload;
       try {
@@ -170,7 +201,7 @@ export function Canvas() {
         }
       }, 0);
     },
-    [screenToFlowPosition, getNodes, addPlugin, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin]
+    [screenToFlowPosition, getNodes, addPlugin, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin, importSkillFileToPlugin]
   );
 
   const proOptions = useMemo(() => ({ hideAttribution: true }), []);

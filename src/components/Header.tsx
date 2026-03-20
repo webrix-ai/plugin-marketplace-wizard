@@ -64,10 +64,10 @@ export function Header() {
             <h1 className="text-sm font-semibold">Plugin Marketplace Wizard</h1>
             <Badge variant="secondary">{plugins.length}</Badge>
           </div>
-          <div className="flex items-center gap-1 text-muted-foreground">
+          <a href="https://webrix.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
             <span className="text-[9px]">by</span>
             <WebrixLogo className="h-[10px] w-auto" />
-          </div>
+          </a>
         </div>
       </div>
 

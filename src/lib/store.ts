@@ -113,6 +113,10 @@ interface WizardState {
   removeSkillFromPlugin: (pluginId: string, skillId: string) => void;
   updateSkillInPlugin: (pluginId: string, skillId: string, updates: Partial<Skill>) => void;
 
+  importSkillFileToPlugin: (pluginId: string, file: File) => Promise<void>;
+  skillImportError: string | null;
+  setSkillImportError: (error: string | null) => void;
+
   exportPlugins: () => Promise<void>;
   silentExport: () => Promise<void>;
 }
@@ -157,6 +161,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   registrySkillsLoading: false,
   registryQuery: "",
   officialPrefetched: false,
+
+  skillImportError: null,
 
   customRegistries: [],
   customRegistryQuery: "",
@@ -743,6 +749,81 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       }),
       ...pushHistory(state),
     });
+  },
+
+  setSkillImportError: (error) => set({ skillImportError: error }),
+
+  importSkillFileToPlugin: async (pluginId: string, file: File) => {
+    const placeholderId = `uploading:${Date.now()}:${file.name}`;
+    const baseName = file.name.replace(/\.(zip|skill)$/i, "");
+
+    const placeholder: Skill = {
+      id: placeholderId,
+      name: baseName,
+      description: "",
+      sourceApplication: "uploaded",
+      sourceFilePath: file.name,
+      scope: "global",
+      content: "",
+      _loading: true,
+    };
+
+    set((s) => ({
+      plugins: s.plugins.map((p) =>
+        p.id === pluginId ? { ...p, skills: [...p.skills, placeholder] } : p
+      ),
+    }));
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-skill", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        set((s) => ({
+          plugins: s.plugins.map((p) =>
+            p.id === pluginId
+              ? { ...p, skills: p.skills.filter((sk) => sk.id !== placeholderId) }
+              : p
+          ),
+          skillImportError: data.error || "Upload failed",
+        }));
+        return;
+      }
+
+      const realSkill: Skill = {
+        id: `uploaded:${Date.now()}:${data.skill.name}`,
+        name: data.skill.name,
+        description: data.skill.description,
+        sourceApplication: "uploaded",
+        sourceFilePath: file.name,
+        scope: "global",
+        content: data.skill.content,
+      };
+
+      set((s) => ({
+        plugins: s.plugins.map((p) =>
+          p.id === pluginId
+            ? { ...p, skills: p.skills.map((sk) => (sk.id === placeholderId ? realSkill : sk)) }
+            : p
+        ),
+        skills: [...s.skills, realSkill],
+      }));
+    } catch (err) {
+      set((s) => ({
+        plugins: s.plugins.map((p) =>
+          p.id === pluginId
+            ? { ...p, skills: p.skills.filter((sk) => sk.id !== placeholderId) }
+            : p
+        ),
+        skillImportError: err instanceof Error ? err.message : "Failed to import skill",
+      }));
+    }
   },
 
   exportPlugins: async () => {
