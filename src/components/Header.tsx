@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import {
   Save,
   RefreshCw,
@@ -11,8 +10,6 @@ import {
   Settings2,
   Undo2,
   Redo2,
-  Sun,
-  Moon,
   FolderOpen,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
@@ -46,10 +43,6 @@ export function Header() {
     _redoStack,
   } = useWizardStore();
   const [marketplaceDialogOpen, setMarketplaceDialogOpen] = useState(false);
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   const dirDisplay = marketplaceDir
     ? marketplaceDir.split("/").slice(-2).join("/")
@@ -59,12 +52,9 @@ export function Header() {
     <header className="flex h-12 shrink-0 items-center border-b bg-card px-3">
       <div className="flex items-center gap-2.5">
         <AppLogo className="h-7 w-7" color="currentColor" />
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-semibold">Plugin Marketplace Wizard</h1>
-            <Badge variant="secondary">{plugins.length}</Badge>
-          </div>
-          <a href="https://webrix.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+        <div className="flex items-end gap-2">
+          <h1 className="text-sm font-semibold leading-none">Plugin Marketplace Wizard</h1>
+          <a href="https://webrix.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors leading-none">
             <span className="text-[9px]">by</span>
             <WebrixLogo className="h-[10px] w-auto" />
           </a>
@@ -238,22 +228,6 @@ export function Header() {
           </>
         )}
 
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-              />
-            }
-          >
-            {mounted && resolvedTheme === "dark" ? <Sun /> : <Moon />}
-          </TooltipTrigger>
-          <TooltipContent>
-            {mounted && resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
-          </TooltipContent>
-        </Tooltip>
       </div>
 
       <MarketplaceSettingsDialog

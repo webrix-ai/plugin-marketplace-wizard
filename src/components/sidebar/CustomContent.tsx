@@ -103,7 +103,13 @@ function CustomRegistrySection({
   );
 }
 
-export function CustomContent({ onSelectItem }: { onSelectItem: (item: DetailItem) => void }) {
+export function CustomContent({
+  tab,
+  onSelectItem,
+}: {
+  tab: "mcps" | "skills";
+  onSelectItem: (item: DetailItem) => void;
+}) {
   const {
     customRegistries,
     customRegistryQuery,
@@ -123,6 +129,18 @@ export function CustomContent({ onSelectItem }: { onSelectItem: (item: DetailIte
     setNewUrl("");
     setIsAdding(false);
   };
+
+  if (tab === "skills") {
+    return (
+      <div className="flex flex-1 flex-col items-center gap-2 px-4 py-12 text-center">
+        <Link className="size-6 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">Custom registries support MCP servers only</p>
+        <p className="text-[10px] text-muted-foreground/70">
+          Switch to the MCP tab to manage custom registries
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -1,14 +1,102 @@
 "use client";
 
-import { useState } from "react";
-import { Monitor, Globe, Link } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Monitor, Globe, Link, Plus, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useWizardStore } from "@/lib/store";
 import { DetailPanel, type DetailItem } from "@/components/DetailPanel";
+import McpLogo from "@/components/logo/McpLogo";
+import SkillLogo from "@/components/logo/SkillLogo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LocalContent } from "./LocalContent";
 import { OfficialContent } from "./OfficialContent";
 import { CustomContent } from "./CustomContent";
+import { CreatePluginDialog } from "@/components/CreatePluginDialog";
+
+function IconRail({
+  tab,
+  onChange,
+}: {
+  tab: "mcps" | "skills";
+  onChange: (t: "mcps" | "skills") => void;
+}) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <div className="flex w-11 shrink-0 flex-col items-center border-r bg-card/50 pt-2.5 pb-2.5">
+        <div className="flex flex-col items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => onChange("mcps")}
+              className={`flex size-8 items-center justify-center rounded-lg transition-all ${
+                tab === "mcps"
+                  ? "bg-emerald-500/15 text-emerald-400"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <McpLogo
+                color="currentColor"
+                className="size-4"
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={6}>
+              <p className="text-xs">MCP Servers</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => onChange("skills")}
+              className={`flex size-8 items-center justify-center rounded-lg transition-all ${
+                tab === "skills"
+                  ? "bg-violet-500/15 text-violet-400"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <SkillLogo
+                size={16}
+                color="currentColor"
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={6}>
+              <p className="text-xs">Skills</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="mt-auto flex flex-col items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+            >
+              {mounted && resolvedTheme === "dark" ? (
+                <Sun className="size-4" />
+              ) : (
+                <Moon className="size-4" />
+              )}
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={6}>
+              <p className="text-xs">
+                {mounted && resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
 
 function SourceTabs({
   source,
@@ -51,29 +139,56 @@ function SourceTabs({
 }
 
 export function Sidebar() {
-  const { sidebarSource, setSidebarSource } = useWizardStore();
+  const { sidebarTab, setSidebarTab, sidebarSource, setSidebarSource } =
+    useWizardStore();
   const [selectedItem, setSelectedItem] = useState<DetailItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <aside className="relative flex w-72 shrink-0 flex-col border-r bg-card">
-      <div className="border-b p-3">
-        <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
-      </div>
+    <>
+      <aside className="relative flex shrink-0 border-r bg-card">
+        <IconRail tab={sidebarTab} onChange={setSidebarTab} />
 
-      {sidebarSource === "local" && <LocalContent onSelectItem={setSelectedItem} />}
-      {sidebarSource === "official" && <OfficialContent onSelectItem={setSelectedItem} />}
-      {sidebarSource === "custom" && <CustomContent onSelectItem={setSelectedItem} />}
+        <div className="flex w-64 flex-col">
+          <div className="border-b p-3">
+            <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
+          </div>
 
-      <Separator />
-      <div className="px-3 py-2.5">
-        <p className="text-center text-[10px] text-muted-foreground">
-          Click to inspect · Drag to add to plugins
-        </p>
-      </div>
+          {sidebarSource === "local" && (
+            <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+          )}
+          {sidebarSource === "official" && (
+            <OfficialContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+          )}
+          {sidebarSource === "custom" && (
+            <CustomContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+          )}
 
-      {selectedItem && (
-        <DetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
-      )}
-    </aside>
+          <Separator />
+          <div className="px-3 py-2.5">
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="w-full rounded-full"
+              size="sm"
+            >
+              <Plus className="size-4" />
+              New Plugin
+            </Button>
+            <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+              Drag to add to plugins
+            </p>
+          </div>
+
+          {selectedItem && (
+            <DetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
+          )}
+        </div>
+      </aside>
+
+      <CreatePluginDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
+    </>
   );
 }

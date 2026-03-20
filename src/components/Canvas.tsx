@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -16,8 +16,6 @@ import { Plus, Loader2 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import PluginNodeComponent from "./PluginNode";
 import type { PluginNodeType } from "./PluginNode";
-import { CreatePluginDialog } from "./CreatePluginDialog";
-import { Button } from "@/components/ui/button";
 import type { DragPayload, PluginData } from "@/lib/types";
 
 const nodeTypes = {
@@ -69,9 +67,6 @@ export function Canvas() {
   const isPluginsLoading = useWizardStore((s) => s.isPluginsLoading);
   const [nodes, setNodes, onNodesChange] = useNodesState<PluginNodeType>([]);
   const { screenToFlowPosition, getNodes } = useReactFlow();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogPosition, setDialogPosition] = useState<{ x: number; y: number }>();
-
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
   useEffect(() => {
@@ -230,14 +225,9 @@ export function Canvas() {
             className="!text-muted-foreground/20"
           />
           <Controls
-            position="bottom-right"
+            position="bottom-center"
+            orientation="horizontal"
             className="!border !bg-card [&_button]:!border-border [&_button]:!bg-card [&_button]:!text-muted-foreground [&_button:hover]:!bg-accent"
-          />
-          <MiniMap
-            position="bottom-left"
-            className="!border !bg-card"
-            nodeColor={() => "oklch(0.488 0.243 264.376)"}
-            maskColor="oklch(0 0 0 / 40%)"
           />
         </ReactFlow>
 
@@ -276,24 +266,7 @@ export function Canvas() {
           </div>
         )}
 
-        <Button
-          onClick={() => {
-            setDialogPosition(undefined);
-            setDialogOpen(true);
-          }}
-          className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full shadow-lg"
-          size="sm"
-        >
-          <Plus data-icon="inline-start" />
-          New Plugin
-        </Button>
       </div>
-
-      <CreatePluginDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        position={dialogPosition}
-      />
     </>
   );
 }
