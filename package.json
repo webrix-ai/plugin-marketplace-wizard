@@ -2,6 +2,21 @@
   "name": "plugin-marketplace-wizard",
   "version": "0.1.3",
   "description": "Visual editor for building and managing agent plugin marketplaces",
+  "homepage": "https://webrix.ai/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webrix-ai/plugin-marketplace-wizard.git"
+  },
+  "keywords": [
+    "mcp",
+    "marketplace",
+    "plugin",
+    "ai-agents",
+    "visual-editor",
+    "cursor",
+    "claude",
+    "webrix"
+  ],
   "bin": {
     "pmw": "./bin/cli.mjs",
     "create-plugin-marketplace-wizard": "./bin/create.mjs"

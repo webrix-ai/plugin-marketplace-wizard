@@ -3,6 +3,7 @@ export const MAX_UNDO_HISTORY = 50;
 export const STORAGE_KEYS = {
   autoSave: "pmw:autoSave",
   customRegistries: "pmw:customRegistries",
+  exportTargets: "pmw:exportTargets",
 } as const;
 
 export const DEFAULTS = {

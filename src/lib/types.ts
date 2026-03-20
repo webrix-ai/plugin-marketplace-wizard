@@ -82,12 +82,18 @@ export interface DragPayload {
 // Export
 // ---------------------------------------------------------------------------
 
+export interface ExportTargets {
+  cursor: boolean;
+  claude: boolean;
+}
+
 export interface ExportRequest {
   outputDir?: string;
   plugins: PluginData[];
   /** @deprecated Prefer `marketplaceSettings` */
   orgName?: string;
   marketplaceSettings?: MarketplaceSettings;
+  exportTargets?: ExportTargets;
 }
 
 export interface ExportResult {

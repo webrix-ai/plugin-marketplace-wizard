@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import {
   Save,
@@ -31,6 +32,7 @@ export function Header() {
   const {
     marketplaceDir,
     marketplaceSettings,
+    exportTargets,
     isExporting,
     isScanning,
     plugins,
@@ -59,7 +61,7 @@ export function Header() {
         <AppLogo className="h-7 w-7" color="currentColor" />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-semibold">Marketplace Wizard</h1>
+            <h1 className="text-sm font-semibold">Plugin Marketplace Wizard</h1>
             <Badge variant="secondary">{plugins.length}</Badge>
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
@@ -85,6 +87,40 @@ export function Header() {
               v{marketplaceSettings.metadata.version}
             </Badge>
           )}
+          <span className="flex items-center gap-1 ml-0.5">
+            {exportTargets.cursor && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Image
+                      src="/cursor.svg"
+                      alt="Cursor"
+                      width={14}
+                      height={14}
+                      className="shrink-0 dark:invert"
+                    />
+                  }
+                />
+                <TooltipContent>Exporting to Cursor</TooltipContent>
+              </Tooltip>
+            )}
+            {exportTargets.claude && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Image
+                      src="/claude.svg"
+                      alt="Claude"
+                      width={14}
+                      height={14}
+                      className="shrink-0"
+                    />
+                  }
+                />
+                <TooltipContent>Exporting to Claude</TooltipContent>
+              </Tooltip>
+            )}
+          </span>
         </Button>
       </div>
 

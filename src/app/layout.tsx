@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Marketplace Wizard",
+  title: "Plugin Marketplace Wizard",
   description: "Build and export marketplace plugins",
 };
 

@@ -15,9 +15,11 @@ export default function Home() {
   const connectPluginStream = useWizardStore((s) => s.connectPluginStream);
   const disconnectPluginStream = useWizardStore((s) => s.disconnectPluginStream);
   const setAutoSave = useWizardStore((s) => s.setAutoSave);
+  const detectExportTargets = useWizardStore((s) => s.detectExportTargets);
   const autoSave = useWizardStore((s) => s.autoSave);
   const plugins = useWizardStore((s) => s.plugins);
   const marketplaceSettings = useWizardStore((s) => s.marketplaceSettings);
+  const exportTargets = useWizardStore((s) => s.exportTargets);
   const silentExport = useWizardStore((s) => s.silentExport);
   const undo = useWizardStore((s) => s.undo);
   const redo = useWizardStore((s) => s.redo);
@@ -36,6 +38,8 @@ export default function Home() {
       if (stored !== null) setAutoSave(stored === "true");
     } catch {}
 
+    detectExportTargets();
+
     connectPluginStream();
     scan();
 
@@ -52,7 +56,7 @@ export default function Home() {
     return () => {
       disconnectPluginStream();
     };
-  }, [connectPluginStream, disconnectPluginStream, scan, setAutoSave, prefetchOfficialRegistry, addCustomRegistry]);
+  }, [connectPluginStream, disconnectPluginStream, scan, setAutoSave, detectExportTargets, prefetchOfficialRegistry, addCustomRegistry]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -61,7 +65,7 @@ export default function Home() {
     }
     if (!autoSave) return;
 
-    const snapshot = JSON.stringify({ plugins, marketplaceSettings });
+    const snapshot = JSON.stringify({ plugins, marketplaceSettings, exportTargets });
     if (snapshot === lastExportedSnapshot.current) return;
 
     const timer = setTimeout(() => {
@@ -69,7 +73,7 @@ export default function Home() {
       silentExport();
     }, 1500);
     return () => clearTimeout(timer);
-  }, [plugins, marketplaceSettings, autoSave, silentExport]);
+  }, [plugins, marketplaceSettings, exportTargets, autoSave, silentExport]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

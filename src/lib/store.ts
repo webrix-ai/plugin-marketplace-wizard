@@ -8,6 +8,7 @@ import type {
   Skill,
   PluginData,
   ExportResult,
+  ExportTargets,
   RegistryMcpServer,
   RegistrySkillEntry,
   GitDefaults,
@@ -46,6 +47,7 @@ interface WizardState {
   isPluginsLoading: boolean;
   isExporting: boolean;
   autoSave: boolean;
+  exportTargets: ExportTargets;
   lastExport: ExportResult | null;
 
   _undoStack: PluginData[][];
@@ -82,6 +84,9 @@ interface WizardState {
   setSidebarSource: (source: "local" | "official" | "custom") => void;
   setRegistryQuery: (q: string) => void;
   setAutoSave: (on: boolean) => void;
+  setExportTargets: (targets: Partial<ExportTargets>) => void;
+  detectExportTargets: () => Promise<void>;
+  deleteExportFolders: (targets: string[]) => Promise<void>;
   searchRegistryMcps: (query: string) => Promise<void>;
   searchRegistrySkills: (query: string) => Promise<void>;
   prefetchOfficialRegistry: () => void;
@@ -138,6 +143,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   isPluginsLoading: false,
   isExporting: false,
   autoSave: true,
+  exportTargets: { cursor: true, claude: true },
   lastExport: null,
 
   _undoStack: [],
@@ -391,6 +397,31 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     set({ autoSave });
     try {
       localStorage.setItem(STORAGE_KEYS.autoSave, String(autoSave));
+    } catch {
+      /* ignore */
+    }
+  },
+  setExportTargets: (patch) => {
+    const updated = { ...get().exportTargets, ...patch };
+    set({ exportTargets: updated });
+  },
+  detectExportTargets: async () => {
+    try {
+      const res = await fetch("/api/export-targets");
+      if (!res.ok) return;
+      const data = await res.json();
+      set({ exportTargets: { cursor: !!data.cursor, claude: !!data.claude } });
+    } catch {
+      /* ignore */
+    }
+  },
+  deleteExportFolders: async (targets: string[]) => {
+    try {
+      await fetch("/api/export-targets", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targets }),
+      });
     } catch {
       /* ignore */
     }
@@ -715,7 +746,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   exportPlugins: async () => {
-    const { plugins, marketplaceSettings } = get();
+    const { plugins, marketplaceSettings, exportTargets } = get();
     if (plugins.length === 0) {
       sonnerToast.error("No plugins to export");
       return;
@@ -726,7 +757,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const res = await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plugins, marketplaceSettings }),
+        body: JSON.stringify({ plugins, marketplaceSettings, exportTargets }),
       });
       const result = await res.json();
 
@@ -747,13 +778,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   silentExport: async () => {
-    const { plugins, marketplaceSettings, isExporting } = get();
+    const { plugins, marketplaceSettings, exportTargets, isExporting } = get();
     if (plugins.length === 0 || isExporting) return;
     try {
       await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plugins, marketplaceSettings }),
+        body: JSON.stringify({ plugins, marketplaceSettings, exportTargets }),
       });
     } catch {
       // silent
