@@ -11,9 +11,11 @@ import {
   Undo2,
   Redo2,
   FolderOpen,
+  Github,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { MarketplaceSettingsDialog } from "./MarketplaceSettingsDialog";
+import { PublishDialog } from "./PublishDialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,7 @@ export function Header() {
     _redoStack,
   } = useWizardStore();
   const [marketplaceDialogOpen, setMarketplaceDialogOpen] = useState(false);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
 
   const dirDisplay = marketplaceDir
     ? marketplaceDir.split("/").slice(-2).join("/")
@@ -228,11 +231,24 @@ export function Header() {
           </>
         )}
 
+        <Button
+          size="sm"
+          onClick={() => setPublishDialogOpen(true)}
+          className="gap-1.5"
+        >
+          <Github className="size-3.5" />
+          Publish
+        </Button>
       </div>
 
       <MarketplaceSettingsDialog
         open={marketplaceDialogOpen}
         onClose={() => setMarketplaceDialogOpen(false)}
+      />
+
+      <PublishDialog
+        open={publishDialogOpen}
+        onClose={() => setPublishDialogOpen(false)}
       />
     </header>
   );
