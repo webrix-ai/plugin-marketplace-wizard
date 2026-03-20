@@ -5,6 +5,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { Canvas } from "@/components/Canvas";
+import { PluginEditorPanel } from "@/components/PluginEditorPanel";
 import { Toast } from "@/components/Toast";
 import { useWizardStore } from "@/lib/store";
 
@@ -14,14 +15,16 @@ export default function Home() {
   const setAutoSave = useWizardStore((s) => s.setAutoSave);
   const autoSave = useWizardStore((s) => s.autoSave);
   const plugins = useWizardStore((s) => s.plugins);
+  const marketplaceSettings = useWizardStore((s) => s.marketplaceSettings);
   const silentExport = useWizardStore((s) => s.silentExport);
+  const undo = useWizardStore((s) => s.undo);
+  const redo = useWizardStore((s) => s.redo);
   const hasInit = useRef(false);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
     if (hasInit.current) return;
     hasInit.current = true;
-    // Hydrate auto-save pref from localStorage after mount (avoids SSR mismatch)
     try {
       const stored = localStorage.getItem("marketplace-wizard:autoSave");
       if (stored !== null) setAutoSave(stored === "true");
@@ -40,7 +43,22 @@ export default function Home() {
       silentExport();
     }, 1500);
     return () => clearTimeout(timer);
-  }, [plugins, autoSave, silentExport]);
+  }, [plugins, marketplaceSettings, autoSave, silentExport]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undo, redo]);
 
   return (
     <ReactFlowProvider>
@@ -49,6 +67,7 @@ export default function Home() {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <Canvas />
+          <PluginEditorPanel />
         </div>
       </div>
       <Toast />

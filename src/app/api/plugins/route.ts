@@ -138,7 +138,7 @@ export async function DELETE(request: Request) {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
         if (Array.isArray(manifest.plugins)) {
           manifest.plugins = manifest.plugins.filter(
-            (p: { slug?: string }) => p.slug !== slug
+            (p: { name?: string }) => p.name !== slug
           );
           fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
         }

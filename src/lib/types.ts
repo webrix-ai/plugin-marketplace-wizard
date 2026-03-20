@@ -1,3 +1,5 @@
+import type { MarketplaceSettings } from "./marketplace-schema";
+
 export interface McpServer {
   id: string;
   name: string;
@@ -26,6 +28,12 @@ export interface Skill {
   [key: string]: unknown;
 }
 
+export interface PluginAuthorData {
+  name: string;
+  email?: string;
+}
+
+/** Wizard model for one plugin (disk manifests + marketplace entry fields) */
 export interface PluginData {
   id: string;
   name: string;
@@ -34,6 +42,19 @@ export interface PluginData {
   version: string;
   mcps: McpServer[];
   skills: Skill[];
+  /** Display / manifest author */
+  author?: PluginAuthorData;
+  homepage?: string;
+  repository?: string;
+  license?: string;
+  keywords?: string[];
+  /** Marketplace category (organizer + manifest) */
+  category?: string;
+  tags?: string[];
+  /** Default true per spec when omitted */
+  strict?: boolean;
+  /** Optional non-default `source` in marketplace.json */
+  sourceOverride?: string | Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -53,7 +74,9 @@ export interface DragPayload {
 export interface ExportRequest {
   outputDir: string;
   plugins: PluginData[];
+  /** @deprecated Prefer `marketplaceSettings` */
   orgName?: string;
+  marketplaceSettings?: MarketplaceSettings;
 }
 
 export interface ExportResult {

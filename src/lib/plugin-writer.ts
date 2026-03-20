@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { PluginData, ExportRequest, ExportResult } from "./types";
+import type { MarketplaceSettings } from "./marketplace-schema";
+import { createDefaultMarketplaceSettings } from "./default-marketplace-settings";
+import type { PluginData, ExportRequest, ExportResult } from "./types";
 
 function ensureDir(dirPath: string) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -103,30 +105,56 @@ function writePlugin(outputDir: string, plugin: PluginData): string[] {
   return files;
 }
 
+function buildMarketplacePluginEntry(
+  plugin: PluginData,
+  sourceStyle: "cursor" | "claude"
+): Record<string, unknown> {
+  const defaultSource =
+    sourceStyle === "claude" ? `./plugins/${plugin.slug}` : plugin.slug;
+  const source =
+    plugin.sourceOverride !== undefined ? plugin.sourceOverride : defaultSource;
+
+  const entry: Record<string, unknown> = {
+    name: plugin.slug,
+    source,
+  };
+  if (plugin.description) entry.description = plugin.description;
+  if (plugin.version) entry.version = plugin.version;
+  if (plugin.author?.name) {
+    entry.author = {
+      name: plugin.author.name,
+      ...(plugin.author.email ? { email: plugin.author.email } : {}),
+    };
+  }
+  if (plugin.homepage) entry.homepage = plugin.homepage;
+  if (plugin.repository) entry.repository = plugin.repository;
+  if (plugin.license) entry.license = plugin.license;
+  if (plugin.keywords?.length) entry.keywords = plugin.keywords;
+  if (plugin.category) entry.category = plugin.category;
+  if (plugin.tags?.length) entry.tags = plugin.tags;
+  if (plugin.strict !== undefined) entry.strict = plugin.strict;
+  return entry;
+}
+
 function writeMarketplaceManifests(
   outputDir: string,
   plugins: PluginData[],
-  orgName: string
+  settings: MarketplaceSettings
 ): string[] {
   const files: string[] = [];
-  const orgSlug = orgName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  const owner: Record<string, unknown> = { name: settings.owner.name };
+  if (settings.owner.email) owner.email = settings.owner.email;
+
+  const meta: Record<string, unknown> = {};
+  if (settings.metadata.description)
+    meta.description = settings.metadata.description;
+  if (settings.metadata.version) meta.version = settings.metadata.version;
 
   const cursorMarketplace = {
-    name: `${orgSlug}-marketplace`,
-    owner: { name: orgName },
-    metadata: {
-      description: `Plugin marketplace for ${orgName}`,
-      version: "1.0.0",
-      pluginRoot: "plugins",
-    },
-    plugins: plugins.map((p) => ({
-      name: p.slug,
-      source: p.slug,
-      description: p.description,
-    })),
+    name: settings.name,
+    owner,
+    ...(Object.keys(meta).length ? { metadata: meta } : {}),
+    plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "cursor")),
   };
 
   const cursorPath = path.join(outputDir, ".cursor-plugin", "marketplace.json");
@@ -134,19 +162,10 @@ function writeMarketplaceManifests(
   files.push(cursorPath);
 
   const claudeMarketplace = {
-    name: `${orgSlug}-marketplace`,
-    owner: { name: orgName },
-    metadata: {
-      description: `Plugin marketplace for ${orgName}`,
-      version: "1.0.0",
-      pluginRoot: "./plugins",
-    },
-    plugins: plugins.map((p) => ({
-      name: p.slug,
-      source: `./plugins/${p.slug}`,
-      description: p.description,
-      version: p.version,
-    })),
+    name: settings.name,
+    owner,
+    ...(Object.keys(meta).length ? { metadata: meta } : {}),
+    plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "claude")),
   };
 
   const claudePath = path.join(outputDir, ".claude-plugin", "marketplace.json");
@@ -157,7 +176,9 @@ function writeMarketplaceManifests(
 }
 
 export async function exportPlugins(request: ExportRequest): Promise<ExportResult> {
-  const { outputDir, plugins, orgName = "my-org" } = request;
+  const { outputDir, plugins, orgName = "my-org", marketplaceSettings } = request;
+  const settings =
+    marketplaceSettings ?? createDefaultMarketplaceSettings(orgName, undefined);
 
   try {
     ensureDir(outputDir);
@@ -168,7 +189,7 @@ export async function exportPlugins(request: ExportRequest): Promise<ExportResul
       allFiles.push(...files);
     }
 
-    const manifestFiles = writeMarketplaceManifests(outputDir, plugins, orgName);
+    const manifestFiles = writeMarketplaceManifests(outputDir, plugins, settings);
     allFiles.push(...manifestFiles);
 
     return {

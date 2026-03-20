@@ -8,7 +8,6 @@ import {
   MiniMap,
   useNodesState,
   useReactFlow,
-  type Node,
   type OnNodesChange,
   BackgroundVariant,
 } from "@xyflow/react";
@@ -28,7 +27,7 @@ function gridPosition(index: number) {
   const cols = 3;
   const col = index % cols;
   const row = Math.floor(index / cols);
-  return { x: col * 380 + 60, y: row * 400 + 60 };
+  return { x: col * 380 + 60, y: row * 400 + 160 };
 }
 
 export function Canvas() {
@@ -114,11 +113,7 @@ export function Canvas() {
           ? (payload.item as PluginData["mcps"][0]).name
           : (payload.item as PluginData["skills"][0]).name;
 
-      const pluginId = addPlugin(
-        `Plugin with ${itemName}`,
-        "",
-        flowPos
-      );
+      const pluginId = addPlugin(`Plugin with ${itemName}`, "");
 
       positionsRef.current.set(pluginId, flowPos);
 
@@ -133,28 +128,17 @@ export function Canvas() {
     [screenToFlowPosition, getNodes, addPlugin, addMcpToPlugin, addSkillToPlugin]
   );
 
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      setDialogPosition(flowPos);
-      setDialogOpen(true);
-    },
-    [screenToFlowPosition]
-  );
-
   const proOptions = useMemo(() => ({ hideAttribution: true }), []);
 
   return (
     <>
-      <div className="relative flex-1">
+      <div className="relative flex min-h-0 flex-1 flex-col">
         <ReactFlow
           nodes={nodes}
-          edges={[]}
           onNodesChange={handleNodesChange}
           nodeTypes={nodeTypes}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          onDoubleClick={handleDoubleClick}
           fitView={plugins.length > 0}
           fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
           proOptions={proOptions}
@@ -176,7 +160,7 @@ export function Canvas() {
           <MiniMap
             position="bottom-left"
             className="!border-white/[0.08] !bg-[#12161f]"
-            nodeColor="#6366f1"
+            nodeColor={() => "#4f46e5"}
             maskColor="rgba(0,0,0,0.6)"
           />
         </ReactFlow>
@@ -187,25 +171,21 @@ export function Canvas() {
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06]">
                 <Plus className="h-6 w-6 text-slate-600" />
               </div>
-              <p className="text-sm font-medium text-slate-500">
-                No plugins yet
-              </p>
+              <p className="text-sm font-medium text-slate-500">No plugins yet</p>
               <p className="mt-1 text-xs text-slate-600">
-                Double-click the canvas or use the button below to create one
-              </p>
-              <p className="mt-0.5 text-xs text-slate-700">
-                Drop items from the sidebar to auto-create a plugin
+                Use the button below to create one, or drop items from the sidebar
               </p>
             </div>
           </div>
         )}
 
         <button
+          type="button"
           onClick={() => {
             setDialogPosition(undefined);
             setDialogOpen(true);
           }}
-          className="absolute bottom-6 right-20 z-10 flex items-center gap-1.5 rounded-full bg-indigo-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 hover:shadow-indigo-600/30"
+          className="absolute bottom-6 right-6 z-10 flex items-center gap-1.5 rounded-full bg-indigo-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 hover:shadow-indigo-600/30"
         >
           <Plus className="h-3.5 w-3.5" />
           New Plugin
