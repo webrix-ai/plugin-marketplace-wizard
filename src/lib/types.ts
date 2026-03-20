@@ -1,5 +1,9 @@
 import type { MarketplaceSettings } from "./marketplace-schema";
 
+// ---------------------------------------------------------------------------
+// Core domain types
+// ---------------------------------------------------------------------------
+
 export interface McpServer {
   id: string;
   name: string;
@@ -33,7 +37,6 @@ export interface PluginAuthorData {
   email?: string;
 }
 
-/** Wizard model for one plugin (disk manifests + marketplace entry fields) */
 export interface PluginData {
   id: string;
   name: string;
@@ -42,21 +45,21 @@ export interface PluginData {
   version: string;
   mcps: McpServer[];
   skills: Skill[];
-  /** Display / manifest author */
   author?: PluginAuthorData;
   homepage?: string;
   repository?: string;
   license?: string;
   keywords?: string[];
-  /** Marketplace category (organizer + manifest) */
   category?: string;
   tags?: string[];
-  /** Default true per spec when omitted */
   strict?: boolean;
-  /** Optional non-default `source` in marketplace.json */
   sourceOverride?: string | Record<string, unknown>;
   [key: string]: unknown;
 }
+
+// ---------------------------------------------------------------------------
+// Scanner
+// ---------------------------------------------------------------------------
 
 export interface ScanResult {
   mcpServers: McpServer[];
@@ -64,12 +67,20 @@ export interface ScanResult {
   scannedAt: string;
 }
 
+// ---------------------------------------------------------------------------
+// Drag & drop
+// ---------------------------------------------------------------------------
+
 export type DragItemType = "mcp" | "skill";
 
 export interface DragPayload {
   type: DragItemType;
   item: McpServer | Skill;
 }
+
+// ---------------------------------------------------------------------------
+// Export
+// ---------------------------------------------------------------------------
 
 export interface ExportRequest {
   outputDir: string;
@@ -87,7 +98,9 @@ export interface ExportResult {
   error?: string;
 }
 
-// --- Registry types ---
+// ---------------------------------------------------------------------------
+// Registry (official MCP registry + skills.sh)
+// ---------------------------------------------------------------------------
 
 export interface RegistryMcpServer {
   name: string;
@@ -117,15 +130,54 @@ export interface RegistryMcpResult {
   };
 }
 
+export interface RegistrySkillEntry {
+  id: string;
+  skillId: string;
+  name: string;
+  installs: number;
+  source: string;
+}
+
 export interface RegistrySkillResult {
   query: string;
   searchType: string;
-  skills: {
-    id: string;
-    skillId: string;
-    name: string;
-    installs: number;
-    source: string;
-  }[];
+  skills: RegistrySkillEntry[];
   count: number;
 }
+
+// ---------------------------------------------------------------------------
+// Store-related types (shared across components)
+// ---------------------------------------------------------------------------
+
+export interface GitDefaults {
+  userName: string | null;
+  userEmail: string | null;
+  remoteUrl: string | null;
+}
+
+export interface CustomRegistry {
+  url: string;
+  name: string;
+  servers: RegistryMcpServer[];
+  total: number;
+  loading: boolean;
+  error?: string;
+}
+
+export type PluginScalarUpdate = Partial<
+  Pick<
+    PluginData,
+    | "name"
+    | "description"
+    | "version"
+    | "author"
+    | "homepage"
+    | "repository"
+    | "license"
+    | "keywords"
+    | "category"
+    | "tags"
+    | "strict"
+    | "sourceOverride"
+  >
+>;

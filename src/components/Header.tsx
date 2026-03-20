@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import {
-  Package,
   FolderOutput,
   Download,
   RefreshCw,
@@ -11,10 +11,22 @@ import {
   Settings2,
   Undo2,
   Redo2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { MarketplaceSettingsDialog } from "./MarketplaceSettingsDialog";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import AppLogo from "./logo/AppLogo";
+import WebrixLogo from "./logo/WebrixLogo";
 
 export function Header() {
   const {
@@ -26,7 +38,7 @@ export function Header() {
     plugins,
     autoSave,
     setAutoSave,
-    scan,
+    loadPlugins,
     exportPlugins,
     undo,
     redo,
@@ -34,117 +46,170 @@ export function Header() {
     _redoStack,
   } = useWizardStore();
   const [marketplaceDialogOpen, setMarketplaceDialogOpen] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   return (
-    <header className="flex h-12 shrink-0 items-center border-b border-white/[0.06] bg-[#0d1017] px-3">
-      {/* Left: brand */}
+    <header className="flex h-12 shrink-0 items-center border-b bg-card px-3">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600">
-          <Package className="h-3.5 w-3.5 text-white" />
+        <AppLogo className="h-7 w-7" color="currentColor" />
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-semibold">Marketplace Wizard</h1>
+            <Badge variant="secondary">{plugins.length}</Badge>
+          </div>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span className="text-[9px]">by</span>
+            <WebrixLogo className="h-[10px] w-auto" />
+          </div>
         </div>
-        <h1 className="text-sm font-semibold text-white">Marketplace Wizard</h1>
-        <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[9px] font-medium text-slate-500">
-          {plugins.length}
-        </span>
       </div>
 
-      {/* Center: marketplace name + version + edit button */}
       <div className="mx-auto flex items-center gap-2">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setMarketplaceDialogOpen(true)}
-          className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:bg-white/[0.06]"
+          className="gap-2"
         >
-          <Settings2 className="h-3.5 w-3.5 text-indigo-400" />
-          <span className="text-[11px] font-medium text-slate-200">
+          <Settings2 className="text-primary" data-icon="inline-start" />
+          <span className="text-[11px] font-medium">
             {marketplaceSettings.name}
           </span>
           {marketplaceSettings.metadata.version && (
-            <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-slate-500">
+            <Badge variant="secondary" className="text-[9px]">
               v{marketplaceSettings.metadata.version}
-            </span>
+            </Badge>
           )}
-        </button>
+        </Button>
       </div>
 
-      {/* Right: icon buttons */}
       <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={undo}
-          disabled={_undoStack.length === 0}
-          className="rounded-md p-1.5 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500"
-          title="Undo"
-        >
-          <Undo2 className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={redo}
-          disabled={_redoStack.length === 0}
-          className="rounded-md p-1.5 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500"
-          title="Redo"
-        >
-          <Redo2 className="h-3.5 w-3.5" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={undo}
+                disabled={_undoStack.length === 0}
+              />
+            }
+          >
+            <Undo2 />
+          </TooltipTrigger>
+          <TooltipContent>Undo</TooltipContent>
+        </Tooltip>
 
-        <div className="mx-1 h-4 w-px bg-white/[0.06]" />
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={redo}
+                disabled={_redoStack.length === 0}
+              />
+            }
+          >
+            <Redo2 />
+          </TooltipTrigger>
+          <TooltipContent>Redo</TooltipContent>
+        </Tooltip>
 
-        <button
-          type="button"
-          onClick={scan}
-          disabled={isScanning}
-          className="rounded-md p-1.5 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300 disabled:opacity-50"
-          title="Rescan MCPs & skills"
-        >
-          {isScanning ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-        </button>
+        <Separator orientation="vertical" className="mx-1 h-4" />
 
-        <button
-          type="button"
-          onClick={() => setAutoSave(!autoSave)}
-          className={cn(
-            "rounded-md p-1.5 transition",
-            autoSave
-              ? "text-emerald-400 hover:bg-emerald-600/20"
-              : "text-slate-600 hover:bg-white/[0.06] hover:text-slate-400"
-          )}
-          title={autoSave ? "Auto-save on" : "Auto-save off"}
-        >
-          <HardDriveDownload className="h-3.5 w-3.5" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => loadPlugins()}
+                disabled={isScanning}
+              />
+            }
+          >
+            {isScanning ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <RefreshCw />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>Refresh from output folder</TooltipContent>
+        </Tooltip>
 
-        <div className="mx-1 h-4 w-px bg-white/[0.06]" />
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant={autoSave ? "secondary" : "ghost"}
+                size="icon-xs"
+                onClick={() => setAutoSave(!autoSave)}
+                className={autoSave ? "text-emerald-500" : ""}
+              />
+            }
+          >
+            <HardDriveDownload />
+          </TooltipTrigger>
+          <TooltipContent>
+            {autoSave ? "Auto-save on" : "Auto-save off"}
+          </TooltipContent>
+        </Tooltip>
 
-        <div className="flex items-center gap-1 rounded-md bg-white/[0.03] px-2 py-1">
-          <FolderOutput className="h-3 w-3 text-slate-600" />
-          <input
-            type="text"
+        <Separator orientation="vertical" className="mx-1 h-4" />
+
+        <div className="flex items-center gap-1 rounded-md border px-2 py-1">
+          <FolderOutput className="size-3 text-muted-foreground" />
+          <Input
             value={outputDir}
             onChange={(e) => setOutputDir(e.target.value)}
-            className="w-36 bg-transparent text-[10px] text-slate-400 outline-none placeholder:text-slate-600"
+            className="h-5 w-36 border-0 bg-transparent px-1 text-[10px] text-muted-foreground focus-visible:ring-0"
             placeholder="Output dir"
           />
         </div>
 
-        <button
-          type="button"
-          onClick={exportPlugins}
-          disabled={isExporting || plugins.length === 0}
-          className="rounded-md p-1.5 text-indigo-400 transition hover:bg-indigo-600/20 disabled:opacity-30 disabled:hover:bg-transparent"
-          title="Export all plugins"
-        >
-          {isExporting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Download className="h-3.5 w-3.5" />
-          )}
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={exportPlugins}
+                disabled={isExporting || plugins.length === 0}
+                className="text-primary"
+              />
+            }
+          >
+            {isExporting ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Download />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>Export all plugins</TooltipContent>
+        </Tooltip>
 
+        <Separator orientation="vertical" className="mx-1 h-4" />
+
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              />
+            }
+          >
+            {mounted && resolvedTheme === "dark" ? <Sun /> : <Moon />}
+          </TooltipTrigger>
+          <TooltipContent>
+            {mounted && resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <MarketplaceSettingsDialog

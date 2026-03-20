@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "fetch": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ]
+    },
+    "playwright": {
+      "type": "stdio",
+      "url": "http://127.0.0.1:51090",
+      "headers": {
+        "X-Blocked-Mcp-Name": "playwright",
+        "X-Original-Config": "{\"args\":[\"@playwright/mcp@latest\"],\"command\":\"npx\",\"disabled\":true,\"timeout\":60,\"type\":\"stdio\"}"
+      }
+    }
+  }
+}

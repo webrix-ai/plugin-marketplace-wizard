@@ -1,11 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Settings2 } from "lucide-react";
+import { Settings2, AlertTriangle } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
 import { validateMarketplaceSettings } from "@/lib/validate-marketplace";
 import type { MarketplaceSettings } from "@/lib/marketplace-schema";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface Props {
   open: boolean;
@@ -49,108 +61,103 @@ function MarketplaceSettingsFormBody({
   };
 
   return (
-    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-white/[0.08] bg-[#12161f] shadow-2xl">
-      <div className="sticky top-0 flex items-center justify-between border-b border-white/[0.06] bg-[#12161f] px-5 py-3.5">
+    <>
+      <DialogHeader>
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/10">
-            <Settings2 className="h-3.5 w-3.5 text-indigo-400" />
+          <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
+            <Settings2 className="size-3.5 text-primary" />
           </div>
-          <h2 className="text-sm font-semibold text-white">Marketplace settings</h2>
+          <div>
+            <DialogTitle>Marketplace settings</DialogTitle>
+            <DialogDescription className="sr-only">
+              Configure marketplace metadata
+            </DialogDescription>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md p-1 text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+      </DialogHeader>
 
-      <div className="space-y-4 p-5">
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="mkt-name" className="text-xs">
             Marketplace name (kebab-case)
-          </label>
-          <input
+          </Label>
+          <Input
+            id="mkt-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-indigo-500/40"
             placeholder="acme-tools"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-400">Owner name</label>
-            <input
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="mkt-owner" className="text-xs">Owner name</Label>
+            <Input
+              id="mkt-owner"
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/40"
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-400">Owner email</label>
-            <input
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="mkt-email" className="text-xs">Owner email</Label>
+            <Input
+              id="mkt-email"
               type="email"
               value={ownerEmail}
               onChange={(e) => setOwnerEmail(e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/40"
             />
           </div>
         </div>
 
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
-          <textarea
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="mkt-desc" className="text-xs">Description</Label>
+          <Textarea
+            id="mkt-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/40"
+            className="resize-none"
           />
         </div>
 
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-slate-400">Marketplace version</label>
-          <input
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="mkt-version" className="text-xs">
+            Marketplace version
+          </Label>
+          <Input
+            id="mkt-version"
             value={version}
             onChange={(e) => setVersion(e.target.value)}
-            className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/40"
             placeholder="1.0.0"
           />
         </div>
 
         {issues.length > 0 && (
-          <ul className="space-y-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200/90">
-            {issues.map((it, i) => (
-              <li key={i}>
-                <span className="font-mono text-amber-400/80">{it.path}:</span> {it.message}
-              </li>
-            ))}
-          </ul>
+          <Alert variant="destructive">
+            <AlertTriangle />
+            <AlertTitle>Validation issues</AlertTitle>
+            <AlertDescription>
+              <ul className="mt-1 flex flex-col gap-0.5 text-xs">
+                {issues.map((it, i) => (
+                  <li key={i}>
+                    <span className="font-mono">{it.path}:</span> {it.message}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
         )}
-
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-white/[0.06] px-4 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/[0.1]"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={issues.length > 0}
-            onClick={save}
-            className={cn(
-              "rounded-lg px-4 py-2 text-xs font-medium text-white transition",
-              issues.length > 0 ? "bg-slate-600 opacity-50" : "bg-indigo-600 hover:bg-indigo-500"
-            )}
-          >
-            Save
-          </button>
-        </div>
       </div>
-    </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button disabled={issues.length > 0} onClick={save}>
+          Save
+        </Button>
+      </DialogFooter>
+    </>
   );
 }
 
@@ -162,15 +169,19 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
     if (open) refreshGitDefaults();
   }, [open, refreshGitDefaults]);
 
-  if (!open) return null;
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <MarketplaceSettingsFormBody
-        key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}|${marketplaceSettings.owner.email ?? ""}|${marketplaceSettings.metadata.version ?? ""}|${(marketplaceSettings.metadata.description ?? "").slice(0, 32)}`}
-        initial={marketplaceSettings}
-        onClose={onClose}
-      />
-    </div>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <MarketplaceSettingsFormBody
+          key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}`}
+          initial={marketplaceSettings}
+          onClose={onClose}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }

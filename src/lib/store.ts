@@ -1,56 +1,32 @@
 "use client";
 
 import { create } from "zustand";
-import type { MarketplaceSettings } from "./marketplace-schema";
+import { toast as sonnerToast } from "sonner";
+import type { MarketplaceSettings, MarketplaceManifest } from "./marketplace-schema";
 import type {
   McpServer,
   Skill,
   PluginData,
   ExportResult,
   RegistryMcpServer,
+  RegistrySkillEntry,
+  GitDefaults,
+  CustomRegistry,
+  PluginScalarUpdate,
 } from "./types";
 import { createDefaultMarketplaceSettings } from "./default-marketplace-settings";
 import {
   mergePluginsWithManifest,
   settingsFromManifest,
 } from "./merge-marketplace-manifest";
-import type { MarketplaceManifest } from "./marketplace-schema";
 import { slugify } from "./utils";
 import { authorFromGit } from "./git-defaults";
-
-interface RegistrySkillEntry {
-  id: string;
-  skillId: string;
-  name: string;
-  installs: number;
-  source: string;
-}
-
-export interface GitDefaults {
-  userName: string | null;
-  userEmail: string | null;
-  remoteUrl: string | null;
-}
-
-type PluginScalarUpdate = Partial<
-  Pick<
-    PluginData,
-    | "name"
-    | "description"
-    | "version"
-    | "author"
-    | "homepage"
-    | "repository"
-    | "license"
-    | "keywords"
-    | "category"
-    | "tags"
-    | "strict"
-    | "sourceOverride"
-  >
->;
-
-const MAX_HISTORY = 50;
+import {
+  registryMcpToLocal,
+  registrySkillToLocal,
+  persistCustomRegistryUrls,
+} from "./services/registry";
+import { MAX_UNDO_HISTORY, DEFAULTS, STORAGE_KEYS } from "./constants";
 
 interface WizardState {
   mcpServers: McpServer[];
@@ -61,17 +37,20 @@ interface WizardState {
   gitDefaults: GitDefaults | null;
   categories: string[];
   selectedPluginId: string | null;
+  selectedItemId: string | null;
+  selectedItemType: "mcp" | "skill" | null;
   searchQuery: string;
   sidebarTab: "mcps" | "skills";
-  sidebarSource: "local" | "registry";
+  sidebarSource: "local" | "official" | "custom";
   isScanning: boolean;
+  isPluginsLoading: boolean;
   isExporting: boolean;
   autoSave: boolean;
   lastExport: ExportResult | null;
-  toast: { message: string; type: "success" | "error" | "info" } | null;
 
   _undoStack: PluginData[][];
   _redoStack: PluginData[][];
+  _eventSource: EventSource | null;
 
   registryMcps: RegistryMcpServer[];
   registryMcpsTotal: number;
@@ -79,9 +58,15 @@ interface WizardState {
   registrySkills: RegistrySkillEntry[];
   registrySkillsLoading: boolean;
   registryQuery: string;
+  officialPrefetched: boolean;
+
+  customRegistries: CustomRegistry[];
+  customRegistryQuery: string;
 
   scan: () => Promise<void>;
   loadPlugins: () => Promise<void>;
+  connectPluginStream: () => void;
+  disconnectPluginStream: () => void;
   refreshGitDefaults: () => Promise<void>;
   setOutputDir: (dir: string) => void;
   setMarketplaceSettings: (patch: Partial<MarketplaceSettings>) => void;
@@ -92,14 +77,21 @@ interface WizardState {
   addCategory: (name: string) => void;
   removeCategory: (name: string) => void;
   setSelectedPluginId: (id: string | null) => void;
+  setSelectedItemInPlugin: (itemId: string | null, itemType: "mcp" | "skill" | null) => void;
   setSearchQuery: (query: string) => void;
   setSidebarTab: (tab: "mcps" | "skills") => void;
-  setSidebarSource: (source: "local" | "registry") => void;
-  setToast: (toast: WizardState["toast"]) => void;
+  setSidebarSource: (source: "local" | "official" | "custom") => void;
   setRegistryQuery: (q: string) => void;
   setAutoSave: (on: boolean) => void;
   searchRegistryMcps: (query: string) => Promise<void>;
   searchRegistrySkills: (query: string) => Promise<void>;
+  prefetchOfficialRegistry: () => void;
+  fetchRegistrySkillContent: (entry: RegistrySkillEntry) => Promise<Skill>;
+
+  addCustomRegistry: (url: string) => Promise<void>;
+  removeCustomRegistry: (url: string) => void;
+  refreshCustomRegistry: (url: string) => Promise<void>;
+  setCustomRegistryQuery: (q: string) => void;
 
   undo: () => void;
   redo: () => void;
@@ -112,8 +104,10 @@ interface WizardState {
 
   addMcpToPlugin: (pluginId: string, mcp: McpServer) => void;
   removeMcpFromPlugin: (pluginId: string, mcpId: string) => void;
+  updateMcpInPlugin: (pluginId: string, mcpId: string, updates: Partial<McpServer>) => void;
   addSkillToPlugin: (pluginId: string, skill: Skill) => void;
   removeSkillFromPlugin: (pluginId: string, skillId: string) => void;
+  updateSkillInPlugin: (pluginId: string, skillId: string, updates: Partial<Skill>) => void;
 
   exportPlugins: () => Promise<void>;
   silentExport: () => Promise<void>;
@@ -121,69 +115,35 @@ interface WizardState {
 
 function pushHistory(state: WizardState): Pick<WizardState, "_undoStack" | "_redoStack"> {
   const stack = [...state._undoStack, state.plugins];
-  if (stack.length > MAX_HISTORY) stack.shift();
+  if (stack.length > MAX_UNDO_HISTORY) stack.shift();
   return { _undoStack: stack, _redoStack: [] };
 }
 
-function registryMcpToLocal(server: RegistryMcpServer): McpServer {
-  const config: McpServer["config"] = {};
-  if (server.remotes?.[0]) {
-    config.type =
-      server.remotes[0].type === "streamable-http"
-        ? "streamable-http"
-        : server.remotes[0].type;
-    config.url = server.remotes[0].url;
-  } else if (server.packages?.[0]) {
-    config.type = server.packages[0].transport?.type || "stdio";
-    config.command = "npx";
-    config.args = ["-y", server.packages[0].identifier];
-  }
-
-  return {
-    id: `registry:${server.name}:${server.version}`,
-    name: server.name,
-    sourceApplication: "registry",
-    sourceFilePath: server.websiteUrl || `https://registry.modelcontextprotocol.io`,
-    scope: "global",
-    config,
-  };
-}
-
-function registrySkillToLocal(entry: RegistrySkillEntry): Skill {
-  return {
-    id: `skills.sh:${entry.id}`,
-    name: entry.name,
-    description: `From ${entry.source} (${entry.installs.toLocaleString()} installs)`,
-    sourceApplication: "skills.sh",
-    sourceFilePath: `https://skills.sh`,
-    scope: "global",
-    content: `# ${entry.name}\n\nInstall from: ${entry.source}\nSkill ID: ${entry.skillId}\n`,
-  };
-}
-
 export { registryMcpToLocal, registrySkillToLocal };
-export type { RegistrySkillEntry };
 
 export const useWizardStore = create<WizardState>((set, get) => ({
   mcpServers: [],
   skills: [],
   plugins: [],
-  outputDir: "./marketplace-output",
+  outputDir: DEFAULTS.outputDir,
   marketplaceSettings: createDefaultMarketplaceSettings(null, null),
   gitDefaults: null,
   categories: [],
   selectedPluginId: null,
+  selectedItemId: null,
+  selectedItemType: null,
   searchQuery: "",
   sidebarTab: "mcps",
   sidebarSource: "local",
   isScanning: false,
+  isPluginsLoading: false,
   isExporting: false,
   autoSave: true,
   lastExport: null,
-  toast: null,
 
   _undoStack: [],
   _redoStack: [],
+  _eventSource: null,
 
   registryMcps: [],
   registryMcpsTotal: 0,
@@ -191,6 +151,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   registrySkills: [],
   registrySkillsLoading: false,
   registryQuery: "",
+  officialPrefetched: false,
+
+  customRegistries: [],
+  customRegistryQuery: "",
 
   refreshGitDefaults: async () => {
     try {
@@ -210,6 +174,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   loadPlugins: async () => {
+    set({ isPluginsLoading: true });
     const { outputDir, refreshGitDefaults } = get();
     await refreshGitDefaults();
     const { gitDefaults } = get();
@@ -249,14 +214,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         );
       }
 
-      const toast =
-        loaded.length > 0
-          ? {
-              message: `Loaded ${loaded.length} plugin${loaded.length !== 1 ? "s" : ""} from ${outputDir}`,
-              type: "info" as const,
-            }
-          : get().toast;
-
       const seedCats = new Set(get().categories);
       for (const p of loaded) {
         if (p.category?.trim()) seedCats.add(p.category.trim());
@@ -268,10 +225,102 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         categories: [...seedCats],
         _undoStack: [],
         _redoStack: [],
-        ...(toast ? { toast } : {}),
+        isPluginsLoading: false,
       });
     } catch {
-      // no existing plugins
+      set({ isPluginsLoading: false });
+    }
+  },
+
+  connectPluginStream: () => {
+    const prev = get()._eventSource;
+    if (prev) {
+      prev.close();
+    }
+
+    const { outputDir, refreshGitDefaults } = get();
+    set({ isPluginsLoading: true });
+
+    refreshGitDefaults().then(() => {
+      const { gitDefaults } = get();
+      const url = new URL("/api/plugins/stream", window.location.origin);
+      url.searchParams.set("dir", outputDir);
+
+      const es = new EventSource(url.toString());
+      let manifest: MarketplaceManifest | null = null;
+      let streamedPlugins: PluginData[] = [];
+
+      es.addEventListener("manifest", (e) => {
+        manifest = JSON.parse(e.data);
+        if (manifest) {
+          set({ marketplaceSettings: settingsFromManifest(manifest) });
+        } else {
+          set({
+            marketplaceSettings: createDefaultMarketplaceSettings(
+              gitDefaults?.userName,
+              gitDefaults?.userEmail
+            ),
+          });
+        }
+      });
+
+      es.addEventListener("plugin", (e) => {
+        const plugin: PluginData = JSON.parse(e.data);
+        streamedPlugins.push(plugin);
+        const merged = mergePluginsWithManifest([...streamedPlugins], manifest);
+        const seedCats = new Set(get().categories);
+        for (const p of merged) {
+          if (p.category?.trim()) seedCats.add(p.category.trim());
+        }
+        set({ plugins: merged, categories: [...seedCats] });
+      });
+
+      es.addEventListener("done", () => {
+        set({
+          isPluginsLoading: false,
+          _undoStack: [],
+          _redoStack: [],
+        });
+      });
+
+      es.addEventListener("plugin:updated", (e) => {
+        const updated: PluginData = JSON.parse(e.data);
+        const merged = mergePluginsWithManifest([updated], manifest)[0];
+        set((s) => {
+          const exists = s.plugins.some((p) => p.slug === merged.slug);
+          const newPlugins = exists
+            ? s.plugins.map((p) => (p.slug === merged.slug ? { ...merged, id: p.id } : p))
+            : [...s.plugins, merged];
+          const seedCats = new Set(s.categories);
+          if (merged.category?.trim()) seedCats.add(merged.category.trim());
+          return { plugins: newPlugins, categories: [...seedCats] };
+        });
+      });
+
+      es.addEventListener("plugin:removed", (e) => {
+        const { slug } = JSON.parse(e.data);
+        set((s) => ({
+          plugins: s.plugins.filter((p) => p.slug !== slug),
+          selectedPluginId:
+            s.plugins.find((p) => p.slug === slug)?.id === s.selectedPluginId
+              ? null
+              : s.selectedPluginId,
+        }));
+      });
+
+      es.onerror = () => {
+        set({ isPluginsLoading: false });
+      };
+
+      set({ _eventSource: es });
+    });
+  },
+
+  disconnectPluginStream: () => {
+    const es = get()._eventSource;
+    if (es) {
+      es.close();
+      set({ _eventSource: null });
     }
   },
 
@@ -285,19 +334,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         mcpServers: data.mcpServers,
         skills: data.skills,
         isScanning: false,
-        toast: {
-          message: `Found ${data.mcpServers.length} MCPs and ${data.skills.length} skills`,
-          type: "success",
-        },
       });
-    } catch (error) {
-      set({
-        isScanning: false,
-        toast: {
-          message: error instanceof Error ? error.message : "Scan failed",
-          type: "error",
-        },
-      });
+    } catch {
+      set({ isScanning: false });
     }
   },
 
@@ -338,16 +377,24 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
   removeCategory: (name) =>
     set((s) => ({ categories: s.categories.filter((c) => c !== name) })),
-  setSelectedPluginId: (selectedPluginId) => set({ selectedPluginId }),
+  setSelectedPluginId: (selectedPluginId) => {
+    const prev = get().selectedPluginId;
+    if (selectedPluginId !== prev) {
+      set({ selectedPluginId, selectedItemId: null, selectedItemType: null });
+    } else {
+      set({ selectedPluginId });
+    }
+  },
+  setSelectedItemInPlugin: (selectedItemId, selectedItemType) => set({ selectedItemId, selectedItemType }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setSidebarTab: (sidebarTab) => set({ sidebarTab }),
   setSidebarSource: (sidebarSource) => set({ sidebarSource }),
-  setToast: (toast) => set({ toast }),
   setRegistryQuery: (registryQuery) => set({ registryQuery }),
+  setCustomRegistryQuery: (customRegistryQuery) => set({ customRegistryQuery }),
   setAutoSave: (autoSave) => {
     set({ autoSave });
     try {
-      localStorage.setItem("marketplace-wizard:autoSave", String(autoSave));
+      localStorage.setItem(STORAGE_KEYS.autoSave, String(autoSave));
     } catch {
       /* ignore */
     }
@@ -412,6 +459,135 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       });
     } catch {
       set({ registrySkillsLoading: false });
+    }
+  },
+
+  prefetchOfficialRegistry: () => {
+    const { officialPrefetched, searchRegistryMcps } = get();
+    if (officialPrefetched) return;
+    set({ officialPrefetched: true });
+    searchRegistryMcps("");
+  },
+
+  fetchRegistrySkillContent: async (entry: RegistrySkillEntry): Promise<Skill> => {
+    if (!entry.source) {
+      return registrySkillToLocal(entry);
+    }
+
+    try {
+      const url = new URL("/api/registry/skill-content", window.location.origin);
+      url.searchParams.set("source", entry.source);
+      url.searchParams.set("skill", entry.name);
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      if (!res.ok || !data.content) {
+        return registrySkillToLocal(entry);
+      }
+
+      return registrySkillToLocal(entry, data.content);
+    } catch {
+      return registrySkillToLocal(entry);
+    }
+  },
+
+  addCustomRegistry: async (rawUrl: string) => {
+    const trimmed = rawUrl.trim().replace(/\/+$/, "");
+    if (!trimmed) return;
+
+    const existing = get().customRegistries;
+    if (existing.some((r) => r.url === trimmed)) {
+      sonnerToast.info("Registry already added");
+      return;
+    }
+
+    let hostname: string;
+    try {
+      hostname = new URL(trimmed).hostname;
+    } catch {
+      sonnerToast.error("Invalid URL");
+      return;
+    }
+
+    const entry: CustomRegistry = {
+      url: trimmed,
+      name: hostname,
+      servers: [],
+      total: 0,
+      loading: true,
+    };
+
+    set({ customRegistries: [...existing, entry] });
+
+    try {
+      const url = new URL("/api/registry/custom", window.location.origin);
+      url.searchParams.set("registryUrl", trimmed);
+      url.searchParams.set("limit", "100");
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+
+      set({
+        customRegistries: get().customRegistries.map((r) =>
+          r.url === trimmed
+            ? { ...r, servers: data.servers || [], total: data.total || 0, loading: false }
+            : r
+        ),
+      });
+      persistCustomRegistryUrls(get().customRegistries);
+      sonnerToast.success(`Loaded ${data.servers?.length || 0} servers from ${hostname}`);
+    } catch (err) {
+      set({
+        customRegistries: get().customRegistries.map((r) =>
+          r.url === trimmed
+            ? { ...r, loading: false, error: err instanceof Error ? err.message : "Failed" }
+            : r
+        ),
+      });
+      sonnerToast.error(`Failed to load registry: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  },
+
+  removeCustomRegistry: (url: string) => {
+    set({ customRegistries: get().customRegistries.filter((r) => r.url !== url) });
+    persistCustomRegistryUrls(get().customRegistries);
+  },
+
+  refreshCustomRegistry: async (registryUrl: string) => {
+    set({
+      customRegistries: get().customRegistries.map((r) =>
+        r.url === registryUrl ? { ...r, loading: true, error: undefined } : r
+      ),
+    });
+
+    try {
+      const url = new URL("/api/registry/custom", window.location.origin);
+      url.searchParams.set("registryUrl", registryUrl);
+      const q = get().customRegistryQuery;
+      if (q) url.searchParams.set("q", q);
+      url.searchParams.set("limit", "100");
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+
+      set({
+        customRegistries: get().customRegistries.map((r) =>
+          r.url === registryUrl
+            ? { ...r, servers: data.servers || [], total: data.total || 0, loading: false }
+            : r
+        ),
+      });
+    } catch (err) {
+      set({
+        customRegistries: get().customRegistries.map((r) =>
+          r.url === registryUrl
+            ? { ...r, loading: false, error: err instanceof Error ? err.message : "Failed" }
+            : r
+        ),
+      });
     }
   },
 
@@ -490,6 +666,20 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     });
   },
 
+  updateMcpInPlugin: (pluginId, mcpId, updates) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return {
+          ...p,
+          mcps: p.mcps.map((m) => (m.id === mcpId ? { ...m, ...updates } : m)),
+        };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
   addSkillToPlugin: (pluginId, skill) => {
     const state = get();
     const plugin = state.plugins.find((p) => p.id === pluginId);
@@ -514,10 +704,24 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     });
   },
 
+  updateSkillInPlugin: (pluginId, skillId, updates) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return {
+          ...p,
+          skills: p.skills.map((s) => (s.id === skillId ? { ...s, ...updates } : s)),
+        };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
   exportPlugins: async () => {
     const { plugins, outputDir, marketplaceSettings } = get();
     if (plugins.length === 0) {
-      set({ toast: { message: "No plugins to export", type: "error" } });
+      sonnerToast.error("No plugins to export");
       return;
     }
 
@@ -531,25 +735,18 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const result = await res.json();
 
       if (result.success) {
-        set({
-          isExporting: false,
-          lastExport: result,
-          toast: {
-            message: `Exported ${result.pluginCount} plugins (${result.files.length} files)`,
-            type: "success",
-          },
-        });
+        set({ isExporting: false, lastExport: result });
+        sonnerToast.success(
+          `Exported ${result.pluginCount} plugins (${result.files.length} files)`
+        );
       } else {
         throw new Error(result.error || "Export failed");
       }
     } catch (error) {
-      set({
-        isExporting: false,
-        toast: {
-          message: error instanceof Error ? error.message : "Export failed",
-          type: "error",
-        },
-      });
+      set({ isExporting: false });
+      sonnerToast.error(
+        error instanceof Error ? error.message : "Export failed"
+      );
     }
   },
 

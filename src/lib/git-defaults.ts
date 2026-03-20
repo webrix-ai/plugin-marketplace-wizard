@@ -1,5 +1,4 @@
-import type { GitDefaults } from "./store";
-import type { PluginAuthorData } from "./types";
+import type { GitDefaults, PluginAuthorData } from "./types";
 
 export function authorFromGit(git: GitDefaults | null): {
   author?: PluginAuthorData;

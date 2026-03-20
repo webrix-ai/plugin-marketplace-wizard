@@ -2,16 +2,18 @@
 
 import { useEffect, useRef } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
+import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar } from "@/components/sidebar";
 import { Canvas } from "@/components/Canvas";
-import { PluginEditorPanel } from "@/components/PluginEditorPanel";
-import { Toast } from "@/components/Toast";
+import { PluginEditorPanel } from "@/components/plugin-editor";
 import { useWizardStore } from "@/lib/store";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 export default function Home() {
   const scan = useWizardStore((s) => s.scan);
-  const loadPlugins = useWizardStore((s) => s.loadPlugins);
+  const connectPluginStream = useWizardStore((s) => s.connectPluginStream);
+  const disconnectPluginStream = useWizardStore((s) => s.disconnectPluginStream);
   const setAutoSave = useWizardStore((s) => s.setAutoSave);
   const autoSave = useWizardStore((s) => s.autoSave);
   const plugins = useWizardStore((s) => s.plugins);
@@ -22,15 +24,34 @@ export default function Home() {
   const hasInit = useRef(false);
   const isFirstRender = useRef(true);
 
+  const prefetchOfficialRegistry = useWizardStore((s) => s.prefetchOfficialRegistry);
+  const addCustomRegistry = useWizardStore((s) => s.addCustomRegistry);
+
   useEffect(() => {
     if (hasInit.current) return;
     hasInit.current = true;
     try {
-      const stored = localStorage.getItem("marketplace-wizard:autoSave");
+      const stored = localStorage.getItem(STORAGE_KEYS.autoSave);
       if (stored !== null) setAutoSave(stored === "true");
     } catch {}
-    loadPlugins().then(() => scan());
-  }, [loadPlugins, scan, setAutoSave]);
+
+    connectPluginStream();
+    scan();
+
+    prefetchOfficialRegistry();
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.customRegistries);
+      if (raw) {
+        const urls: string[] = JSON.parse(raw);
+        for (const url of urls) addCustomRegistry(url);
+      }
+    } catch {}
+
+    return () => {
+      disconnectPluginStream();
+    };
+  }, [connectPluginStream, disconnectPluginStream, scan, setAutoSave, prefetchOfficialRegistry, addCustomRegistry]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -62,7 +83,7 @@ export default function Home() {
 
   return (
     <ReactFlowProvider>
-      <div className="flex h-screen flex-col">
+      <div className="flex h-screen flex-col bg-background">
         <Header />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
@@ -70,7 +91,7 @@ export default function Home() {
           <PluginEditorPanel />
         </div>
       </div>
-      <Toast />
+      <Toaster position="bottom-right" richColors />
     </ReactFlowProvider>
   );
 }

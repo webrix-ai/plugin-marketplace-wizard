@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "weekly-summary": {
+      "type": "streamable-http",
+      "url": "https://webrix-ai.mcp-s.com/mcp?toolkit=pull-requests-linear-weekly-summary"
+    }
+  }
+}

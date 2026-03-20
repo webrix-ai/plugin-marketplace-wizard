@@ -6,11 +6,17 @@ import {
   X,
   Trash2,
   GripVertical,
-  Pencil,
-  Check,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import McpLogo from "./logo/McpLogo";
 import SkillLogo from "./logo/SkillLogo";
 import type { PluginData, DragPayload } from "@/lib/types";
@@ -20,18 +26,19 @@ export type PluginNodeType = Node<PluginData, "plugin">;
 function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
   const {
     removePlugin,
-    updatePlugin,
     addMcpToPlugin,
     addSkillToPlugin,
+    updateSkillInPlugin,
     removeMcpFromPlugin,
     removeSkillFromPlugin,
     setSelectedPluginId,
     selectedPluginId,
+    setSelectedItemInPlugin,
+    selectedItemId,
+    fetchRegistrySkillContent,
   } = useWizardStore();
 
   const [isOver, setIsOver] = useState(false);
-  const [editingName, setEditingName] = useState(false);
-  const [nameVal, setNameVal] = useState(data.name);
 
   const isSelected = selectedPluginId === id;
 
@@ -62,22 +69,32 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
         if (payload.type === "mcp") {
           addMcpToPlugin(id, payload.item as PluginData["mcps"][0]);
         } else {
-          addSkillToPlugin(id, payload.item as PluginData["skills"][0]);
+          const skill = payload.item as PluginData["skills"][0];
+          addSkillToPlugin(id, skill);
+
+          if (skill._registryEntry) {
+            fetchRegistrySkillContent(skill._registryEntry).then((fullSkill) => {
+              updateSkillInPlugin(id, skill.id, {
+                content: fullSkill.content,
+                description: fullSkill.description,
+                sourceFilePath: fullSkill.sourceFilePath,
+              });
+            });
+          }
         }
       } catch {
         // invalid drag data
       }
     },
-    [id, addMcpToPlugin, addSkillToPlugin]
+    [id, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin]
   );
 
-  const saveName = () => {
-    if (nameVal.trim()) updatePlugin(id, { name: nameVal.trim() });
-    setEditingName(false);
-  };
-
   const handleClick = useCallback(() => {
-    setSelectedPluginId(isSelected ? null : id);
+    if (isSelected) {
+      setSelectedPluginId(null);
+    } else {
+      setSelectedPluginId(id);
+    }
   }, [id, isSelected, setSelectedPluginId]);
 
   const totalItems = data.mcps.length + data.skills.length;
@@ -88,168 +105,164 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
-      className={cn(
-        "w-[320px] cursor-pointer rounded-xl border bg-[#12161f] shadow-2xl shadow-black/40 transition-all",
-        isSelected
-          ? "border-indigo-500/60 ring-2 ring-indigo-500/25"
-          : isOver
-            ? "border-indigo-500/60 ring-2 ring-indigo-500/20"
-            : "border-white/[0.08] hover:border-white/[0.14]"
-      )}
     >
-      {/* Header */}
-      <div className="relative flex items-start gap-2 rounded-t-xl border-b border-white/[0.06] bg-gradient-to-r from-indigo-600/10 via-violet-600/10 to-transparent px-3 pt-2.5 pb-2.5">
-        <div className="cursor-grab pt-0.5 text-slate-600 hover:text-slate-400 active:cursor-grabbing">
-          <GripVertical className="h-3.5 w-3.5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          {editingName ? (
-            <div className="nodrag flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <input
-                type="text"
-                value={nameVal}
-                onChange={(e) => setNameVal(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && saveName()}
-                className="w-full rounded bg-black/30 px-1.5 py-0.5 text-sm font-semibold text-white outline-none ring-1 ring-indigo-500/40"
-                autoFocus
-              />
-              <button onClick={saveName} className="text-indigo-400 hover:text-indigo-300">
-                <Check className="h-3.5 w-3.5" />
-              </button>
+      <Card
+        size="sm"
+        className={cn(
+          "w-[320px] cursor-pointer transition-all",
+          isSelected
+            ? "ring-2 ring-primary/50"
+            : isOver
+              ? "ring-2 ring-primary/40"
+              : "hover:ring-1 hover:ring-foreground/10"
+        )}
+      >
+        <CardHeader className="gap-2 border-b">
+          <div className="flex items-start gap-2">
+            <div className="cursor-grab pt-0.5 text-muted-foreground hover:text-foreground active:cursor-grabbing">
+              <GripVertical className="size-3.5" />
             </div>
-          ) : (
-            <div className="group/name flex items-center gap-1">
-              <h3 className="truncate text-sm font-semibold text-white">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-semibold">
                 {data.name}
               </h3>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setNameVal(data.name);
-                  setEditingName(true);
-                }}
-                className="nodrag text-slate-600 opacity-0 transition hover:text-slate-400 group-hover/name:opacity-100"
-              >
-                <Pencil className="h-2.5 w-2.5" />
-              </button>
+              {data.description && (
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                  {data.description}
+                </p>
+              )}
             </div>
-          )}
-          {data.description && (
-            <p className="mt-0.5 truncate text-[11px] text-slate-500">
-              {data.description}
-            </p>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            removePlugin(id);
-          }}
-          className="nodrag rounded-md p-1 text-slate-600 opacity-0 transition hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100 [div:hover>&]:opacity-100"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      </div>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                removePlugin(id);
+              }}
+              className="nodrag size-5 opacity-0 hover:text-destructive [div:hover>&]:opacity-100"
+            >
+              <Trash2 className="size-3" />
+            </Button>
+          </div>
+        </CardHeader>
 
-      {/* Body */}
-      <div className="space-y-1 p-2.5">
-        {data.mcps.length > 0 && (
-          <div>
-            <p className="mb-1 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/60">
-              <McpLogo color="currentColor" className="h-3 w-3" />
-              MCP Servers
-            </p>
-            <div className="space-y-0.5">
-              {data.mcps.map((mcp) => (
-                <div
-                  key={mcp.id}
-                  className="nodrag group/item flex items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1.5 transition hover:bg-emerald-500/[0.06]"
-                >
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/60" />
-                  <span className="flex-1 truncate text-[11px] text-slate-300">
-                    {mcp.name}
-                  </span>
-                  <span className="text-[9px] text-slate-600">
-                    {mcp.config.type || "stdio"}
-                  </span>
-                  <button
+        <CardContent className="flex flex-col gap-1">
+          {data.mcps.length > 0 && (
+            <div>
+              <p className="mb-1 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
+                <McpLogo color="currentColor" className="size-3" />
+                MCP Servers
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {data.mcps.map((mcp) => (
+                  <div
+                    key={mcp.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeMcpFromPlugin(id, mcp.id);
+                      if (!isSelected) setSelectedPluginId(id);
+                      setSelectedItemInPlugin(mcp.id, "mcp");
                     }}
-                    className="rounded p-0.5 text-slate-600 opacity-0 transition hover:bg-red-500/10 hover:text-red-400 group-hover/item:opacity-100"
+                    className={cn(
+                      "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
+                      isSelected && selectedItemId === mcp.id && "bg-emerald-500/10 ring-1 ring-emerald-500/30"
+                    )}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+                    <div className="size-1.5 rounded-full bg-emerald-500/60" />
+                    <span className="flex-1 truncate text-[11px]">
+                      {mcp.name}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground">
+                      {mcp.config.type || "stdio"}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeMcpFromPlugin(id, mcp.id);
+                      }}
+                      className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                    >
+                      <X className="size-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {data.skills.length > 0 && (
-          <div>
-            <p className="mb-1 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-violet-400/60">
-              <SkillLogo size={12} color="currentColor" />
-              Skills
-            </p>
-            <div className="space-y-0.5">
-              {data.skills.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="nodrag group/item flex items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1.5 transition hover:bg-violet-500/[0.06]"
-                >
-                  <div className="h-1.5 w-1.5 rounded-full bg-violet-400/60" />
-                  <span className="flex-1 truncate text-[11px] text-slate-300">
-                    {skill.name}
-                  </span>
-                  <button
+          {data.skills.length > 0 && (
+            <div>
+              <p className="mb-1 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-violet-500/80">
+                <SkillLogo size={12} color="currentColor" />
+                Skills
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {data.skills.map((skill) => (
+                  <div
+                    key={skill.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeSkillFromPlugin(id, skill.id);
+                      if (!isSelected) setSelectedPluginId(id);
+                      setSelectedItemInPlugin(skill.id, "skill");
                     }}
-                    className="rounded p-0.5 text-slate-600 opacity-0 transition hover:bg-red-500/10 hover:text-red-400 group-hover/item:opacity-100"
+                    className={cn(
+                      "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
+                      isSelected && selectedItemId === skill.id && "bg-violet-500/10 ring-1 ring-violet-500/30"
+                    )}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+                    <div className="size-1.5 rounded-full bg-violet-500/60" />
+                    <span className="flex-1 truncate text-[11px]">
+                      {skill.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSkillFromPlugin(id, skill.id);
+                      }}
+                      className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                    >
+                      <X className="size-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {totalItems === 0 && !isOver && (
-          <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-white/[0.08] py-6 text-center">
-            <p className="text-[11px] text-slate-500">Drop MCPs & skills here</p>
-            <p className="text-[10px] text-slate-600">or drag from the sidebar</p>
-          </div>
-        )}
+          {totalItems === 0 && !isOver && (
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed py-6 text-center">
+              <p className="text-[11px] text-muted-foreground">Drop MCPs & skills here</p>
+              <p className="text-[10px] text-muted-foreground/70">or drag from the sidebar</p>
+            </div>
+          )}
 
-        {isOver && (
-          <div className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-indigo-500/40 bg-indigo-500/[0.06] py-3 text-center">
-            <span className="text-[11px] font-medium text-indigo-400">Release to add</span>
-          </div>
-        )}
-      </div>
+          {isOver && (
+            <div className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/40 bg-primary/5 py-3 text-center">
+              <span className="text-[11px] font-medium text-primary">Release to add</span>
+            </div>
+          )}
+        </CardContent>
 
-      {/* Footer */}
-      <div className="flex items-center gap-2 border-t border-white/[0.04] px-3 py-1.5">
-        <span className="text-[9px] text-slate-600">v{data.version}</span>
-        <span className="text-[9px] text-slate-700">·</span>
-        <span className="text-[9px] text-slate-600">{data.slug}</span>
-        {data.category ? (
-          <>
-            <span className="text-[9px] text-slate-700">·</span>
-            <span className="max-w-[80px] truncate text-[9px] text-indigo-400/80">
-              {data.category}
-            </span>
-          </>
-        ) : null}
-        <span className="ml-auto text-[9px] text-slate-600">
-          {totalItems} item{totalItems !== 1 ? "s" : ""}
-        </span>
-      </div>
+        <CardFooter className="gap-2 text-[9px] text-muted-foreground">
+          <span>v{data.version}</span>
+          <span>·</span>
+          <span>{data.slug}</span>
+          {data.category && (
+            <>
+              <span>·</span>
+              <Badge variant="secondary" className="h-4 max-w-[80px] truncate px-1.5 text-[9px]">
+                {data.category}
+              </Badge>
+            </>
+          )}
+          <span className="ml-auto">
+            {totalItems} item{totalItems !== 1 ? "s" : ""}
+          </span>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
