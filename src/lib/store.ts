@@ -424,10 +424,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   canRedo: () => get()._redoStack.length > 0,
 
   searchRegistryMcps: async (query: string) => {
+    if (query.length < 2) {
+      set({ registryMcps: [], registryMcpsTotal: 0, registryMcpsLoading: false });
+      return;
+    }
     set({ registryMcpsLoading: true });
     try {
       const url = new URL("/api/registry/mcps", window.location.origin);
-      if (query) url.searchParams.set("q", query);
+      url.searchParams.set("q", query);
       url.searchParams.set("limit", "50");
       const res = await fetch(url.toString());
       const data = await res.json();
@@ -442,7 +446,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   searchRegistrySkills: async (query: string) => {
-    if (!query) {
+    if (query.length < 2) {
       set({ registrySkills: [], registrySkillsLoading: false });
       return;
     }
@@ -463,10 +467,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   prefetchOfficialRegistry: () => {
-    const { officialPrefetched, searchRegistryMcps } = get();
-    if (officialPrefetched) return;
+    if (get().officialPrefetched) return;
     set({ officialPrefetched: true });
-    searchRegistryMcps("");
   },
 
   fetchRegistrySkillContent: async (entry: RegistrySkillEntry): Promise<Skill> => {

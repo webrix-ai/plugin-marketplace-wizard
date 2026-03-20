@@ -62,7 +62,7 @@ export function OfficialContent({ onSelectItem }: { onSelectItem: (item: DetailI
             ) : registryMcps.length === 0 ? (
               <div className="px-3 py-6 text-center">
                 <p className="text-[11px] text-muted-foreground">
-                  {registryQuery ? "No MCPs match your search" : "Loading MCP servers..."}
+                  {registryQuery.length >= 2 ? "No MCPs match your search" : "Type at least 2 characters to search"}
                 </p>
               </div>
             ) : (
@@ -95,7 +95,7 @@ export function OfficialContent({ onSelectItem }: { onSelectItem: (item: DetailI
             ) : registrySkills.length === 0 ? (
               <div className="px-3 py-6 text-center">
                 <p className="text-[11px] text-muted-foreground">
-                  {registryQuery ? "No skills match your search" : "Type to search skills.sh"}
+                  {registryQuery.length >= 2 ? "No skills match your search" : "Type at least 2 characters to search"}
                 </p>
               </div>
             ) : (
