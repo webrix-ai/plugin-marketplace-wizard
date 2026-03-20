@@ -2,6 +2,22 @@
 
 A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
 
+### Works with
+
+<p>
+  <a href="https://cursor.com/docs/plugins"><img src="public/cursor.svg" alt="Cursor" height="28" /></a>
+  &nbsp;&nbsp;
+  <a href="https://code.claude.com/docs/en/discover-plugins"><img src="public/claude.svg" alt="Claude Code" height="28" /></a>
+</p>
+
+Generates valid marketplace packages for [Cursor Plugins](https://cursor.com/docs/plugins) and [Claude Code Plugins](https://code.claude.com/docs/en/discover-plugins).
+
+### Deployment guides
+
+- [Adding your marketplace to Cursor](docs/add-marketplace-to-cursor.md)
+- [Adding your marketplace to Claude Code (CLI)](docs/add-marketplace-to-claude-code.md)
+- [Adding your marketplace to Claude (Organization)](docs/add-marketplace-to-claude.md)
+
 ## Quick Start
 
 ```bash
@@ -51,15 +67,17 @@ pmw validate ./my-marketplace
 
 ## Features
 
+- **Marketplace Manifests** — Generates complete [`.cursor-plugin/`](https://cursor.com/docs/plugins) and [`.claude-plugin/`](https://code.claude.com/docs/en/discover-plugins) directory structures ready for distribution
+- **Real-time Auto-save** — Persists plugins directly to your marketplace directory on every change
+- **CLI Validation** — Extensible validation system for CI/CD pipelines
+- **Visual Canvas** — Drag-and-drop interface built on ReactFlow for assembling and organizing plugins
+- **Hot Reload** — Watches for external changes and syncs automatically
 - **Local Discovery** — Automatically scans Cursor, Claude, VS Code, Windsurf, Zed, Cline, Roo, and other IDE configurations for MCP servers and skills
 - **Official Registry** — Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for community-published servers and skills
+- **Skill File Import** — Drop `.zip` or `.skill` files directly onto plugin cards or the canvas to import packaged skills
 - **Custom Registries** — Connect any registry that implements the MCP Server Registry API
-- **Visual Canvas** — Drag-and-drop interface built on ReactFlow for assembling and organizing plugins
-- **Real-time Auto-save** — Persists plugins directly to your marketplace directory on every change
-- **Hot Reload** — Watches for external changes and syncs automatically
-- **Marketplace Manifests** — Generates complete `.cursor-plugin/` and `.claude-plugin/` directory structures
+- **Plugin Contents View** — Browse all MCPs and skills across your plugins from the Local sidebar tab
 - **Undo / Redo** — Full history support with keyboard shortcuts (`Cmd+Z` / `Cmd+Shift+Z`)
-- **CLI Validation** — Extensible validation system for CI/CD pipelines
 
 ## Marketplace Structure
 
@@ -87,8 +105,9 @@ my-marketplace/
 2. **Browse sources** — Use the sidebar to browse local MCPs & skills, search official registries, or add custom registry URLs
 3. **Create plugins** — Click **New Plugin** on the canvas, or drag items from the sidebar onto an empty area
 4. **Assemble plugins** — Drag MCPs and skills from the sidebar onto plugin cards
-5. **Edit metadata** — Click a plugin card to open the editor panel (name, author, version, category, keywords)
-6. **Auto-save** — Changes are automatically saved to your marketplace directory
+5. **Import skill files** — Drop a `.zip` or `.skill` file onto a plugin card to import a packaged skill, or drop it on the canvas to create a new plugin with that skill
+6. **Edit metadata** — Click a plugin card to open the editor panel (name, author, version, category, keywords)
+7. **Auto-save** — Changes are automatically saved to your marketplace directory
 
 ## Tech Stack
 
