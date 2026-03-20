@@ -83,7 +83,7 @@ export interface DragPayload {
 // ---------------------------------------------------------------------------
 
 export interface ExportRequest {
-  outputDir: string;
+  outputDir?: string;
   plugins: PluginData[];
   /** @deprecated Prefer `marketplaceSettings` */
   orgName?: string;

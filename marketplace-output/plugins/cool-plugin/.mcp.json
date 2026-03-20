@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "jira": {
+      "type": "streamable-http",
+      "url": "https://run.my-mcp-s.com/mcp/mcp/jira"
+    },
     "mcp-s": {
       "type": "stdio",
       "command": "npx",
@@ -11,9 +15,9 @@
         "NODE_TLS_REJECT_UNAUTHORIZED": "0"
       }
     },
-    "com.figma.mcp/mcp": {
+    "linear-push": {
       "type": "streamable-http",
-      "url": "https://mcp.figma.com/mcp"
+      "url": "https://webrix-ai.mcp-s.com/mcp?toolkit=shalev%40webrix.ai%3Alinear-push"
     }
   }
 }

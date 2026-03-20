@@ -26,13 +26,13 @@ import {
   registrySkillToLocal,
   persistCustomRegistryUrls,
 } from "./services/registry";
-import { MAX_UNDO_HISTORY, DEFAULTS, STORAGE_KEYS } from "./constants";
+import { MAX_UNDO_HISTORY, STORAGE_KEYS } from "./constants";
 
 interface WizardState {
   mcpServers: McpServer[];
   skills: Skill[];
   plugins: PluginData[];
-  outputDir: string;
+  marketplaceDir: string;
   marketplaceSettings: MarketplaceSettings;
   gitDefaults: GitDefaults | null;
   categories: string[];
@@ -68,7 +68,6 @@ interface WizardState {
   connectPluginStream: () => void;
   disconnectPluginStream: () => void;
   refreshGitDefaults: () => Promise<void>;
-  setOutputDir: (dir: string) => void;
   setMarketplaceSettings: (patch: Partial<MarketplaceSettings>) => void;
   setMarketplaceMetadata: (
     patch: Partial<MarketplaceSettings["metadata"]>
@@ -125,7 +124,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   mcpServers: [],
   skills: [],
   plugins: [],
-  outputDir: DEFAULTS.outputDir,
+  marketplaceDir: "",
   marketplaceSettings: createDefaultMarketplaceSettings(null, null),
   gitDefaults: null,
   categories: [],
@@ -175,19 +174,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   loadPlugins: async () => {
     set({ isPluginsLoading: true });
-    const { outputDir, refreshGitDefaults } = get();
+    const { refreshGitDefaults } = get();
     await refreshGitDefaults();
     const { gitDefaults } = get();
 
     try {
-      const pluginsUrl = new URL("/api/plugins", window.location.origin);
-      pluginsUrl.searchParams.set("dir", outputDir);
-      const marketUrl = new URL("/api/marketplace", window.location.origin);
-      marketUrl.searchParams.set("dir", outputDir);
-
       const [pRes, mRes] = await Promise.all([
-        fetch(pluginsUrl.toString()),
-        fetch(marketUrl.toString()),
+        fetch("/api/plugins"),
+        fetch("/api/marketplace"),
       ]);
 
       let loaded: PluginData[] = [];
@@ -238,17 +232,20 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       prev.close();
     }
 
-    const { outputDir, refreshGitDefaults } = get();
+    const { refreshGitDefaults } = get();
     set({ isPluginsLoading: true });
 
     refreshGitDefaults().then(() => {
       const { gitDefaults } = get();
       const url = new URL("/api/plugins/stream", window.location.origin);
-      url.searchParams.set("dir", outputDir);
 
       const es = new EventSource(url.toString());
       let manifest: MarketplaceManifest | null = null;
       let streamedPlugins: PluginData[] = [];
+
+      es.addEventListener("marketplace_dir", (e) => {
+        set({ marketplaceDir: JSON.parse(e.data) });
+      });
 
       es.addEventListener("manifest", (e) => {
         manifest = JSON.parse(e.data);
@@ -340,7 +337,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     }
   },
 
-  setOutputDir: (outputDir) => set({ outputDir }),
   setMarketplaceSettings: (patch) =>
     set((s) => {
       const { owner, metadata, ...rest } = patch;
@@ -623,9 +619,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       ...pushHistory(state),
     });
     if (plugin) {
-      const { outputDir } = state;
       const url = new URL("/api/plugins", window.location.origin);
-      url.searchParams.set("dir", outputDir);
       url.searchParams.set("slug", plugin.slug);
       fetch(url.toString(), { method: "DELETE" }).catch(() => {});
     }
@@ -721,7 +715,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   exportPlugins: async () => {
-    const { plugins, outputDir, marketplaceSettings } = get();
+    const { plugins, marketplaceSettings } = get();
     if (plugins.length === 0) {
       sonnerToast.error("No plugins to export");
       return;
@@ -732,34 +726,34 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const res = await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputDir, plugins, marketplaceSettings }),
+        body: JSON.stringify({ plugins, marketplaceSettings }),
       });
       const result = await res.json();
 
       if (result.success) {
         set({ isExporting: false, lastExport: result });
         sonnerToast.success(
-          `Exported ${result.pluginCount} plugins (${result.files.length} files)`
+          `Saved ${result.pluginCount} plugins (${result.files.length} files)`
         );
       } else {
-        throw new Error(result.error || "Export failed");
+        throw new Error(result.error || "Save failed");
       }
     } catch (error) {
       set({ isExporting: false });
       sonnerToast.error(
-        error instanceof Error ? error.message : "Export failed"
+        error instanceof Error ? error.message : "Save failed"
       );
     }
   },
 
   silentExport: async () => {
-    const { plugins, outputDir, marketplaceSettings, isExporting } = get();
+    const { plugins, marketplaceSettings, isExporting } = get();
     if (plugins.length === 0 || isExporting) return;
     try {
       await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outputDir, plugins, marketplaceSettings }),
+        body: JSON.stringify({ plugins, marketplaceSettings }),
       });
     } catch {
       // silent

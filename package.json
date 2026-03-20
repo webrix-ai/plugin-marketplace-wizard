@@ -1,7 +1,21 @@
 {
-  "name": "marketplace-wizard",
-  "version": "0.1.0",
-  "private": true,
+  "name": "plugin-marketplace-wizard",
+  "version": "0.1.3",
+  "description": "Visual editor for building and managing agent plugin marketplaces",
+  "bin": {
+    "pmw": "./bin/cli.mjs",
+    "create-plugin-marketplace-wizard": "./bin/create.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "public",
+    "next.config.ts",
+    "tsconfig.json",
+    "postcss.config.mjs",
+    "components.json",
+    "README.md"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

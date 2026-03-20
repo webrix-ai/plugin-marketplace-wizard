@@ -3,6 +3,7 @@ import path from "path";
 import { readPluginDir } from "@/lib/plugin-reader";
 import { stripJsonComments } from "@/lib/utils";
 import type { MarketplaceManifest } from "@/lib/marketplace-schema";
+import { getMarketplaceDir } from "@/lib/get-marketplace-dir";
 
 function tryReadManifest(outputDir: string): MarketplaceManifest | null {
   for (const sub of [".claude-plugin", ".cursor-plugin"]) {
@@ -33,11 +34,7 @@ function slugFromPath(changedPath: string, pluginsDir: string): string | null {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const dir = searchParams.get("dir") || "./marketplace-output";
-  const outputDir = path.isAbsolute(dir)
-    ? dir
-    : path.resolve(process.cwd(), dir);
+  const outputDir = getMarketplaceDir();
   const pluginsDir = path.join(outputDir, "plugins");
 
   const encoder = new TextEncoder();
@@ -52,11 +49,11 @@ export async function GET(request: Request) {
         }
       };
 
-      // Phase 1: stream manifest
+      send("marketplace_dir", outputDir);
+
       const manifest = tryReadManifest(outputDir);
       send("manifest", manifest);
 
-      // Phase 2: stream each plugin individually
       if (fs.existsSync(pluginsDir)) {
         try {
           const entries = fs.readdirSync(pluginsDir, { withFileTypes: true });
@@ -75,7 +72,6 @@ export async function GET(request: Request) {
 
       send("done", {});
 
-      // Phase 3: watch for file changes
       let watcher: fs.FSWatcher | null = null;
       const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -119,10 +115,9 @@ export async function GET(request: Request) {
           }
         );
       } catch {
-        // watch not supported or dir missing — streaming still works fine
+        // watch not supported or dir missing
       }
 
-      // Heartbeat to keep connection alive
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(": heartbeat\n\n"));
@@ -131,7 +126,6 @@ export async function GET(request: Request) {
         }
       }, 15_000);
 
-      // Cleanup on close
       request.signal.addEventListener("abort", () => {
         clearInterval(heartbeat);
         for (const t of debounceTimers.values()) clearTimeout(t);

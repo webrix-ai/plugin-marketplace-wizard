@@ -1,12 +1,5 @@
 {
   "mcpServers": {
-    "fetch": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "mcp-server-fetch"
-      ]
-    },
     "playwright": {
       "type": "stdio",
       "url": "http://127.0.0.1:51090",

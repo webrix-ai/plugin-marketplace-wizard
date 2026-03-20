@@ -2,18 +2,18 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { readAllPlugins } from "@/lib/plugin-reader";
+import { getMarketplaceDir } from "@/lib/get-marketplace-dir";
 
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dir = searchParams.get("dir") || "./marketplace-output";
     const slug = searchParams.get("slug");
 
     if (!slug) {
       return NextResponse.json({ error: "Missing slug parameter" }, { status: 400 });
     }
 
-    const outputDir = path.isAbsolute(dir) ? dir : path.resolve(process.cwd(), dir);
+    const outputDir = getMarketplaceDir();
     const pluginDir = path.join(outputDir, "plugins", slug);
 
     if (!fs.existsSync(pluginDir)) {
@@ -46,12 +46,9 @@ export async function DELETE(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const dir = searchParams.get("dir") || "./marketplace-output";
-
-    const outputDir = path.isAbsolute(dir) ? dir : path.resolve(process.cwd(), dir);
+    const outputDir = getMarketplaceDir();
     const plugins = readAllPlugins(outputDir);
 
     return NextResponse.json({ plugins });

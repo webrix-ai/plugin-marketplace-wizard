@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import {
-  FolderOutput,
-  Download,
+  Save,
   RefreshCw,
   Loader2,
   HardDriveDownload,
@@ -13,11 +12,11 @@ import {
   Redo2,
   Sun,
   Moon,
+  FolderOpen,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { MarketplaceSettingsDialog } from "./MarketplaceSettingsDialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,8 +29,7 @@ import WebrixLogo from "./logo/WebrixLogo";
 
 export function Header() {
   const {
-    outputDir,
-    setOutputDir,
+    marketplaceDir,
     marketplaceSettings,
     isExporting,
     isScanning,
@@ -50,6 +48,10 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  const dirDisplay = marketplaceDir
+    ? marketplaceDir.split("/").slice(-2).join("/")
+    : "";
 
   return (
     <header className="flex h-12 shrink-0 items-center border-b bg-card px-3">
@@ -138,7 +140,7 @@ export function Header() {
               <RefreshCw />
             )}
           </TooltipTrigger>
-          <TooltipContent>Refresh from output folder</TooltipContent>
+          <TooltipContent>Refresh plugins</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -159,18 +161,6 @@ export function Header() {
           </TooltipContent>
         </Tooltip>
 
-        <Separator orientation="vertical" className="mx-1 h-4" />
-
-        <div className="flex items-center gap-1 rounded-md border px-2 py-1">
-          <FolderOutput className="size-3 text-muted-foreground" />
-          <Input
-            value={outputDir}
-            onChange={(e) => setOutputDir(e.target.value)}
-            className="h-5 w-36 border-0 bg-transparent px-1 text-[10px] text-muted-foreground focus-visible:ring-0"
-            placeholder="Output dir"
-          />
-        </div>
-
         <Tooltip>
           <TooltipTrigger
             render={
@@ -186,13 +176,31 @@ export function Header() {
             {isExporting ? (
               <Loader2 className="animate-spin" />
             ) : (
-              <Download />
+              <Save />
             )}
           </TooltipTrigger>
-          <TooltipContent>Export all plugins</TooltipContent>
+          <TooltipContent>Save all plugins</TooltipContent>
         </Tooltip>
 
         <Separator orientation="vertical" className="mx-1 h-4" />
+
+        {dirDisplay && (
+          <>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <div className="flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground">
+                    <FolderOpen className="size-3" />
+                    <span className="text-[10px] max-w-40 truncate">{dirDisplay}</span>
+                  </div>
+                }
+              />
+              <TooltipContent>{marketplaceDir}</TooltipContent>
+            </Tooltip>
+
+            <Separator orientation="vertical" className="mx-1 h-4" />
+          </>
+        )}
 
         <Tooltip>
           <TooltipTrigger

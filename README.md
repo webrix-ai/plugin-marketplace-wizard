@@ -1,6 +1,53 @@
-# Marketplace Wizard
+# Plugin Marketplace Wizard
 
-A visual tool for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
+A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
+
+## Quick Start
+
+```bash
+# Create a new marketplace
+npx create-plugin-marketplace-wizard my-marketplace
+cd my-marketplace
+npm start
+```
+
+Or add to an existing project:
+
+```bash
+npm install plugin-marketplace-wizard
+npx pmw init
+npx pmw start
+```
+
+## CLI Commands
+
+### `pmw start [dir]`
+
+Start the visual marketplace editor. Opens a browser-based UI for managing your marketplace plugins.
+
+```bash
+pmw start              # Use current directory
+pmw start ./my-market  # Use specific directory
+pmw start -p 4000      # Custom port
+```
+
+### `pmw init [dir]`
+
+Initialize a new marketplace in the current (or specified) directory. Creates the `.cursor-plugin/`, `.claude-plugin/`, and `plugins/` directories with initial manifests.
+
+```bash
+pmw init
+pmw init ./new-marketplace
+```
+
+### `pmw validate [dir]`
+
+Validate the marketplace structure and content. Checks for proper directory structure, valid manifests, and correct plugin configurations.
+
+```bash
+pmw validate
+pmw validate ./my-marketplace
+```
 
 ## Features
 
@@ -8,46 +55,16 @@ A visual tool for creating, managing, and exporting agent plugin marketplace pac
 - **Official Registry** — Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for community-published servers and skills
 - **Custom Registries** — Connect any registry that implements the MCP Server Registry API
 - **Visual Canvas** — Drag-and-drop interface built on ReactFlow for assembling and organizing plugins
-- **Real-time Auto-save** — Persists plugins to the output folder on every change via SSE streaming
-- **Hot Reload** — Watches the output directory for external changes and syncs automatically
+- **Real-time Auto-save** — Persists plugins directly to your marketplace directory on every change
+- **Hot Reload** — Watches for external changes and syncs automatically
 - **Marketplace Manifests** — Generates complete `.cursor-plugin/` and `.claude-plugin/` directory structures
 - **Undo / Redo** — Full history support with keyboard shortcuts (`Cmd+Z` / `Cmd+Shift+Z`)
-- **Dark Mode** — Automatic theme detection with manual toggle
+- **CLI Validation** — Extensible validation system for CI/CD pipelines
 
-## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) >= 18
-- [pnpm](https://pnpm.io/) >= 9
-
-### Installation
-
-```bash
-pnpm install
-```
-
-### Development
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Usage
-
-1. **Configure output directory** — Set the output folder in the header toolbar (default: `./marketplace-output`)
-2. **Browse sources** — Use the sidebar to browse local MCPs & skills, search official registries, or add custom registry URLs
-3. **Create plugins** — Click **New Plugin** on the canvas, or drag items from the sidebar onto an empty area
-4. **Assemble plugins** — Drag MCPs and skills from the sidebar onto plugin cards
-5. **Edit metadata** — Click a plugin card to open the editor panel (name, author, version, category, keywords)
-6. **Export** — Enable auto-save for continuous export, or click the download button for a one-time export
-
-## Output Structure
+## Marketplace Structure
 
 ```
-<output-dir>/
+my-marketplace/
 ├── .cursor-plugin/
 │   └── marketplace.json          # Cursor marketplace manifest
 ├── .claude-plugin/
@@ -64,42 +81,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
                 └── SKILL.md      # Skill content
 ```
 
-## Project Structure
+## Usage
 
-```
-src/
-├── app/                          # Next.js app router
-│   ├── api/                      # API routes (scan, export, registry proxies, SSE stream)
-│   ├── layout.tsx
-│   └── page.tsx                  # Main page with initialization logic
-├── components/
-│   ├── logo/                     # SVG logo components (AppLogo, WebrixLogo, McpLogo, SkillLogo)
-│   ├── plugin-editor/            # Plugin editor panel (metadata form, MCP/skill detail views)
-│   ├── sidebar/                  # Sidebar with local, official, and custom registry tabs
-│   ├── ui/                       # shadcn/ui primitives
-│   ├── Canvas.tsx                # ReactFlow canvas with drag-and-drop
-│   ├── CreatePluginDialog.tsx
-│   ├── DetailPanel.tsx           # Item inspection overlay
-│   ├── Header.tsx                # Toolbar with marketplace settings, undo/redo, export controls
-│   ├── MarketplaceSettingsDialog.tsx
-│   └── PluginNode.tsx            # ReactFlow node for plugin cards
-└── lib/
-    ├── services/
-    │   └── registry.ts           # Registry data conversion utilities
-    ├── constants.ts              # Application-wide constants
-    ├── types.ts                  # Shared TypeScript interfaces
-    ├── store.ts                  # Zustand global state
-    ├── utils.ts                  # General utilities (slugify, frontmatter parsing, etc.)
-    ├── scanner.ts                # Local filesystem scanner for MCPs and skills
-    ├── scanner-config.ts         # Scanner path definitions and skip lists
-    ├── marketplace-schema.ts     # Marketplace manifest type definitions
-    ├── validate-marketplace.ts   # Manifest validation logic
-    ├── plugin-reader.ts          # Read plugins from output directory
-    ├── plugin-writer.ts          # Write plugins and manifests to disk
-    ├── merge-marketplace-manifest.ts
-    ├── default-marketplace-settings.ts
-    └── git-defaults.ts           # Git config extraction for author defaults
-```
+1. **Run `pmw start`** — Opens the visual editor on your marketplace directory
+2. **Browse sources** — Use the sidebar to browse local MCPs & skills, search official registries, or add custom registry URLs
+3. **Create plugins** — Click **New Plugin** on the canvas, or drag items from the sidebar onto an empty area
+4. **Assemble plugins** — Drag MCPs and skills from the sidebar onto plugin cards
+5. **Edit metadata** — Click a plugin card to open the editor panel (name, author, version, category, keywords)
+6. **Auto-save** — Changes are automatically saved to your marketplace directory
 
 ## Tech Stack
 
@@ -114,15 +103,19 @@ src/
 | Icons | [Lucide React](https://lucide.dev/) |
 | Notifications | [Sonner](https://sonner.emilkowal.ski/) |
 
-## Scripts
+## Development
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start development server |
-| `pnpm build` | Create production build |
-| `pnpm start` | Run production server |
-| `pnpm lint` | Run ESLint |
+```bash
+# Install dependencies
+npm install
+
+# Start the dev server directly (for developing the tool itself)
+npm run dev
+
+# Or use the CLI
+node bin/cli.mjs start
+```
 
 ## License
 
-Private — not published to any package registry.
+MIT

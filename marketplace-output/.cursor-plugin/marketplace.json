@@ -11,32 +11,38 @@
   "plugins": [
     {
       "name": "cool-plugin",
-      "source": "./plugins/cool-plugin",
+      "source": "cool-plugin",
       "version": "1.0.0"
     },
     {
       "name": "my-cool-plugin",
-      "source": "./plugins/my-cool-plugin",
-      "version": "1.0.0"
+      "source": "my-cool-plugin",
+      "version": "1.0.0",
+      "author": {
+        "name": "Shalev Shalit",
+        "email": "shalev@webrix.ai"
+      },
+      "category": "fsdf",
+      "strict": true
     },
     {
       "name": "plugin-with-com-figma-mcp-mcp",
-      "source": "./plugins/plugin-with-com-figma-mcp-mcp",
+      "source": "plugin-with-com-figma-mcp-mcp",
       "version": "1.0.0"
     },
     {
       "name": "plugin-with-fetch",
-      "source": "./plugins/plugin-with-fetch",
+      "source": "plugin-with-fetch",
       "version": "1.0.0"
     },
     {
       "name": "plugin-with-gmail",
-      "source": "./plugins/plugin-with-gmail",
+      "source": "plugin-with-gmail",
       "version": "1.0.0"
     },
     {
       "name": "plugin-with-jira",
-      "source": "./plugins/plugin-with-jira",
+      "source": "plugin-with-jira",
       "version": "1.0.0",
       "author": {
         "name": "Shalev Shalit",
@@ -46,8 +52,13 @@
       "strict": true
     },
     {
+      "name": "plugin-with-playwright",
+      "source": "plugin-with-playwright",
+      "version": "1.0.0"
+    },
+    {
       "name": "plugin-with-skill-creator",
-      "source": "./plugins/plugin-with-skill-creator",
+      "source": "plugin-with-skill-creator",
       "version": "1.0.0"
     }
   ]

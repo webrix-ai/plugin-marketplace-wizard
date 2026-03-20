@@ -23,6 +23,7 @@ export default function Home() {
   const redo = useWizardStore((s) => s.redo);
   const hasInit = useRef(false);
   const isFirstRender = useRef(true);
+  const lastExportedSnapshot = useRef("");
 
   const prefetchOfficialRegistry = useWizardStore((s) => s.prefetchOfficialRegistry);
   const addCustomRegistry = useWizardStore((s) => s.addCustomRegistry);
@@ -60,7 +61,11 @@ export default function Home() {
     }
     if (!autoSave) return;
 
+    const snapshot = JSON.stringify({ plugins, marketplaceSettings });
+    if (snapshot === lastExportedSnapshot.current) return;
+
     const timer = setTimeout(() => {
+      lastExportedSnapshot.current = snapshot;
       silentExport();
     }, 1500);
     return () => clearTimeout(timer);

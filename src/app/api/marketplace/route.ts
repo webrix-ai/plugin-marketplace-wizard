@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { stripJsonComments } from "@/lib/utils";
 import type { MarketplaceManifest } from "@/lib/marketplace-schema";
+import { getMarketplaceDir } from "@/lib/get-marketplace-dir";
 
 function tryReadManifest(outputDir: string): MarketplaceManifest | null {
   const candidates = [
@@ -21,11 +22,9 @@ function tryReadManifest(outputDir: string): MarketplaceManifest | null {
   return null;
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const dir = searchParams.get("dir") || "./marketplace-output";
-    const outputDir = path.isAbsolute(dir) ? dir : path.resolve(process.cwd(), dir);
+    const outputDir = getMarketplaceDir();
     const manifest = tryReadManifest(outputDir);
     return NextResponse.json({ manifest });
   } catch (error) {

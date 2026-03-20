@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "mcp-s": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp-s.wewix.net/mcp?toolkit=talbar%40wix.com%3Achannels-toolkit"
+      ],
+      "env": {
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+      }
+    },
+    "com.figma.mcp/mcp": {
+      "type": "streamable-http",
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "weekly-summary": {
+      "type": "streamable-http",
+      "url": "https://webrix-ai.mcp-s.com/mcp?toolkit=pull-requests-linear-weekly-summary"
+    }
+  }
+}

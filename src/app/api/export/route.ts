@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { exportPlugins } from "@/lib/plugin-writer";
 import type { ExportRequest } from "@/lib/types";
-import path from "path";
+import { getMarketplaceDir } from "@/lib/get-marketplace-dir";
 
 export async function POST(request: Request) {
   try {
     const body: ExportRequest = await request.json();
-
-    const outputDir = path.isAbsolute(body.outputDir)
-      ? body.outputDir
-      : path.resolve(process.cwd(), body.outputDir);
+    const outputDir = getMarketplaceDir();
 
     const result = await exportPlugins({
       ...body,
