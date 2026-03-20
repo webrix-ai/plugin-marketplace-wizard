@@ -59,7 +59,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.50 0.18 115);
+  --primary: oklch(0.45 0.19 255);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -70,7 +70,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.91 0 0);
   --input: oklch(0.91 0 0);
-  --ring: oklch(0.50 0.18 115);
+  --ring: oklch(0.45 0.19 255);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -79,12 +79,12 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.50 0.18 115);
+  --sidebar-primary: oklch(0.45 0.19 255);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.91 0 0);
-  --sidebar-ring: oklch(0.50 0.18 115);
+  --sidebar-ring: oklch(0.45 0.19 255);
 
   --color-surface: oklch(0.97 0 0);
   --color-border-subtle: oklch(0.91 0 0);
@@ -97,7 +97,7 @@
   --card-foreground: #e5e5e5;
   --popover: #2a2a30;
   --popover-foreground: #e5e5e5;
-  --primary: oklch(0.84 0.19 115);
+  --primary: oklch(0.75 0.16 255);
   --primary-foreground: #16161a;
   --secondary: #2a2a30;
   --secondary-foreground: #e0e0e0;
@@ -108,7 +108,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 10%);
-  --ring: oklch(0.84 0.19 115);
+  --ring: oklch(0.75 0.16 255);
   --chart-1: #dedede;
   --chart-2: #8a8a8a;
   --chart-3: #6a6a6a;
@@ -116,12 +116,12 @@
   --chart-5: #3a3a3a;
   --sidebar: #0e0e12;
   --sidebar-foreground: #e5e5e5;
-  --sidebar-primary: oklch(0.84 0.19 115);
+  --sidebar-primary: oklch(0.75 0.16 255);
   --sidebar-primary-foreground: #16161a;
   --sidebar-accent: #2a2a30;
   --sidebar-accent-foreground: #e5e5e5;
   --sidebar-border: rgb(255 255 255 / 10%);
-  --sidebar-ring: oklch(0.84 0.19 115);
+  --sidebar-ring: oklch(0.75 0.16 255);
 
   --color-surface: #212126;
   --color-border-subtle: rgb(255 255 255 / 5%);

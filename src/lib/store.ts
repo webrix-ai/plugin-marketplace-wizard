@@ -27,7 +27,7 @@ import {
   registrySkillToLocal,
   persistCustomRegistryUrls,
 } from "./services/registry";
-import { MAX_UNDO_HISTORY, STORAGE_KEYS } from "./constants";
+import { MAX_UNDO_HISTORY, STORAGE_KEYS, WRITE_GUARD_MS } from "./constants";
 
 interface WizardState {
   mcpServers: McpServer[];
@@ -53,6 +53,7 @@ interface WizardState {
   _undoStack: PluginData[][];
   _redoStack: PluginData[][];
   _eventSource: EventSource | null;
+  _lastExportAt: number;
 
   registryMcps: RegistryMcpServer[];
   registryMcpsTotal: number;
@@ -153,6 +154,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   _undoStack: [],
   _redoStack: [],
   _eventSource: null,
+  _lastExportAt: 0,
 
   registryMcps: [],
   registryMcpsTotal: 0,
@@ -293,6 +295,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       });
 
       es.addEventListener("plugin:updated", (e) => {
+        if (Date.now() - get()._lastExportAt < WRITE_GUARD_MS) return;
+
         const updated: PluginData = JSON.parse(e.data);
         const merged = mergePluginsWithManifest([updated], manifest)[0];
         set((s) => {
@@ -307,6 +311,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       });
 
       es.addEventListener("plugin:removed", (e) => {
+        if (Date.now() - get()._lastExportAt < WRITE_GUARD_MS) return;
+
         const { slug } = JSON.parse(e.data);
         set((s) => ({
           plugins: s.plugins.filter((p) => p.slug !== slug),
@@ -833,7 +839,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       return;
     }
 
-    set({ isExporting: true });
+    set({ isExporting: true, _lastExportAt: Date.now() });
     try {
       const res = await fetch("/api/export", {
         method: "POST",
@@ -843,7 +849,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const result = await res.json();
 
       if (result.success) {
-        set({ isExporting: false, lastExport: result });
+        set({ isExporting: false, lastExport: result, _lastExportAt: Date.now() });
         sonnerToast.success(
           `Saved ${result.pluginCount} plugins (${result.files.length} files)`
         );
@@ -861,12 +867,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   silentExport: async () => {
     const { plugins, marketplaceSettings, exportTargets, isExporting } = get();
     if (plugins.length === 0 || isExporting) return;
+    set({ _lastExportAt: Date.now() });
     try {
       await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plugins, marketplaceSettings, exportTargets }),
       });
+      set({ _lastExportAt: Date.now() });
     } catch {
       // silent
     }

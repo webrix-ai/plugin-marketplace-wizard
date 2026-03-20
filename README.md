@@ -63,6 +63,8 @@ pmw validate ./my-marketplace
 - **Real-time Auto-save** — Persists plugins directly to your marketplace directory on every change
 - **CLI Validation** — Extensible validation system for CI/CD pipelines
 - **Visual Canvas** — Drag-and-drop interface built on ReactFlow for assembling and organizing plugins
+- **Category Grouping** — Plugins with the same category are automatically grouped into labeled regions on the canvas
+- **Plugin Search** — Press `⌘K` to quickly find and focus any plugin on the canvas
 - **Hot Reload** — Watches for external changes and syncs automatically
 - **Local Discovery** — Automatically scans Cursor, Claude, VS Code, Windsurf, Zed, Cline, Roo, and other IDE configurations for MCP servers and skills
 - **Official Registry** — Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for community-published servers and skills

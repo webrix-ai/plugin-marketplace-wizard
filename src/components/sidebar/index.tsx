@@ -32,46 +32,32 @@ function IconRail({
   useEffect(() => setMounted(true), []);
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="flex w-11 shrink-0 flex-col items-center border-r bg-card/50 pt-2.5 pb-2.5">
+    <TooltipProvider delay={300}>
+      <div className="flex w-[47px] shrink-0 flex-col items-center border-r bg-card/50 pt-2.5 pb-2.5">
         <div className="flex flex-col items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger
-              onClick={() => onChange("mcps")}
-              className={`flex size-8 items-center justify-center rounded-lg transition-all ${
-                tab === "mcps"
-                  ? "bg-emerald-500/15 text-emerald-400"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <McpLogo
-                color="currentColor"
-                className="size-4"
-              />
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={6}>
-              <p className="text-xs">MCP Servers</p>
-            </TooltipContent>
-          </Tooltip>
+          <button
+            onClick={() => onChange("skills")}
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
+              tab === "skills"
+                ? "bg-violet-500/15 text-violet-400"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <SkillLogo size={16} color="currentColor" />
+            <span className="text-[9px] font-medium leading-none">Skills</span>
+          </button>
 
-          <Tooltip>
-            <TooltipTrigger
-              onClick={() => onChange("skills")}
-              className={`flex size-8 items-center justify-center rounded-lg transition-all ${
-                tab === "skills"
-                  ? "bg-violet-500/15 text-violet-400"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <SkillLogo
-                size={16}
-                color="currentColor"
-              />
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={6}>
-              <p className="text-xs">Skills</p>
-            </TooltipContent>
-          </Tooltip>
+          <button
+            onClick={() => onChange("mcps")}
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
+              tab === "mcps"
+                ? "bg-emerald-500/15 text-emerald-400"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <McpLogo color="currentColor" className="size-4" />
+            <span className="text-[9px] font-medium leading-none">MCPs</span>
+          </button>
         </div>
 
         <div className="mt-auto flex flex-col items-center gap-1">

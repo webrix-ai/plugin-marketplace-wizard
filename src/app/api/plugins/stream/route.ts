@@ -4,6 +4,7 @@ import { readPluginDir } from "@/lib/plugin-reader";
 import { stripJsonComments } from "@/lib/utils";
 import type { MarketplaceManifest } from "@/lib/marketplace-schema";
 import { getMarketplaceDir } from "@/lib/get-marketplace-dir";
+import { WATCHER_DEBOUNCE_MS } from "@/lib/constants";
 
 function tryReadManifest(outputDir: string): MarketplaceManifest | null {
   for (const sub of [".claude-plugin", ".cursor-plugin"]) {
@@ -110,7 +111,7 @@ export async function GET(request: Request) {
               setTimeout(() => {
                 debounceTimers.delete(slug);
                 handleChange(slug);
-              }, 300)
+              }, WATCHER_DEBOUNCE_MS)
             );
           }
         );

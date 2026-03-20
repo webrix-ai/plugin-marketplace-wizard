@@ -184,6 +184,22 @@ function writeMarketplaceManifests(
   return files;
 }
 
+function removeStalePluginDirs(outputDir: string, currentSlugs: Set<string>) {
+  const pluginsDir = path.join(outputDir, "plugins");
+  if (!fs.existsSync(pluginsDir)) return;
+  try {
+    const entries = fs.readdirSync(pluginsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+      if (!currentSlugs.has(entry.name)) {
+        fs.rmSync(path.join(pluginsDir, entry.name), { recursive: true, force: true });
+      }
+    }
+  } catch {
+    // best-effort cleanup
+  }
+}
+
 export async function exportPlugins(request: ExportRequest): Promise<ExportResult> {
   const { outputDir, plugins, orgName = "my-org", marketplaceSettings, exportTargets } = request;
   const settings =
@@ -193,6 +209,9 @@ export async function exportPlugins(request: ExportRequest): Promise<ExportResul
   try {
     ensureDir(outputDir);
     const allFiles: string[] = [];
+
+    const currentSlugs = new Set(plugins.map((p) => p.slug));
+    removeStalePluginDirs(outputDir, currentSlugs);
 
     for (const plugin of plugins) {
       const files = writePlugin(outputDir, plugin, targets);

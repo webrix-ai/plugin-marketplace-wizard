@@ -5,7 +5,7 @@ import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
+  Panel,
   useNodesState,
   useReactFlow,
   type OnNodesChange,
@@ -16,17 +16,52 @@ import { Plus, Loader2 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import PluginNodeComponent from "./PluginNode";
 import type { PluginNodeType } from "./PluginNode";
-import type { DragPayload, PluginData } from "@/lib/types";
+import CategoryGroupNodeComponent from "./CategoryGroupNode";
+import type { CategoryGroupNodeType } from "./CategoryGroupNode";
+import { PluginSearch } from "./PluginSearch";
+import type { DragPayload, PluginData, RegistrySkillEntry } from "@/lib/types";
+
+type CanvasNode = PluginNodeType | CategoryGroupNodeType;
 
 const nodeTypes = {
   plugin: PluginNodeComponent,
+  categoryGroup: CategoryGroupNodeComponent,
 };
 
-function gridPosition(index: number) {
-  const cols = 3;
-  const col = index % cols;
-  const row = Math.floor(index / cols);
-  return { x: col * 380 + 60, y: row * 400 + 160 };
+const GROUP_COLS = 3;
+const PLUGIN_SPACING_X = 370;
+const PLUGIN_SPACING_Y = 400;
+const PLUGIN_W = 320;
+const PLUGIN_H_ESTIMATE = 320;
+const GROUP_PAD_TOP = 70;
+const GROUP_PAD_X = 50;
+const GROUP_PAD_BOTTOM = 50;
+const GROUP_GAP = 80;
+
+const UNGROUPED_OFFSET_X = 60;
+const UNGROUPED_OFFSET_Y = 160;
+
+function gridPosition(index: number, yOffset = 0) {
+  const col = index % GROUP_COLS;
+  const row = Math.floor(index / GROUP_COLS);
+  return {
+    x: col * PLUGIN_SPACING_X + UNGROUPED_OFFSET_X,
+    y: yOffset + row * PLUGIN_SPACING_Y + UNGROUPED_OFFSET_Y,
+  };
+}
+
+function findNodeAtPoint(e: React.DragEvent, currentNodes: readonly { id: string }[]) {
+  return currentNodes.find((node) => {
+    const el = document.querySelector(`[data-id="${node.id}"]`);
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return (
+      e.clientX >= rect.left &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.top &&
+      e.clientY <= rect.bottom
+    );
+  });
 }
 
 function PluginSkeleton({ style }: { style?: React.CSSProperties }) {
@@ -62,10 +97,17 @@ function PluginSkeleton({ style }: { style?: React.CSSProperties }) {
 }
 
 export function Canvas() {
-  const { plugins, addPlugin, addMcpToPlugin, addSkillToPlugin, updateSkillInPlugin, fetchRegistrySkillContent, importSkillFileToPlugin } =
-    useWizardStore();
+  const {
+    plugins,
+    addPlugin,
+    addMcpToPlugin,
+    addSkillToPlugin,
+    updateSkillInPlugin,
+    fetchRegistrySkillContent,
+    importSkillFileToPlugin,
+  } = useWizardStore();
   const isPluginsLoading = useWizardStore((s) => s.isPluginsLoading);
-  const [nodes, setNodes, onNodesChange] = useNodesState<PluginNodeType>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>([]);
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
@@ -75,19 +117,73 @@ export function Canvas() {
         positionsRef.current.set(n.id, n.position);
       }
 
-      return plugins.map((plugin, index) => {
+      const byCategory = new Map<string, PluginData[]>();
+      const uncategorized: PluginData[] = [];
+
+      for (const plugin of plugins) {
+        const cat = plugin.category?.trim();
+        if (cat) {
+          if (!byCategory.has(cat)) byCategory.set(cat, []);
+          byCategory.get(cat)!.push(plugin);
+        } else {
+          uncategorized.push(plugin);
+        }
+      }
+
+      const result: CanvasNode[] = [];
+      let offsetY = 0;
+
+      for (const [category, catPlugins] of byCategory) {
+        const groupId = `group:${category}`;
+        const cols = Math.min(catPlugins.length, GROUP_COLS);
+        const rows = Math.ceil(catPlugins.length / GROUP_COLS);
+        const w = GROUP_PAD_X + (cols - 1) * PLUGIN_SPACING_X + PLUGIN_W + GROUP_PAD_X;
+        const h = GROUP_PAD_TOP + (rows - 1) * PLUGIN_SPACING_Y + PLUGIN_H_ESTIMATE + GROUP_PAD_BOTTOM;
+
+        result.push({
+          id: groupId,
+          type: "categoryGroup" as const,
+          position: positionsRef.current.get(groupId) || { x: 60, y: offsetY },
+          data: { label: category },
+          style: { width: w, height: h },
+          draggable: true,
+          selectable: false,
+        } as CategoryGroupNodeType);
+
+        catPlugins.forEach((plugin, idx) => {
+          const col = idx % GROUP_COLS;
+          const row = Math.floor(idx / GROUP_COLS);
+          result.push({
+            id: plugin.id,
+            type: "plugin" as const,
+            position: {
+              x: GROUP_PAD_X + col * PLUGIN_SPACING_X,
+              y: GROUP_PAD_TOP + row * PLUGIN_SPACING_Y,
+            },
+            parentId: groupId,
+            extent: "parent" as const,
+            data: plugin,
+          } as PluginNodeType);
+        });
+
+        offsetY += h + GROUP_GAP;
+      }
+
+      uncategorized.forEach((plugin, idx) => {
         const existing = positionsRef.current.get(plugin.id);
-        return {
+        result.push({
           id: plugin.id,
           type: "plugin" as const,
-          position: existing || gridPosition(index),
+          position: existing || gridPosition(idx, byCategory.size > 0 ? offsetY : 0),
           data: plugin,
-        };
+        } as PluginNodeType);
       });
+
+      return result;
     });
   }, [plugins, setNodes]);
 
-  const handleNodesChange: OnNodesChange<PluginNodeType> = useCallback(
+  const handleNodesChange: OnNodesChange<CanvasNode> = useCallback(
     (changes) => {
       onNodesChange(changes);
       for (const change of changes) {
@@ -117,20 +213,7 @@ export function Canvas() {
         const file = files[0];
         const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
 
-        const currentNodes = getNodes();
-        const hitNode = currentNodes.find((node) => {
-          const el = document.querySelector(`[data-id="${node.id}"]`);
-          if (!el) return false;
-          const rect = el.getBoundingClientRect();
-          return (
-            e.clientX >= rect.left &&
-            e.clientX <= rect.right &&
-            e.clientY >= rect.top &&
-            e.clientY <= rect.bottom
-          );
-        });
-
-        if (hitNode) return;
+        if (findNodeAtPoint(e, getNodes())) return;
 
         const baseName = file.name.replace(/\.(zip|skill)$/i, "");
         const pluginId = addPlugin(`Plugin with ${baseName}`, "");
@@ -148,25 +231,9 @@ export function Canvas() {
         return;
       }
 
-      const flowPos = screenToFlowPosition({
-        x: e.clientX,
-        y: e.clientY,
-      });
+      const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
 
-      const currentNodes = getNodes();
-      const hitNode = currentNodes.find((node) => {
-        const el = document.querySelector(`[data-id="${node.id}"]`);
-        if (!el) return false;
-        const rect = el.getBoundingClientRect();
-        return (
-          e.clientX >= rect.left &&
-          e.clientX <= rect.right &&
-          e.clientY >= rect.top &&
-          e.clientY <= rect.bottom
-        );
-      });
-
-      if (hitNode) return;
+      if (findNodeAtPoint(e, getNodes())) return;
 
       const itemName =
         payload.type === "mcp"
@@ -185,7 +252,7 @@ export function Canvas() {
           addSkillToPlugin(pluginId, skill);
 
           if (skill._registryEntry) {
-            fetchRegistrySkillContent(skill._registryEntry).then((fullSkill) => {
+            fetchRegistrySkillContent(skill._registryEntry as RegistrySkillEntry).then((fullSkill) => {
               updateSkillInPlugin(pluginId, skill.id, {
                 content: fullSkill.content,
                 description: fullSkill.description,
@@ -229,6 +296,9 @@ export function Canvas() {
             orientation="horizontal"
             className="!border !bg-card [&_button]:!border-border [&_button]:!bg-card [&_button]:!text-muted-foreground [&_button:hover]:!bg-accent"
           />
+          <Panel position="top-left">
+            <PluginSearch />
+          </Panel>
         </ReactFlow>
 
         {isPluginsLoading && plugins.length === 0 && (
