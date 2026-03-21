@@ -21,6 +21,11 @@ export interface McpServer {
   [key: string]: unknown;
 }
 
+export interface SkillFile {
+  relativePath: string;
+  content: string;
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -29,6 +34,7 @@ export interface Skill {
   sourceFilePath: string;
   scope: "global" | "local";
   content: string;
+  files?: SkillFile[];
   [key: string]: unknown;
 }
 
@@ -198,6 +204,7 @@ export interface CustomGitHubSkill {
   content: string;
   source: string;
   repository: string;
+  files?: SkillFile[];
 }
 
 export interface CustomSkillRepo {

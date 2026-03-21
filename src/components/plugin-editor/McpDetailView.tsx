@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowLeft, Globe, FolderOpen, Check } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { ArrowLeft, Globe, FolderOpen, Check, Code } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { validateMcpServer } from "@/lib/validate-marketplace";
 import type { McpServer } from "@/lib/types";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import McpLogo from "@/components/logo/McpLogo";
 import { JsonBlock, ValidationIssueList } from "./shared";
+import { CodeEditorDialog } from "@/components/CodeEditorDialog";
 
 export function McpDetailView({
   mcp,
@@ -23,16 +24,25 @@ export function McpDetailView({
   const updateMcpInPlugin = useWizardStore((s) => s.updateMcpInPlugin);
   const [name, setName] = useState(mcp.name);
   const [editing, setEditing] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
-  const configJson: Record<string, unknown> = {};
-  if (mcp.config.type) configJson.type = mcp.config.type;
-  if (mcp.config.command) configJson.command = mcp.config.command;
-  if (mcp.config.args?.length) configJson.args = mcp.config.args;
-  if (mcp.config.url) configJson.url = mcp.config.url;
-  if (mcp.config.env && Object.keys(mcp.config.env).length)
-    configJson.env = mcp.config.env;
-  if (mcp.config.headers && Object.keys(mcp.config.headers).length)
-    configJson.headers = mcp.config.headers;
+  const configJson = useMemo(() => {
+    const obj: Record<string, unknown> = {};
+    if (mcp.config.type) obj.type = mcp.config.type;
+    if (mcp.config.command) obj.command = mcp.config.command;
+    if (mcp.config.args?.length) obj.args = mcp.config.args;
+    if (mcp.config.url) obj.url = mcp.config.url;
+    if (mcp.config.env && Object.keys(mcp.config.env).length)
+      obj.env = mcp.config.env;
+    if (mcp.config.headers && Object.keys(mcp.config.headers).length)
+      obj.headers = mcp.config.headers;
+    return obj;
+  }, [mcp.config]);
+
+  const fullMcpJson = useMemo(
+    () => JSON.stringify({ mcpServers: { [mcp.name]: configJson } }, null, 2),
+    [mcp.name, configJson]
+  );
 
   const handleSave = () => {
     if (name.trim()) {
@@ -40,6 +50,58 @@ export function McpDetailView({
     }
     setEditing(false);
   };
+
+  const validateJson = useCallback((value: string): string | null => {
+    try {
+      const parsed = JSON.parse(value);
+      if (!parsed || typeof parsed !== "object") return "Must be a JSON object";
+      if (parsed.mcpServers && typeof parsed.mcpServers === "object") {
+        const keys = Object.keys(parsed.mcpServers);
+        if (keys.length !== 1) return "mcpServers must have exactly one server entry";
+        const server = parsed.mcpServers[keys[0]];
+        if (!server || typeof server !== "object") return "Server config must be an object";
+      }
+      return null;
+    } catch (e) {
+      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+    }
+  }, []);
+
+  const handleEditorSave = useCallback(
+    (value: string) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed.mcpServers && typeof parsed.mcpServers === "object") {
+          const keys = Object.keys(parsed.mcpServers);
+          if (keys.length === 1) {
+            const newName = keys[0];
+            const server = parsed.mcpServers[newName];
+            const config: McpServer["config"] = {};
+            if (server.type) config.type = server.type;
+            if (server.command) config.command = server.command;
+            if (server.args) config.args = server.args;
+            if (server.url) config.url = server.url;
+            if (server.env) config.env = server.env;
+            if (server.headers) config.headers = server.headers;
+            updateMcpInPlugin(pluginId, mcp.id, { name: newName, config });
+            setName(newName);
+            return;
+          }
+        }
+        const config: McpServer["config"] = {};
+        if (parsed.type) config.type = parsed.type;
+        if (parsed.command) config.command = parsed.command;
+        if (parsed.args) config.args = parsed.args;
+        if (parsed.url) config.url = parsed.url;
+        if (parsed.env) config.env = parsed.env;
+        if (parsed.headers) config.headers = parsed.headers;
+        updateMcpInPlugin(pluginId, mcp.id, { config });
+      } catch {
+        // validation should have caught this
+      }
+    },
+    [pluginId, mcp.id, updateMcpInPlugin]
+  );
 
   const issues = useMemo(() => validateMcpServer(mcp), [mcp]);
   const nameError = issues.find((i) => i.path === "mcp.name")?.message;
@@ -105,9 +167,20 @@ export function McpDetailView({
       <ValidationIssueList issues={issues} title="MCP Server" />
 
       <div>
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Server Config
-        </p>
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Server Config
+          </p>
+          <Button
+            variant="outline"
+            size="xs"
+            className="h-6 gap-1 text-[10px]"
+            onClick={() => setEditorOpen(true)}
+          >
+            <Code className="size-3" />
+            Edit Source
+          </Button>
+        </div>
         <JsonBlock data={{ [mcp.name]: configJson }} />
       </div>
 
@@ -119,6 +192,17 @@ export function McpDetailView({
           {mcp.sourceFilePath}
         </p>
       </div>
+
+      <CodeEditorDialog
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        title={`Edit MCP: ${mcp.name}`}
+        subtitle="Edit the MCP server JSON configuration. Changes will update the server name and config."
+        language="json"
+        value={fullMcpJson}
+        onSave={handleEditorSave}
+        validate={validateJson}
+      />
     </div>
   );
 }

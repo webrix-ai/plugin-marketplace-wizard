@@ -128,12 +128,42 @@ export async function GET(request: Request) {
     const content = await contentRes.text();
 
     const skillDir = bestPath.replace(/\/SKILL\.md$/, "");
-    const siblingFiles = tree.tree
-      .filter((e) => e.type === "blob" && e.path.startsWith(skillDir + "/") && e.path !== bestPath)
-      .map((e) => ({
-        path: e.path.slice(skillDir.length + 1),
-        sha: e.sha,
-      }));
+    const siblingEntries = tree.tree
+      .filter((e) => e.type === "blob" && e.path.startsWith(skillDir + "/") && e.path !== bestPath);
+
+    const editableExts = new Set([
+      ".md", ".json", ".yaml", ".yml", ".txt", ".sh", ".bash",
+      ".js", ".ts", ".mjs", ".cjs", ".py", ".rb", ".toml", ".cfg", ".ini", ".xml",
+      ".html", ".css", ".env", ".example",
+    ]);
+
+    const editableSiblings = siblingEntries.filter((e) => {
+      const ext = "." + (e.path.split(".").pop()?.toLowerCase() ?? "");
+      return editableExts.has(ext);
+    });
+
+    const skillFiles: { relativePath: string; content: string }[] = [];
+    if (editableSiblings.length > 0 && editableSiblings.length <= 30) {
+      const fetches = editableSiblings.map(async (e) => {
+        const relativePath = e.path.slice(skillDir.length + 1);
+        try {
+          const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/${e.path}`;
+          const res = await fetch(rawUrl, { signal: AbortSignal.timeout(5000) });
+          if (!res.ok) return null;
+          const text = await res.text();
+          if (text.length > 100_000) return null;
+          return { relativePath, content: text };
+        } catch {
+          return null;
+        }
+      });
+      const results = await Promise.allSettled(fetches);
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value) {
+          skillFiles.push(r.value);
+        }
+      }
+    }
 
     return NextResponse.json({
       content,
@@ -141,7 +171,11 @@ export async function GET(request: Request) {
       skillDir,
       source,
       repository: `https://github.com/${owner}/${repo}`,
-      siblingFiles,
+      siblingFiles: siblingEntries.map((e) => ({
+        path: e.path.slice(skillDir.length + 1),
+        sha: e.sha,
+      })),
+      skillFiles,
     });
   } catch (error) {
     return NextResponse.json(

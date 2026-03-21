@@ -278,6 +278,7 @@ export function CustomGitHubSkillItem({
       sourceFilePath: `${skill.repository}/tree/HEAD/skills/${skill.dirName}`,
       scope: "global",
       content: skill.content,
+      files: skill.files?.length ? skill.files : undefined,
     };
     const payload: DragPayload = { type: "skill", item: localSkill };
     e.dataTransfer.setData("application/json", JSON.stringify(payload));

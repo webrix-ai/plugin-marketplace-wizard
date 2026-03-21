@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowLeft, FolderOpen, Globe, ChevronDown, ChevronRight } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { ArrowLeft, FolderOpen, Globe, ChevronDown, ChevronRight, Code } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { parseAgentFrontmatter, updateAgentFrontmatter } from "@/lib/utils";
 import { validateAgent } from "@/lib/validate-marketplace";
@@ -28,6 +28,7 @@ import AgentLogo from "@/components/logo/AgentLogo";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CopyButton, ValidationIssueList } from "./shared";
+import { CodeEditorDialog } from "@/components/CodeEditorDialog";
 
 const AGENT_NAME_MAX = 64;
 const AGENT_DESC_MAX = 1024;
@@ -57,6 +58,7 @@ export function AgentDetailView({
 }) {
   const updateAgentInPlugin = useWizardStore((s) => s.updateAgentInPlugin);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const { frontmatter, body } = useMemo(
     () => parseAgentFrontmatter(agent.content),
@@ -140,6 +142,39 @@ export function AgentDetailView({
       content: updatedContent,
     });
   };
+
+  const handleEditorSave = useCallback(
+    (newContent: string) => {
+      const parsed = parseAgentFrontmatter(newContent);
+      const fm = parsed.frontmatter;
+      const newName = fm.name || agent.name;
+      const newDesc = fm.description || "";
+      updateAgentInPlugin(pluginId, agent.id, {
+        name: newName,
+        description: newDesc,
+        tools: fm.tools || undefined,
+        disallowedTools: fm.disallowedTools || undefined,
+        model: fm.model || undefined,
+        permissionMode: (fm.permissionMode as AgentData["permissionMode"]) || undefined,
+        maxTurns: fm.maxTurns,
+        memory: (fm.memory as AgentData["memory"]) || undefined,
+        effort: (fm.effort as AgentData["effort"]) || undefined,
+        isolation: (fm.isolation as AgentData["isolation"]) || undefined,
+        content: newContent,
+      });
+      setName(newName);
+      setDescription(newDesc);
+      setTools(fm.tools ?? "");
+      setDisallowedTools(fm.disallowedTools ?? "");
+      setModel(fm.model ?? "");
+      setPermissionMode(fm.permissionMode ?? "");
+      setMaxTurns(fm.maxTurns != null ? String(fm.maxTurns) : "");
+      setMemory(fm.memory ?? "");
+      setEffort(fm.effort ?? "");
+      setIsolation(fm.isolation ?? "");
+    },
+    [pluginId, agent.id, agent.name, updateAgentInPlugin]
+  );
 
   const activeToolSet = new Set(tools.split(",").map((s) => s.trim()).filter(Boolean));
 
@@ -413,19 +448,34 @@ export function AgentDetailView({
       </Collapsible>
 
       {/* System Prompt */}
-      {body.trim() && (
-        <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              System Prompt
-            </p>
-            <CopyButton text={body} />
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            System Prompt
+          </p>
+          <div className="flex items-center gap-1">
+            {body.trim() && <CopyButton text={body} />}
+            <Button
+              variant="outline"
+              size="xs"
+              className="h-6 gap-1 text-[10px]"
+              onClick={() => setEditorOpen(true)}
+            >
+              <Code className="size-3" />
+              Edit Source
+            </Button>
           </div>
+        </div>
+        {body.trim() ? (
           <div className="skill-markdown max-h-[40vh] overflow-y-auto rounded-lg bg-muted p-3">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="rounded-lg bg-muted px-3 py-2 text-[10px] italic text-muted-foreground">
+            No system prompt. Click &quot;Edit Source&quot; to add one.
+          </p>
+        )}
+      </div>
 
       {/* Source File */}
       {agent.sourceFilePath && (
@@ -438,6 +488,16 @@ export function AgentDetailView({
           </p>
         </div>
       )}
+
+      <CodeEditorDialog
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        title={`Edit Agent: ${displayName || agent.name}`}
+        subtitle="Edit the full agent markdown including frontmatter (name, tools, model, etc.). Changes will sync back to all fields."
+        language="markdown"
+        value={agent.content}
+        onSave={handleEditorSave}
+      />
     </div>
   );
 }

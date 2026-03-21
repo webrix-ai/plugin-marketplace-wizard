@@ -1,6 +1,7 @@
 import type {
   McpServer,
   Skill,
+  SkillFile,
   RegistryMcpServer,
   RegistrySkillEntry,
   CustomRegistry,
@@ -33,7 +34,8 @@ export function registryMcpToLocal(server: RegistryMcpServer): McpServer {
 
 export function registrySkillToLocal(
   entry: RegistrySkillEntry,
-  fullContent?: string
+  fullContent?: string,
+  files?: SkillFile[]
 ): Skill {
   const description = fullContent
     ? extractFrontmatter(fullContent, "description") || `From ${entry.source}`
@@ -51,6 +53,7 @@ export function registrySkillToLocal(
     content:
       fullContent ||
       `# ${entry.name}\n\nInstall from: ${entry.source}\nSkill ID: ${entry.skillId}\n`,
+    files: files?.length ? files : undefined,
   };
 }
 

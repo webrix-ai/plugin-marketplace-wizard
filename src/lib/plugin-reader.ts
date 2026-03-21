@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
-import type { PluginData, McpServer, Skill, AgentData } from "./types";
+import type { PluginData, McpServer, Skill, SkillFile, AgentData } from "./types";
 import { parseAgentFrontmatter } from "./utils";
 import { stripJsonComments } from "./utils";
+import { SKIP_DIRS } from "./scanner-config";
 
 export function safeReadJson(filePath: string): Record<string, unknown> | null {
   try {
@@ -39,6 +40,52 @@ function parseSkillFrontmatter(content: string): {
       .replace(/^['"]|['"]$/g, "");
   }
   return result;
+}
+
+const EDITABLE_EXTENSIONS = new Set([
+  ".md", ".json", ".yaml", ".yml", ".txt", ".sh", ".bash",
+  ".js", ".ts", ".mjs", ".cjs", ".py", ".rb", ".toml", ".cfg", ".ini", ".xml",
+  ".html", ".css", ".env", ".example",
+]);
+
+const MAX_SKILL_FILE_SIZE = 100_000;
+
+function collectSkillFiles(skillDir: string): SkillFile[] {
+  const files: SkillFile[] = [];
+
+  function walk(dir: string, prefix: string) {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+      if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name)) continue;
+        walk(fullPath, relativePath);
+      } else if (entry.isFile()) {
+        if (relativePath === "SKILL.md") continue;
+        const ext = path.extname(entry.name).toLowerCase();
+        if (!ext || !EDITABLE_EXTENSIONS.has(ext)) continue;
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.size > MAX_SKILL_FILE_SIZE) continue;
+        } catch { continue; }
+        const content = safeReadText(fullPath);
+        if (content !== null) {
+          files.push({ relativePath, content });
+        }
+      }
+    }
+  }
+
+  walk(skillDir, "");
+  return files;
 }
 
 export function readPluginDir(
@@ -103,19 +150,22 @@ export function readPluginDir(
       const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;
+        const skillDir = path.join(skillsDir, entry.name);
         const skillMd = safeReadText(
-          path.join(skillsDir, entry.name, "SKILL.md")
+          path.join(skillDir, "SKILL.md")
         );
         if (!skillMd) continue;
         const fm = parseSkillFrontmatter(skillMd);
+        const files = collectSkillFiles(skillDir);
         skills.push({
           id: `loaded:${slug}:skill:${entry.name}`,
           name: fm.name || entry.name,
           description: fm.description || "",
           sourceApplication: "marketplace",
-          sourceFilePath: path.join(skillsDir, entry.name, "SKILL.md"),
+          sourceFilePath: path.join(skillDir, "SKILL.md"),
           scope: "global",
           content: skillMd,
+          files: files.length > 0 ? files : undefined,
         });
       }
     } catch {

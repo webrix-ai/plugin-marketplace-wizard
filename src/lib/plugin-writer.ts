@@ -122,6 +122,14 @@ function writePlugin(outputDir: string, plugin: PluginData, targets: ExportTarge
     const skillPath = path.join(skillDir, "SKILL.md");
     writeText(skillPath, buildSkillMd(skill));
     files.push(skillPath);
+
+    if (skill.files?.length) {
+      for (const sf of skill.files) {
+        const filePath = path.join(skillDir, sf.relativePath);
+        writeText(filePath, sf.content);
+        files.push(filePath);
+      }
+    }
   }
 
   removeStaleSkillDirs(path.join(pluginDir, "skills"), currentSkillDirs);
