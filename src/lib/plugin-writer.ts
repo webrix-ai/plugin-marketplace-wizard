@@ -95,18 +95,49 @@ function writePlugin(outputDir: string, plugin: PluginData, targets: ExportTarge
     files.push(mcpPath);
   }
 
+  const currentSkillDirs = new Set<string>();
   for (const skill of plugin.skills) {
-    const skillSlug = skill.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    const skillDir = path.join(pluginDir, "skills", skillSlug);
+    const skillDirName = extractSkillDirName(skill) ||
+      skill.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") ||
+      skill.id;
+    currentSkillDirs.add(skillDirName);
+    const skillDir = path.join(pluginDir, "skills", skillDirName);
     const skillPath = path.join(skillDir, "SKILL.md");
     writeText(skillPath, buildSkillMd(skill));
     files.push(skillPath);
   }
 
+  removeStaleSkillDirs(path.join(pluginDir, "skills"), currentSkillDirs);
+
   return files;
+}
+
+function extractSkillDirName(skill: { sourceFilePath?: string; id?: string }): string | null {
+  if (skill.sourceFilePath) {
+    const parent = path.basename(path.dirname(skill.sourceFilePath));
+    if (parent && parent !== "skills" && parent !== ".") return parent;
+  }
+  const idMatch = skill.id?.match(/^loaded:[^:]+:skill:(.+)$/);
+  if (idMatch) return idMatch[1];
+  return null;
+}
+
+function removeStaleSkillDirs(skillsDir: string, currentDirs: Set<string>) {
+  if (!fs.existsSync(skillsDir)) return;
+  try {
+    const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+      if (!currentDirs.has(entry.name)) {
+        fs.rmSync(path.join(skillsDir, entry.name), { recursive: true, force: true });
+      }
+    }
+  } catch {
+    // best-effort cleanup
+  }
 }
 
 function buildMarketplacePluginEntry(
@@ -201,36 +232,37 @@ function removeStalePluginDirs(outputDir: string, currentSlugs: Set<string>) {
 }
 
 export async function exportPlugins(request: ExportRequest): Promise<ExportResult> {
-  const { outputDir, plugins, orgName = "my-org", marketplaceSettings, exportTargets } = request;
+  const { plugins, orgName = "my-org", marketplaceSettings, exportTargets } = request;
+  const dir = request.outputDir ?? process.cwd();
   const settings =
     marketplaceSettings ?? createDefaultMarketplaceSettings(orgName, undefined);
   const targets: ExportTargets = exportTargets ?? { cursor: true, claude: true };
 
   try {
-    ensureDir(outputDir);
+    ensureDir(dir);
     const allFiles: string[] = [];
 
     const currentSlugs = new Set(plugins.map((p) => p.slug));
-    removeStalePluginDirs(outputDir, currentSlugs);
+    removeStalePluginDirs(dir, currentSlugs);
 
     for (const plugin of plugins) {
-      const files = writePlugin(outputDir, plugin, targets);
+      const files = writePlugin(dir, plugin, targets);
       allFiles.push(...files);
     }
 
-    const manifestFiles = writeMarketplaceManifests(outputDir, plugins, settings, targets);
+    const manifestFiles = writeMarketplaceManifests(dir, plugins, settings, targets);
     allFiles.push(...manifestFiles);
 
     return {
       success: true,
-      outputDir,
+      outputDir: dir,
       pluginCount: plugins.length,
       files: allFiles,
     };
   } catch (error) {
     return {
       success: false,
-      outputDir,
+      outputDir: dir,
       pluginCount: 0,
       files: [],
       error: error instanceof Error ? error.message : "Unknown error",

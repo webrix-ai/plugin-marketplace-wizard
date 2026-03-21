@@ -61,6 +61,7 @@ pmw validate ./my-marketplace
 
 - **Marketplace Manifests** — Generates complete [`.cursor-plugin/`](https://cursor.com/docs/plugins) and [`.claude-plugin/`](https://code.claude.com/docs/en/discover-plugins) directory structures ready for distribution
 - **Real-time Auto-save** — Persists plugins directly to your marketplace directory on every change
+- **Inline Validation** — Real-time validation of plugin, MCP server, and skill configurations with visual indicators on the canvas
 - **CLI Validation** — Extensible validation system for CI/CD pipelines
 - **Visual Canvas** — Drag-and-drop interface built on ReactFlow for assembling and organizing plugins
 - **Category Grouping** — Plugins with the same category are automatically grouped into labeled regions on the canvas

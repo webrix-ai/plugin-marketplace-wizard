@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import type { NodeProps, Node } from "@xyflow/react";
 import {
   X,
   Trash2,
   GripVertical,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -18,9 +19,11 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import { NodeStatusIndicator } from "@/components/node-status-indicator";
 import McpLogo from "./logo/McpLogo";
 import SkillLogo from "./logo/SkillLogo";
-import type { PluginData, DragPayload } from "@/lib/types";
+import { validatePluginData, validateMcpServer, validateSkill, getSkillDirName } from "@/lib/validate-marketplace";
+import type { PluginData, DragPayload, RegistrySkillEntry } from "@/lib/types";
 
 const SKILL_FILE_EXTENSIONS = [".zip", ".skill"];
 function isSkillFile(name: string) {
@@ -49,6 +52,31 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
   const [isOver, setIsOver] = useState(false);
 
   const isSelected = selectedPluginId === id;
+
+  const hasLoadingSkills = data.skills.some((s) => !!s._loading);
+
+  const validationIssues = useMemo(
+    () => validatePluginData(data),
+    [data],
+  );
+  const errors = useMemo(
+    () => validationIssues.filter((i) => i.severity !== "warning"),
+    [validationIssues],
+  );
+
+  const nodeStatus = hasLoadingSkills
+    ? ("loading" as const)
+    : errors.length > 0
+      ? ("error" as const)
+      : undefined;
+
+  const tooltipSummary = useMemo(() => {
+    if (validationIssues.length === 0) return "";
+    const lines = validationIssues.map(
+      (i) => `${i.severity === "warning" ? "⚠" : "✕"} ${i.message}`
+    );
+    return lines.join("\n");
+  }, [validationIssues]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -87,7 +115,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
           addSkillToPlugin(id, skill);
 
           if (skill._registryEntry) {
-            fetchRegistrySkillContent(skill._registryEntry).then((fullSkill) => {
+            fetchRegistrySkillContent(skill._registryEntry as RegistrySkillEntry).then((fullSkill) => {
               updateSkillInPlugin(id, skill.id, {
                 content: fullSkill.content,
                 description: fullSkill.description,
@@ -120,6 +148,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
       onDrop={handleDrop}
       onClick={handleClick}
     >
+      <NodeStatusIndicator status={nodeStatus} variant="border">
       <Card
         size="sm"
         className={cn(
@@ -146,6 +175,21 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                 </p>
               )}
             </div>
+
+            {validationIssues.length > 0 && (
+              <span
+                title={tooltipSummary}
+                className={cn(
+                  "inline-flex size-5 shrink-0 items-center justify-center rounded-md",
+                  errors.length > 0
+                    ? "text-red-500"
+                    : "text-amber-500",
+                )}
+              >
+                <AlertCircle className="size-3.5" />
+              </span>
+            )}
+
             <Button
               variant="ghost"
               size="icon-xs"
@@ -168,39 +212,44 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                 MCP Servers
               </p>
               <div className="flex flex-col gap-0.5">
-                {data.mcps.map((mcp) => (
-                  <div
-                    key={mcp.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isSelected) setSelectedPluginId(id);
-                      setSelectedItemInPlugin(mcp.id, "mcp");
-                    }}
-                    className={cn(
-                      "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
-                      isSelected && selectedItemId === mcp.id && "bg-emerald-500/10 ring-1 ring-emerald-500/30"
-                    )}
-                  >
-                    <div className="size-1.5 rounded-full bg-emerald-500/60" />
-                    <span className="flex-1 truncate text-[11px]">
-                      {mcp.name}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground">
-                      {mcp.config.type || "stdio"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
+                {data.mcps.map((mcp) => {
+                  const mcpIssues = validateMcpServer(mcp);
+                  const mcpHasErrors = mcpIssues.some((i) => i.severity !== "warning");
+                  return (
+                    <div
+                      key={mcp.id}
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeMcpFromPlugin(id, mcp.id);
+                        if (!isSelected) setSelectedPluginId(id);
+                        setSelectedItemInPlugin(mcp.id, "mcp");
                       }}
-                      className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                      className={cn(
+                        "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
+                        isSelected && selectedItemId === mcp.id && "bg-emerald-500/10 ring-1 ring-emerald-500/30"
+                      )}
                     >
-                      <X className="size-3" />
-                    </Button>
-                  </div>
-                ))}
+                      {mcpIssues.length > 0 ? (
+                        <AlertCircle className={cn("size-3 shrink-0", mcpHasErrors ? "text-red-500" : "text-amber-500")} />
+                      ) : (
+                        <div className="size-1.5 rounded-full bg-emerald-500/60" />
+                      )}
+                      <span className="flex-1 truncate text-[11px]">
+                        {mcp.name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMcpFromPlugin(id, mcp.id);
+                        }}
+                        className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                      >
+                        <X className="size-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -214,6 +263,10 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
               <div className="flex flex-col gap-0.5">
                 {data.skills.map((skill) => {
                   const loading = !!skill._loading;
+                  const skillIssues = loading ? [] : validateSkill(skill);
+                  const skillHasErrors = skillIssues.some((i) => i.severity !== "warning");
+                  const dir = getSkillDirName(skill);
+                  const namesDiffer = dir && dir !== skill.name?.trim();
                   return (
                     <div
                       key={skill.id}
@@ -233,12 +286,21 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                     >
                       {loading ? (
                         <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+                      ) : skillIssues.length > 0 ? (
+                        <AlertCircle className={cn("size-3 shrink-0", skillHasErrors ? "text-red-500" : "text-amber-500")} />
                       ) : (
                         <div className="size-1.5 rounded-full bg-violet-500/60" />
                       )}
-                      <span className="flex-1 truncate text-[11px]">
-                        {skill.name}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px]">
+                          {skill.name}
+                        </span>
+                        {namesDiffer && (
+                          <span className="block truncate font-mono text-[9px] text-muted-foreground">
+                            {dir}/
+                          </span>
+                        )}
+                      </div>
                       {!loading && (
                         <Button
                           variant="ghost"
@@ -290,6 +352,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
           </span>
         </CardFooter>
       </Card>
+      </NodeStatusIndicator>
     </div>
   );
 }
