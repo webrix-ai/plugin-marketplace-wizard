@@ -14,6 +14,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Plus, Loader2 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
+import { slugify } from "@/lib/utils";
 import PluginNodeComponent from "./PluginNode";
 import type { PluginNodeType } from "./PluginNode";
 import CategoryGroupNodeComponent from "./CategoryGroupNode";
@@ -218,7 +219,7 @@ export function Canvas() {
         if (findNodeAtPoint(e, getNodes())) return;
 
         const baseName = file.name.replace(/\.(zip|skill)$/i, "");
-        const pluginId = addPlugin(`Plugin with ${baseName}`, "");
+        const pluginId = addPlugin(slugify(`plugin-with-${baseName}`), "");
         positionsRef.current.set(pluginId, flowPos);
         setTimeout(() => importSkillFileToPlugin(pluginId, file), 0);
         return;
@@ -242,7 +243,7 @@ export function Canvas() {
           ? (payload.item as PluginData["mcps"][0]).name
           : (payload.item as PluginData["skills"][0]).name;
 
-      const pluginId = addPlugin(`Plugin with ${itemName}`, "");
+      const pluginId = addPlugin(slugify(`plugin-with-${itemName}`), "");
 
       positionsRef.current.set(pluginId, flowPos);
 
@@ -332,7 +333,7 @@ export function Canvas() {
               </div>
               <p className="text-sm font-medium text-muted-foreground">No plugins yet</p>
               <p className="mt-1 text-xs text-muted-foreground/70">
-                Use the button below to create one, or drop items from the sidebar
+                Use the "New Plugin" button to create one, or drop items from the sidebar
               </p>
             </div>
           </div>

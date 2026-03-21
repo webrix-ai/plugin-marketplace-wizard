@@ -84,7 +84,10 @@ export function AgentDetailView({
     frontmatter.isolation ?? agent.isolation ?? ""
   );
 
-  const issues = useMemo(() => validateAgent(agent), [agent]);
+  const issues = useMemo(
+    () => validateAgent({ ...agent, name, description }),
+    [agent, name, description]
+  );
   const nameIssue = issues.find((i) => i.path === "agent.name");
   const descIssue = issues.find((i) => i.path === "agent.description");
 

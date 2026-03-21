@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Monitor, Globe, Link, Plus, Sun, Moon, Bot } from "lucide-react";
+import { Monitor, Globe, Link, Plus, Sun, Moon, Bot, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useWizardStore } from "@/lib/store";
 import { DetailPanel, type DetailItem } from "@/components/DetailPanel";
@@ -22,10 +22,14 @@ import { CreatePluginDialog } from "@/components/CreatePluginDialog";
 
 function IconRail({
   tab,
-  onChange,
+  collapsed,
+  onTabChange,
+  onToggleCollapse,
 }: {
   tab: "mcps" | "skills" | "agents";
-  onChange: (t: "mcps" | "skills" | "agents") => void;
+  collapsed: boolean;
+  onTabChange: (t: "mcps" | "skills" | "agents") => void;
+  onToggleCollapse: () => void;
 }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -36,7 +40,7 @@ function IconRail({
       <div className="flex w-[47px] shrink-0 flex-col items-center border-r bg-card/50 pt-2.5 pb-2.5">
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={() => onChange("skills")}
+            onClick={() => onTabChange("skills")}
             className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
               tab === "skills"
                 ? "bg-violet-500/15 text-violet-400"
@@ -48,7 +52,7 @@ function IconRail({
           </button>
 
           <button
-            onClick={() => onChange("mcps")}
+            onClick={() => onTabChange("mcps")}
             className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
               tab === "mcps"
                 ? "bg-emerald-500/15 text-emerald-400"
@@ -60,7 +64,7 @@ function IconRail({
           </button>
 
           <button
-            onClick={() => onChange("agents")}
+            onClick={() => onTabChange("agents")}
             className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
               tab === "agents"
                 ? "bg-blue-500/15 text-blue-400"
@@ -73,6 +77,24 @@ function IconRail({
         </div>
 
         <div className="mt-auto flex flex-col items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={onToggleCollapse}
+              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="size-4" />
+              ) : (
+                <PanelLeftClose className="size-4" />
+              )}
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={6}>
+              <p className="text-xs">
+                {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+
           <Tooltip>
             <TooltipTrigger
               onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
@@ -137,52 +159,72 @@ function SourceTabs({
 }
 
 export function Sidebar() {
-  const { sidebarTab, setSidebarTab, sidebarSource, setSidebarSource } =
-    useWizardStore();
+  const {
+    sidebarTab,
+    setSidebarTab,
+    sidebarSource,
+    setSidebarSource,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+  } = useWizardStore();
   const [selectedItem, setSelectedItem] = useState<DetailItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleTabChange = (tab: "mcps" | "skills" | "agents") => {
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+    }
+    setSidebarTab(tab);
+  };
 
   return (
     <>
       <aside className="relative flex shrink-0 border-r bg-card">
-        <IconRail tab={sidebarTab} onChange={setSidebarTab} />
+        <IconRail
+          tab={sidebarTab}
+          collapsed={sidebarCollapsed}
+          onTabChange={handleTabChange}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
 
-        <div className="flex w-64 flex-col">
-          {sidebarTab !== "agents" && (
-            <div className="border-b p-3">
-              <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
+        {!sidebarCollapsed && (
+          <div className="flex w-64 flex-col">
+            {sidebarTab !== "agents" && (
+              <div className="border-b p-3">
+                <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
+              </div>
+            )}
+
+            {(sidebarTab === "agents" || sidebarSource === "local") && (
+              <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+            )}
+            {sidebarTab !== "agents" && sidebarSource === "registry" && (
+              <RegistryContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
+            )}
+            {sidebarTab !== "agents" && sidebarSource === "custom" && (
+              <CustomContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
+            )}
+
+            <Separator />
+            <div className="px-3 py-2.5">
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className="w-full rounded-full"
+                size="sm"
+              >
+                <Plus className="size-4" />
+                New Plugin
+              </Button>
+              <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+                Drag to add to plugins
+              </p>
             </div>
-          )}
 
-          {(sidebarTab === "agents" || sidebarSource === "local") && (
-            <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
-          )}
-          {sidebarTab !== "agents" && sidebarSource === "registry" && (
-            <RegistryContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
-          )}
-          {sidebarTab !== "agents" && sidebarSource === "custom" && (
-            <CustomContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
-          )}
-
-          <Separator />
-          <div className="px-3 py-2.5">
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="w-full rounded-full"
-              size="sm"
-            >
-              <Plus className="size-4" />
-              New Plugin
-            </Button>
-            <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-              Drag to add to plugins
-            </p>
+            {selectedItem && (
+              <DetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
+            )}
           </div>
-
-          {selectedItem && (
-            <DetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
-          )}
-        </div>
+        )}
       </aside>
 
       <CreatePluginDialog

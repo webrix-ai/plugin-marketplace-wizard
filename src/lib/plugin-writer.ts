@@ -19,20 +19,34 @@ function writeText(filePath: string, content: string) {
 }
 
 function buildCursorPluginManifest(plugin: PluginData) {
-  return {
+  const manifest: Record<string, unknown> = {
     name: plugin.slug,
     displayName: plugin.name,
     version: plugin.version,
     description: plugin.description,
   };
+  if (plugin.author?.name) {
+    manifest.author = {
+      name: plugin.author.name,
+      ...(plugin.author.email ? { email: plugin.author.email } : {}),
+    };
+  }
+  return manifest;
 }
 
 function buildClaudePluginManifest(plugin: PluginData) {
-  return {
+  const manifest: Record<string, unknown> = {
     name: plugin.slug,
     description: plugin.description,
     version: plugin.version,
   };
+  if (plugin.author?.name) {
+    manifest.author = {
+      name: plugin.author.name,
+      ...(plugin.author.email ? { email: plugin.author.email } : {}),
+    };
+  }
+  return manifest;
 }
 
 function buildMcpJson(plugin: PluginData) {
@@ -185,14 +199,7 @@ function buildMarketplacePluginEntry(
   };
   if (plugin.description) entry.description = plugin.description;
   if (plugin.version) entry.version = plugin.version;
-  if (plugin.author?.name) {
-    entry.author = {
-      name: plugin.author.name,
-      ...(plugin.author.email ? { email: plugin.author.email } : {}),
-    };
-  }
   if (plugin.homepage) entry.homepage = plugin.homepage;
-  if (plugin.repository) entry.repository = plugin.repository;
   if (plugin.license) entry.license = plugin.license;
   if (plugin.keywords?.length) entry.keywords = plugin.keywords;
   if (plugin.category) entry.category = plugin.category;

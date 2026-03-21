@@ -47,6 +47,7 @@ interface WizardState {
   searchQuery: string;
   sidebarTab: "mcps" | "skills" | "agents";
   sidebarSource: "local" | "registry" | "custom";
+  sidebarCollapsed: boolean;
   isScanning: boolean;
   isPluginsLoading: boolean;
   isExporting: boolean;
@@ -90,6 +91,7 @@ interface WizardState {
   setSearchQuery: (query: string) => void;
   setSidebarTab: (tab: "mcps" | "skills" | "agents") => void;
   setSidebarSource: (source: "local" | "registry" | "custom") => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   setRegistryQuery: (q: string) => void;
   setAutoSave: (on: boolean) => void;
   setExportTargets: (targets: Partial<ExportTargets>) => void;
@@ -160,6 +162,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   searchQuery: "",
   sidebarTab: "mcps",
   sidebarSource: "local",
+  sidebarCollapsed: false,
   isScanning: false,
   isPluginsLoading: false,
   isExporting: false,
@@ -461,6 +464,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setSidebarTab: (sidebarTab) => set({ sidebarTab }),
   setSidebarSource: (sidebarSource) => set({ sidebarSource }),
+  setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
   setRegistryQuery: (registryQuery) => set({ registryQuery }),
   setCustomRegistryQuery: (customRegistryQuery) => set({ customRegistryQuery }),
   setAutoSave: (autoSave) => {
