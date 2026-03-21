@@ -112,6 +112,21 @@ function writePlugin(outputDir: string, plugin: PluginData, targets: ExportTarge
 
   removeStaleSkillDirs(path.join(pluginDir, "skills"), currentSkillDirs);
 
+  const currentAgentFiles = new Set<string>();
+  for (const agent of plugin.agents ?? []) {
+    const fileName =
+      agent.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") + ".md" || `${agent.id}.md`;
+    currentAgentFiles.add(fileName);
+    const agentPath = path.join(pluginDir, "agents", fileName);
+    writeText(agentPath, agent.content);
+    files.push(agentPath);
+  }
+
+  removeStaleAgentFiles(path.join(pluginDir, "agents"), currentAgentFiles);
+
   return files;
 }
 
@@ -133,6 +148,21 @@ function removeStaleSkillDirs(skillsDir: string, currentDirs: Set<string>) {
       if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
       if (!currentDirs.has(entry.name)) {
         fs.rmSync(path.join(skillsDir, entry.name), { recursive: true, force: true });
+      }
+    }
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+function removeStaleAgentFiles(agentsDir: string, currentFiles: Set<string>) {
+  if (!fs.existsSync(agentsDir)) return;
+  try {
+    const entries = fs.readdirSync(agentsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      if (!currentFiles.has(entry.name)) {
+        fs.rmSync(path.join(agentsDir, entry.name), { force: true });
       }
     }
   } catch {

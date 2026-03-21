@@ -32,6 +32,25 @@ export interface Skill {
   [key: string]: unknown;
 }
 
+export interface AgentData {
+  id: string;
+  name: string;
+  description: string;
+  sourceFilePath: string;
+  scope: "global" | "local";
+  content: string;
+  tools?: string;
+  disallowedTools?: string;
+  model?: string;
+  permissionMode?: "default" | "acceptEdits" | "dontAsk" | "bypassPermissions" | "plan";
+  maxTurns?: number;
+  memory?: "user" | "project" | "local";
+  background?: boolean;
+  effort?: "low" | "medium" | "high" | "max";
+  isolation?: "worktree";
+  [key: string]: unknown;
+}
+
 export interface PluginAuthorData {
   name: string;
   email?: string;
@@ -45,6 +64,7 @@ export interface PluginData {
   version: string;
   mcps: McpServer[];
   skills: Skill[];
+  agents?: AgentData[];
   author?: PluginAuthorData;
   homepage?: string;
   repository?: string;
@@ -64,6 +84,7 @@ export interface PluginData {
 export interface ScanResult {
   mcpServers: McpServer[];
   skills: Skill[];
+  agents: AgentData[];
   scannedAt: string;
 }
 
@@ -71,11 +92,11 @@ export interface ScanResult {
 // Drag & drop
 // ---------------------------------------------------------------------------
 
-export type DragItemType = "mcp" | "skill";
+export type DragItemType = "mcp" | "skill" | "agent";
 
 export interface DragPayload {
   type: DragItemType;
-  item: McpServer | Skill;
+  item: McpServer | Skill | AgentData;
 }
 
 // ---------------------------------------------------------------------------

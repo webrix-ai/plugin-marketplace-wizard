@@ -42,7 +42,7 @@ export function RegistryContent({
 
   return (
     <>
-      <div className="px-3 pb-2">
+      <div className="p-3">
         <div className="relative">
           <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input

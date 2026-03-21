@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import { registryMcpToLocal, registrySkillToLocal } from "@/lib/services/registry";
 import { cn, truncate, parseSkillFrontmatter } from "@/lib/utils";
-import type { McpServer, Skill, DragPayload, RegistryMcpServer, RegistrySkillEntry, CustomGitHubSkill } from "@/lib/types";
+import type { McpServer, Skill, AgentData, DragPayload, RegistryMcpServer, RegistrySkillEntry, CustomGitHubSkill } from "@/lib/types";
 import McpLogo from "@/components/logo/McpLogo";
 import SkillLogo from "@/components/logo/SkillLogo";
+import AgentLogo from "@/components/logo/AgentLogo";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -106,6 +107,50 @@ export function SkillItem({
       </div>
       {usageCount > 0 ? (
         <Badge variant="secondary" className="h-4 text-[9px] text-violet-500">
+          {usageCount}
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="h-4 text-[9px] opacity-0 transition group-hover:opacity-100">
+          Drag
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+export function AgentItem({
+  agent,
+  usageCount,
+  onSelect,
+}: {
+  agent: AgentData;
+  usageCount: number;
+  onSelect: () => void;
+}) {
+  const handleDragStart = (e: React.DragEvent) => {
+    const payload: DragPayload = { type: "agent", item: agent };
+    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      onClick={onSelect}
+      className="group flex cursor-grab items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2 transition-all hover:border-blue-500/20 hover:bg-blue-500/5 active:cursor-grabbing"
+    >
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-blue-500/10">
+        <AgentLogo size={16} color="#3b82f6" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium">{agent.name}</p>
+        <p className="truncate text-[10px] text-muted-foreground">
+          {agent.description ? truncate(agent.description, 40) : agent.scope}
+        </p>
+      </div>
+      {usageCount > 0 ? (
+        <Badge variant="secondary" className="h-4 text-[9px] text-blue-500">
           {usageCount}
         </Badge>
       ) : (

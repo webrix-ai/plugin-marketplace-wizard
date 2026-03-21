@@ -1,22 +1,22 @@
 "use client";
 
 import { useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, Bot } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import type { DetailItem } from "@/components/DetailPanel";
 import McpLogo from "@/components/logo/McpLogo";
 import SkillLogo from "@/components/logo/SkillLogo";
 import { Input } from "@/components/ui/input";
-import { McpItem, SkillItem, SkeletonItem } from "./SidebarItems";
+import { McpItem, SkillItem, AgentItem, SkeletonItem } from "./SidebarItems";
 
 export function LocalContent({
   tab,
   onSelectItem,
 }: {
-  tab: "mcps" | "skills";
+  tab: "mcps" | "skills" | "agents";
   onSelectItem: (item: DetailItem) => void;
 }) {
-  const { mcpServers, skills, plugins, searchQuery, setSearchQuery, isScanning } =
+  const { mcpServers, skills, agents, plugins, searchQuery, setSearchQuery, isScanning } =
     useWizardStore();
 
   const mcpUsage = useMemo(() => {
@@ -39,6 +39,16 @@ export function LocalContent({
     return counts;
   }, [plugins]);
 
+  const agentUsage = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of plugins) {
+      for (const a of p.agents ?? []) {
+        counts.set(a.id, (counts.get(a.id) || 0) + 1);
+      }
+    }
+    return counts;
+  }, [plugins]);
+
   const filteredMcps = mcpServers.filter(
     (m) =>
       !searchQuery ||
@@ -54,15 +64,25 @@ export function LocalContent({
       s.sourceApplication.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredAgents = agents.filter(
+    (a) =>
+      !searchQuery ||
+      a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const placeholder =
+    tab === "mcps" ? "Filter MCP servers..." : tab === "skills" ? "Filter skills..." : "Filter agents...";
+
   return (
     <>
-      <div className="px-3 pb-2">
+      <div className="p-3">
         <div className="relative">
           <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={tab === "mcps" ? "Filter MCP servers..." : "Filter skills..."}
+            placeholder={placeholder}
             className="h-8 pl-8 text-xs"
           />
         </div>
@@ -97,6 +117,16 @@ export function LocalContent({
           </div>
         )}
 
+        {!isScanning && tab === "agents" && agents.length === 0 && (
+          <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
+            <Bot className="size-6 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">No agents found</p>
+            <p className="text-[10px] text-muted-foreground/70">
+              Add agents to ~/.claude/agents/
+            </p>
+          </div>
+        )}
+
         {!isScanning && tab === "mcps" && filteredMcps.length > 0 && (
           <div className="flex flex-col gap-0.5 px-1.5">
             {filteredMcps.map((mcp) => (
@@ -118,6 +148,19 @@ export function LocalContent({
                 skill={skill}
                 usageCount={skillUsage.get(skill.id) || 0}
                 onSelect={() => onSelectItem({ kind: "skill", data: skill })}
+              />
+            ))}
+          </div>
+        )}
+
+        {!isScanning && tab === "agents" && filteredAgents.length > 0 && (
+          <div className="flex flex-col gap-0.5 px-1.5">
+            {filteredAgents.map((agent) => (
+              <AgentItem
+                key={agent.id}
+                agent={agent}
+                usageCount={agentUsage.get(agent.id) || 0}
+                onSelect={() => {}}
               />
             ))}
           </div>

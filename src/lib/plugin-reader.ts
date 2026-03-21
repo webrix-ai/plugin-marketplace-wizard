@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
-import type { PluginData, McpServer, Skill } from "./types";
+import type { PluginData, McpServer, Skill, AgentData } from "./types";
+import { parseAgentFrontmatter } from "./utils";
 import { stripJsonComments } from "./utils";
 
 export function safeReadJson(filePath: string): Record<string, unknown> | null {
@@ -122,6 +123,40 @@ export function readPluginDir(
     }
   }
 
+  const agents: AgentData[] = [];
+  const agentsDir = path.join(pluginDir, "agents");
+  if (fs.existsSync(agentsDir)) {
+    try {
+      const entries = fs.readdirSync(agentsDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+        const content = safeReadText(path.join(agentsDir, entry.name));
+        if (!content) continue;
+        const { frontmatter } = parseAgentFrontmatter(content);
+        const baseName = entry.name.replace(/\.md$/, "");
+        agents.push({
+          id: `loaded:${slug}:agent:${baseName}`,
+          name: frontmatter.name || baseName,
+          description: frontmatter.description || "",
+          sourceFilePath: path.join(agentsDir, entry.name),
+          scope: "global",
+          content,
+          tools: frontmatter.tools,
+          disallowedTools: frontmatter.disallowedTools,
+          model: frontmatter.model,
+          permissionMode: frontmatter.permissionMode as AgentData["permissionMode"],
+          maxTurns: frontmatter.maxTurns,
+          memory: frontmatter.memory as AgentData["memory"],
+          background: frontmatter.background,
+          effort: frontmatter.effort as AgentData["effort"],
+          isolation: frontmatter.isolation as AgentData["isolation"],
+        });
+      }
+    } catch {
+      // skip
+    }
+  }
+
   return {
     id: `loaded:${slug}`,
     name,
@@ -130,6 +165,7 @@ export function readPluginDir(
     version,
     mcps,
     skills,
+    agents,
   };
 }
 

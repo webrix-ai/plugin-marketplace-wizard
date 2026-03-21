@@ -3,7 +3,7 @@ import type {
   MarketplacePluginEntry,
   MarketplaceSettings,
 } from "./marketplace-schema";
-import type { PluginData, McpServer, Skill } from "./types";
+import type { PluginData, McpServer, Skill, AgentData } from "./types";
 
 export interface ValidationIssue {
   path: string;
@@ -258,6 +258,53 @@ export function getSkillDirName(skill: Skill): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// Agent validation
+// ---------------------------------------------------------------------------
+
+const AGENT_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const AGENT_NAME_MAX = 64;
+const AGENT_DESC_MAX = 1024;
+
+export function validateAgent(agent: AgentData, pfx = "agent"): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  const name = agent.name?.trim();
+  if (!name) {
+    issues.push({ path: `${pfx}.name`, message: "Agent name is required" });
+  } else if (name.length > AGENT_NAME_MAX) {
+    issues.push({
+      path: `${pfx}.name`,
+      message: `Agent name exceeds ${AGENT_NAME_MAX} characters (${name.length}/${AGENT_NAME_MAX})`,
+    });
+  } else if (name.startsWith("-") || name.endsWith("-")) {
+    issues.push({
+      path: `${pfx}.name`,
+      message: "Agent name must not start or end with a hyphen",
+    });
+  } else if (!AGENT_NAME_PATTERN.test(name)) {
+    issues.push({
+      path: `${pfx}.name`,
+      message: "Agent name must be lowercase letters, numbers, and hyphens only",
+    });
+  }
+
+  const desc = agent.description?.trim();
+  if (!desc) {
+    issues.push({
+      path: `${pfx}.description`,
+      message: "Description is required so Claude knows when to delegate to this agent",
+    });
+  } else if (desc.length > AGENT_DESC_MAX) {
+    issues.push({
+      path: `${pfx}.description`,
+      message: `Description exceeds ${AGENT_DESC_MAX} characters (${desc.length}/${AGENT_DESC_MAX})`,
+    });
+  }
+
+  return issues;
+}
+
+// ---------------------------------------------------------------------------
 // Full PluginData validation (used by PluginNode)
 // ---------------------------------------------------------------------------
 
@@ -274,10 +321,11 @@ export function validatePluginData(plugin: PluginData): ValidationIssue[] {
     issues.push({ path: "version", message: "Plugin version is required", severity: "warning" });
   }
 
-  if (plugin.mcps.length === 0 && plugin.skills.length === 0) {
+  const agents = plugin.agents ?? [];
+  if (plugin.mcps.length === 0 && plugin.skills.length === 0 && agents.length === 0) {
     issues.push({
       path: "items",
-      message: "Plugin has no MCP servers or skills",
+      message: "Plugin has no MCP servers, skills, or agents",
       severity: "warning",
     });
   }
@@ -292,6 +340,11 @@ export function validatePluginData(plugin: PluginData): ValidationIssue[] {
     const dir = skillDirName(skill);
     const label = dir || skill.name?.trim() || `skills[${i}]`;
     issues.push(...validateSkill(skill, label));
+  });
+
+  agents.forEach((agent, i) => {
+    const label = agent.name?.trim() || `agents[${i}]`;
+    issues.push(...validateAgent(agent, label));
   });
 
   return issues;

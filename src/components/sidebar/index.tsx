@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Monitor, Globe, Link, Plus, Sun, Moon } from "lucide-react";
+import { Monitor, Globe, Link, Plus, Sun, Moon, Bot } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useWizardStore } from "@/lib/store";
 import { DetailPanel, type DetailItem } from "@/components/DetailPanel";
@@ -24,8 +24,8 @@ function IconRail({
   tab,
   onChange,
 }: {
-  tab: "mcps" | "skills";
-  onChange: (t: "mcps" | "skills") => void;
+  tab: "mcps" | "skills" | "agents";
+  onChange: (t: "mcps" | "skills" | "agents") => void;
 }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -57,6 +57,18 @@ function IconRail({
           >
             <McpLogo color="currentColor" className="size-4" />
             <span className="text-[9px] font-medium leading-none">MCPs</span>
+          </button>
+
+          <button
+            onClick={() => onChange("agents")}
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
+              tab === "agents"
+                ? "bg-blue-500/15 text-blue-400"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Bot className="size-4" />
+            <span className="text-[9px] font-medium leading-none">Agents</span>
           </button>
         </div>
 
@@ -136,18 +148,20 @@ export function Sidebar() {
         <IconRail tab={sidebarTab} onChange={setSidebarTab} />
 
         <div className="flex w-64 flex-col">
-          <div className="border-b p-3">
-            <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
-          </div>
+          {sidebarTab !== "agents" && (
+            <div className="border-b p-3">
+              <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
+            </div>
+          )}
 
-          {sidebarSource === "local" && (
+          {(sidebarTab === "agents" || sidebarSource === "local") && (
             <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
           )}
-          {sidebarSource === "registry" && (
-            <RegistryContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+          {sidebarTab !== "agents" && sidebarSource === "registry" && (
+            <RegistryContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
           )}
-          {sidebarSource === "custom" && (
-            <CustomContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+          {sidebarTab !== "agents" && sidebarSource === "custom" && (
+            <CustomContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
           )}
 
           <Separator />

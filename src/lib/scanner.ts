@@ -1,14 +1,16 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
-import { McpServer, Skill, ScanResult } from "./types";
-import { stripJsonComments } from "./utils";
+import { McpServer, Skill, AgentData, ScanResult } from "./types";
+import { stripJsonComments, parseAgentFrontmatter } from "./utils";
 import {
   SKIP_DIRS,
   GLOBAL_MCP_PATHS,
   GLOBAL_SKILL_DIRS,
+  GLOBAL_AGENT_DIRS,
   LOCAL_MCP_PATTERNS,
   LOCAL_SKILL_PATTERNS,
+  LOCAL_AGENT_PATTERNS,
   PROJECT_SUBDIRS,
 } from "./scanner-config";
 
@@ -150,6 +152,51 @@ function scanSkillDirectory(
   return skills;
 }
 
+function scanAgentDirectory(
+  dirPath: string,
+  app: string,
+  scope: "global" | "local"
+): AgentData[] {
+  const agents: AgentData[] = [];
+
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      if (entry.name.startsWith(".")) continue;
+
+      const filePath = path.join(dirPath, entry.name);
+      const content = safeReadFile(filePath);
+      if (!content) continue;
+
+      const { frontmatter } = parseAgentFrontmatter(content);
+      const baseName = entry.name.replace(/\.md$/, "");
+
+      agents.push({
+        id: `${app}:${scope}:agent:${filePath}`,
+        name: frontmatter.name || baseName,
+        description: frontmatter.description || "",
+        sourceFilePath: filePath,
+        scope,
+        content: content.slice(0, 50000),
+        tools: frontmatter.tools,
+        disallowedTools: frontmatter.disallowedTools,
+        model: frontmatter.model,
+        permissionMode: frontmatter.permissionMode as AgentData["permissionMode"],
+        maxTurns: frontmatter.maxTurns,
+        memory: frontmatter.memory as AgentData["memory"],
+        background: frontmatter.background,
+        effort: frontmatter.effort as AgentData["effort"],
+        isolation: frontmatter.isolation as AgentData["isolation"],
+      });
+    }
+  } catch {
+    // skip inaccessible directories
+  }
+
+  return agents;
+}
+
 function walkProjectDirs(
   homeDir: string,
   maxDepth: number,
@@ -199,8 +246,11 @@ export async function scanSystem(): Promise<ScanResult> {
   const homeDir = os.homedir();
   const mcpServers: McpServer[] = [];
   const skills: Skill[] = [];
+  const agents: AgentData[] = [];
   const seenMcpIds = new Set<string>();
   const seenSkillIds = new Set<string>();
+  const seenAgentIds = new Set<string>();
+  const seenAgentPaths = new Set<string>();
 
   function addMcp(server: McpServer) {
     if (!seenMcpIds.has(server.id)) {
@@ -214,6 +264,16 @@ export async function scanSystem(): Promise<ScanResult> {
       if (!seenSkillIds.has(skill.id)) {
         seenSkillIds.add(skill.id);
         skills.push(skill);
+      }
+    }
+  }
+
+  function addAgents(newAgents: AgentData[]) {
+    for (const agent of newAgents) {
+      if (!seenAgentIds.has(agent.id) && !seenAgentPaths.has(agent.sourceFilePath)) {
+        seenAgentIds.add(agent.id);
+        seenAgentPaths.add(agent.sourceFilePath);
+        agents.push(agent);
       }
     }
   }
@@ -247,6 +307,12 @@ export async function scanSystem(): Promise<ScanResult> {
     addSkills(scanSkillDirectory(dirPath, def.app, "global"));
   }
 
+  for (const def of GLOBAL_AGENT_DIRS) {
+    const dirPath = path.join(homeDir, def.relativePath);
+    if (!fs.existsSync(dirPath)) continue;
+    addAgents(scanAgentDirectory(dirPath, def.app, "global"));
+  }
+
   walkProjectDirs(homeDir, 3, (dirPath) => {
     for (const pattern of LOCAL_MCP_PATTERNS) {
       const filePath = path.join(dirPath, pattern.pattern);
@@ -273,7 +339,7 @@ export async function scanSystem(): Promise<ScanResult> {
 
     for (const pattern of LOCAL_SKILL_PATTERNS) {
       const dirCandidate = path.join(dirPath, pattern.pattern);
-      if (!fs.existsSync(dirCandidate)) return;
+      if (!fs.existsSync(dirCandidate)) continue;
 
       try {
         const stat = fs.statSync(dirCandidate);
@@ -284,11 +350,26 @@ export async function scanSystem(): Promise<ScanResult> {
         // skip
       }
     }
+
+    for (const pattern of LOCAL_AGENT_PATTERNS) {
+      const dirCandidate = path.join(dirPath, pattern.pattern);
+      if (!fs.existsSync(dirCandidate)) continue;
+
+      try {
+        const stat = fs.statSync(dirCandidate);
+        if (stat.isDirectory()) {
+          addAgents(scanAgentDirectory(dirCandidate, pattern.app, "local"));
+        }
+      } catch {
+        // skip
+      }
+    }
   });
 
   return {
     mcpServers,
     skills,
+    agents,
     scannedAt: new Date().toISOString(),
   };
 }

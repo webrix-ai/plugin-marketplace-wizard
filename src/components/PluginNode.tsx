@@ -22,7 +22,8 @@ import {
 import { NodeStatusIndicator } from "@/components/node-status-indicator";
 import McpLogo from "./logo/McpLogo";
 import SkillLogo from "./logo/SkillLogo";
-import { validatePluginData, validateMcpServer, validateSkill, getSkillDirName } from "@/lib/validate-marketplace";
+import AgentLogo from "./logo/AgentLogo";
+import { validatePluginData, validateMcpServer, validateSkill, validateAgent, getSkillDirName } from "@/lib/validate-marketplace";
 import type { PluginData, DragPayload, RegistrySkillEntry } from "@/lib/types";
 
 const SKILL_FILE_EXTENSIONS = [".zip", ".skill"];
@@ -41,6 +42,8 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
     updateSkillInPlugin,
     removeMcpFromPlugin,
     removeSkillFromPlugin,
+    addAgentToPlugin,
+    removeAgentFromPlugin,
     setSelectedPluginId,
     selectedPluginId,
     setSelectedItemInPlugin,
@@ -110,6 +113,8 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
 
         if (payload.type === "mcp") {
           addMcpToPlugin(id, payload.item as PluginData["mcps"][0]);
+        } else if (payload.type === "agent") {
+          addAgentToPlugin(id, payload.item as NonNullable<PluginData["agents"]>[0]);
         } else {
           const skill = payload.item as PluginData["skills"][0];
           addSkillToPlugin(id, skill);
@@ -128,7 +133,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
         // invalid drag data
       }
     },
-    [id, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin, importSkillFileToPlugin]
+    [id, addMcpToPlugin, addSkillToPlugin, addAgentToPlugin, fetchRegistrySkillContent, updateSkillInPlugin, importSkillFileToPlugin]
   );
 
   const handleClick = useCallback(() => {
@@ -139,7 +144,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
     }
   }, [id, isSelected, setSelectedPluginId]);
 
-  const totalItems = data.mcps.length + data.skills.length;
+  const totalItems = data.mcps.length + data.skills.length + (data.agents?.length ?? 0);
 
   return (
     <div
@@ -314,6 +319,53 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                           <X className="size-3" />
                         </Button>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {(data.agents?.length ?? 0) > 0 && (
+            <div>
+              <p className="mb-1 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-blue-500/80">
+                <AgentLogo size={12} color="currentColor" />
+                Agents
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {data.agents!.map((agent) => {
+                  const agentIssues = validateAgent(agent);
+                  const agentHasErrors = agentIssues.some((i) => i.severity !== "warning");
+                  return (
+                    <div
+                      key={agent.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isSelected) setSelectedPluginId(id);
+                        setSelectedItemInPlugin(agent.id, "agent");
+                      }}
+                      className={cn(
+                        "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
+                        isSelected && selectedItemId === agent.id && "bg-blue-500/10 ring-1 ring-blue-500/30"
+                      )}
+                    >
+                      {agentIssues.length > 0 ? (
+                        <AlertCircle className={cn("size-3 shrink-0", agentHasErrors ? "text-red-500" : "text-amber-500")} />
+                      ) : (
+                        <div className="size-1.5 rounded-full bg-blue-500/60" />
+                      )}
+                      <span className="flex-1 truncate text-[11px]">{agent.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeAgentFromPlugin(id, agent.id);
+                        }}
+                        className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                      >
+                        <X className="size-3" />
+                      </Button>
                     </div>
                   );
                 })}

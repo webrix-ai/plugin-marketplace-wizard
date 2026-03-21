@@ -6,6 +6,7 @@ import type { MarketplaceSettings, MarketplaceManifest } from "./marketplace-sch
 import type {
   McpServer,
   Skill,
+  AgentData,
   PluginData,
   ExportResult,
   ExportTargets,
@@ -34,6 +35,7 @@ import { MAX_UNDO_HISTORY, STORAGE_KEYS, WRITE_GUARD_MS } from "./constants";
 interface WizardState {
   mcpServers: McpServer[];
   skills: Skill[];
+  agents: AgentData[];
   plugins: PluginData[];
   marketplaceDir: string;
   marketplaceSettings: MarketplaceSettings;
@@ -41,9 +43,9 @@ interface WizardState {
   categories: string[];
   selectedPluginId: string | null;
   selectedItemId: string | null;
-  selectedItemType: "mcp" | "skill" | null;
+  selectedItemType: "mcp" | "skill" | "agent" | null;
   searchQuery: string;
-  sidebarTab: "mcps" | "skills";
+  sidebarTab: "mcps" | "skills" | "agents";
   sidebarSource: "local" | "registry" | "custom";
   isScanning: boolean;
   isPluginsLoading: boolean;
@@ -84,9 +86,9 @@ interface WizardState {
   addCategory: (name: string) => void;
   removeCategory: (name: string) => void;
   setSelectedPluginId: (id: string | null) => void;
-  setSelectedItemInPlugin: (itemId: string | null, itemType: "mcp" | "skill" | null) => void;
+  setSelectedItemInPlugin: (itemId: string | null, itemType: "mcp" | "skill" | "agent" | null) => void;
   setSearchQuery: (query: string) => void;
-  setSidebarTab: (tab: "mcps" | "skills") => void;
+  setSidebarTab: (tab: "mcps" | "skills" | "agents") => void;
   setSidebarSource: (source: "local" | "registry" | "custom") => void;
   setRegistryQuery: (q: string) => void;
   setAutoSave: (on: boolean) => void;
@@ -123,6 +125,10 @@ interface WizardState {
   removeSkillFromPlugin: (pluginId: string, skillId: string) => void;
   updateSkillInPlugin: (pluginId: string, skillId: string, updates: Partial<Skill>) => void;
 
+  addAgentToPlugin: (pluginId: string, agent: AgentData) => void;
+  removeAgentFromPlugin: (pluginId: string, agentId: string) => void;
+  updateAgentInPlugin: (pluginId: string, agentId: string, updates: Partial<AgentData>) => void;
+
   importSkillFileToPlugin: (pluginId: string, file: File) => Promise<void>;
   skillImportError: string | null;
   setSkillImportError: (error: string | null) => void;
@@ -142,6 +148,7 @@ export { registryMcpToLocal, registrySkillToLocal };
 export const useWizardStore = create<WizardState>((set, get) => ({
   mcpServers: [],
   skills: [],
+  agents: [],
   plugins: [],
   marketplaceDir: "",
   marketplaceSettings: createDefaultMarketplaceSettings(null, null),
@@ -398,6 +405,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       set({
         mcpServers: data.mcpServers,
         skills: data.skills,
+        agents: data.agents || [],
         isScanning: false,
       });
     } catch {
@@ -800,6 +808,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       version: "1.0.0",
       mcps: [],
       skills: [],
+      agents: [],
       ...authorFromGit(state.gitDefaults),
     };
     set({
@@ -907,6 +916,44 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         return {
           ...p,
           skills: p.skills.map((s) => (s.id === skillId ? { ...s, ...updates } : s)),
+        };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
+  addAgentToPlugin: (pluginId, agent) => {
+    const state = get();
+    const plugin = state.plugins.find((p) => p.id === pluginId);
+    if (plugin?.agents?.some((a) => a.id === agent.id)) return;
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return { ...p, agents: [...(p.agents ?? []), agent] };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
+  removeAgentFromPlugin: (pluginId, agentId) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return { ...p, agents: (p.agents ?? []).filter((a) => a.id !== agentId) };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
+  updateAgentInPlugin: (pluginId, agentId, updates) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return {
+          ...p,
+          agents: (p.agents ?? []).map((a) => (a.id === agentId ? { ...a, ...updates } : a)),
         };
       }),
       ...pushHistory(state),

@@ -226,7 +226,7 @@ export function CustomContent({
 
     return (
       <>
-        <div className="space-y-2 px-3 pb-2">
+        <div className="space-y-2 p-3">
           <div className="flex gap-1.5">
             <Input
               value={newUrl}
@@ -286,7 +286,7 @@ export function CustomContent({
 
   return (
     <>
-      <div className="space-y-2 px-3 pb-2">
+      <div className="space-y-2 p-3">
         <div className="flex gap-1.5">
           <Input
             value={newUrl}

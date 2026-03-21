@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Globe, Loader2, CheckCircle2, AlertCircle, GitBranch } from "lucide-react";
+import { Github, Loader2, CheckCircle2, AlertCircle, GitBranch } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -191,7 +191,7 @@ function ReadyState({
             {phase === "success" ? (
               <CheckCircle2 className="size-3.5 text-emerald-500" />
             ) : (
-              <Globe className="size-3.5 text-primary" />
+              <Github className="size-3.5 text-primary" />
             )}
           </div>
           <div>
@@ -205,10 +205,10 @@ function ReadyState({
         </div>
       </DialogHeader>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2">
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex w-full max-w-full items-center gap-2 overflow-hidden rounded-lg border bg-muted/50 px-3 py-2">
           <GitBranch className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate text-xs font-mono text-muted-foreground">
+          <span className="min-w-0 truncate text-xs font-mono text-muted-foreground">
             {remoteUrl}
           </span>
         </div>

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { parse as parseYaml } from "yaml"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -29,22 +30,15 @@ export function parseSkillFrontmatter(content: string): {
   const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!match) return { frontmatter: {}, body: content };
 
-  const raw = match[1];
   const fm: SkillFrontmatter = {};
-
-  const nameMatch = raw.match(/^name:\s*(.+)$/m);
-  if (nameMatch) fm.name = nameMatch[1].trim();
-
-  const descMatch = raw.match(/^description:\s*>-?\s*\n([\s\S]*?)(?=\n\w|\n---)/m);
-  if (descMatch) {
-    fm.description = descMatch[1]
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .join(" ");
-  } else {
-    const simpleDesc = raw.match(/^description:\s*(.+)$/m);
-    if (simpleDesc) fm.description = simpleDesc[1].trim();
+  try {
+    const parsed = parseYaml(match[1]) as Record<string, unknown>;
+    if (parsed && typeof parsed === "object") {
+      if (typeof parsed.name === "string") fm.name = parsed.name.trim();
+      if (typeof parsed.description === "string") fm.description = parsed.description.trim();
+    }
+  } catch {
+    // fallback: ignore parse errors
   }
 
   const body = content.slice(match[0].length);
@@ -83,6 +77,82 @@ export function updateSkillFrontmatter(
 
   rawFm = rawFm.replace(/\n{2,}/g, "\n").trim();
 
+  return `---\n${rawFm}\n---${rest}`;
+}
+
+export interface AgentFrontmatter {
+  name?: string;
+  description?: string;
+  tools?: string;
+  disallowedTools?: string;
+  model?: string;
+  permissionMode?: string;
+  maxTurns?: number;
+  memory?: string;
+  background?: boolean;
+  effort?: string;
+  isolation?: string;
+}
+
+export function parseAgentFrontmatter(content: string): {
+  frontmatter: AgentFrontmatter;
+  body: string;
+} {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!match) return { frontmatter: {}, body: content };
+
+  const fm: AgentFrontmatter = {};
+  try {
+    const parsed = parseYaml(match[1]) as Record<string, unknown>;
+    if (parsed && typeof parsed === "object") {
+      if (typeof parsed.name === "string") fm.name = parsed.name.trim();
+      if (typeof parsed.description === "string") fm.description = parsed.description.trim();
+      if (typeof parsed.tools === "string") fm.tools = parsed.tools.trim();
+      if (typeof parsed.disallowedTools === "string") fm.disallowedTools = parsed.disallowedTools.trim();
+      if (typeof parsed.model === "string") fm.model = parsed.model.trim();
+      if (typeof parsed.permissionMode === "string") fm.permissionMode = parsed.permissionMode.trim();
+      if (typeof parsed.maxTurns === "number") fm.maxTurns = parsed.maxTurns;
+      if (typeof parsed.memory === "string") fm.memory = parsed.memory.trim();
+      if (typeof parsed.background === "boolean") fm.background = parsed.background;
+      if (typeof parsed.effort === "string") fm.effort = parsed.effort.trim();
+      if (typeof parsed.isolation === "string") fm.isolation = parsed.isolation.trim();
+    }
+  } catch {
+    // fallback: ignore parse errors
+  }
+
+  const body = content.slice(match[0].length);
+  return { frontmatter: fm, body };
+}
+
+export function updateAgentFrontmatter(
+  content: string,
+  updates: Partial<AgentFrontmatter>
+): string {
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmMatch) return content;
+
+  let rawFm = fmMatch[1];
+  const rest = content.slice(fmMatch[0].length);
+
+  function setField(key: string, value: string | number | boolean | undefined | null) {
+    const pattern = new RegExp(`^${key}:.*$`, "m");
+    if (value === undefined || value === null || value === "") {
+      rawFm = rawFm.replace(new RegExp(`^${key}:.*\\n?`, "m"), "");
+      return;
+    }
+    if (pattern.test(rawFm)) {
+      rawFm = rawFm.replace(pattern, `${key}: ${value}`);
+    } else {
+      rawFm = `${rawFm}\n${key}: ${value}`;
+    }
+  }
+
+  for (const [key, value] of Object.entries(updates)) {
+    setField(key, value as string | number | boolean | undefined);
+  }
+
+  rawFm = rawFm.replace(/\n{2,}/g, "\n").trim();
   return `---\n${rawFm}\n---${rest}`;
 }
 

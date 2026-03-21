@@ -15,10 +15,11 @@ import {
   validatePluginData,
   validateMcpServer,
   validateSkill,
+  validateAgent,
   getSkillDirName,
   type ValidationIssue,
 } from "@/lib/validate-marketplace";
-import type { PluginData } from "@/lib/types";
+import type { PluginData, AgentData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,8 +35,10 @@ import {
 import { Separator } from "@/components/ui/separator";
 import McpLogo from "@/components/logo/McpLogo";
 import SkillLogo from "@/components/logo/SkillLogo";
+import AgentLogo from "@/components/logo/AgentLogo";
 import { McpDetailView } from "./McpDetailView";
 import { SkillDetailView } from "./SkillDetailView";
+import { AgentDetailView } from "./AgentDetailView";
 import { TagInput } from "./TagInput";
 
 export function PanelBody({
@@ -48,6 +51,8 @@ export function PanelBody({
   const updatePlugin = useWizardStore((s) => s.updatePlugin);
   const removeMcpFromPlugin = useWizardStore((s) => s.removeMcpFromPlugin);
   const removeSkillFromPlugin = useWizardStore((s) => s.removeSkillFromPlugin);
+  const addAgentToPlugin = useWizardStore((s) => s.addAgentToPlugin);
+  const removeAgentFromPlugin = useWizardStore((s) => s.removeAgentFromPlugin);
   const plugins = useWizardStore((s) => s.plugins);
   const categories = useWizardStore((s) => s.categories);
   const addCategory = useWizardStore((s) => s.addCategory);
@@ -91,6 +96,7 @@ export function PanelBody({
       : undefined,
     keywords: tags.length ? tags : undefined,
     category: category.trim() || undefined,
+    agents: plugin.agents ?? [],
   };
 
   const issues = useMemo(() => validatePluginData(livePlugin), [livePlugin]);
@@ -113,6 +119,10 @@ export function PanelBody({
     }
     return labels;
   }, [plugin.skills]);
+  const agentNames = useMemo(
+    () => new Set((plugin.agents ?? []).map((a) => a.name?.trim()).filter(Boolean)),
+    [plugin.agents]
+  );
 
   function findItemByRoot(path: string) {
     const root = path.split(".")[0];
@@ -123,6 +133,8 @@ export function PanelBody({
       return sDir === root || s.name?.trim() === root;
     });
     if (skill) return { type: "skill" as const, id: skill.id };
+    const agent = (plugin.agents ?? []).find((a) => a.name?.trim() === root);
+    if (agent) return { type: "agent" as const, id: agent.id };
     return null;
   }
 
@@ -140,6 +152,7 @@ export function PanelBody({
     const root = issue.path.split(".")[0];
     if (mcpNames.has(root)) return "Go to MCP";
     if (skillLabels.has(root)) return "Go to Skill";
+    if (agentNames.has(root)) return "Go to Agent";
     return "Fix";
   }
 
@@ -177,6 +190,24 @@ export function PanelBody({
     selectedItemId && selectedItemType === "skill"
       ? plugin.skills.find((s) => s.id === selectedItemId)
       : null;
+  const selectedAgent =
+    selectedItemId && selectedItemType === "agent"
+      ? (plugin.agents ?? []).find((a) => a.id === selectedItemId)
+      : null;
+
+  function createBlankAgent() {
+    const id = crypto.randomUUID();
+    const agent: AgentData = {
+      id,
+      name: "new-agent",
+      description: "",
+      sourceFilePath: ".claude/agents/new-agent.md",
+      scope: "local",
+      content: "---\nname: new-agent\ndescription: Describe when Claude should delegate to this agent\ntools: Read, Grep, Glob\n---\n\n# System Prompt\n\nDescribe how this agent should behave and what it should focus on.\n",
+    };
+    addAgentToPlugin(plugin.id, agent);
+    setSelectedItemInPlugin(id, "agent");
+  }
 
   if (selectedMcp) {
     return (
@@ -226,6 +257,34 @@ export function PanelBody({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <SkillDetailView
             skill={selectedSkill}
+            pluginId={plugin.id}
+            onBack={() => setSelectedItemInPlugin(null, null)}
+          />
+        </div>
+      </>
+    );
+  }
+
+  if (selectedAgent) {
+    return (
+      <>
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex size-6 items-center justify-center rounded-md bg-blue-500/10">
+              <AgentLogo size={12} color="#3b82f6" />
+            </div>
+            <div>
+              <h2 className="text-xs font-semibold">Agent</h2>
+              <p className="text-[9px] text-muted-foreground">{plugin.name}</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon-xs" onClick={onClose}>
+            <X />
+          </Button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <AgentDetailView
+            agent={selectedAgent}
             pluginId={plugin.id}
             onBack={() => setSelectedItemInPlugin(null, null)}
           />
@@ -475,114 +534,179 @@ export function PanelBody({
 
         </div>
 
-        {(plugin.mcps.length > 0 || plugin.skills.length > 0) && (
-          <div className="flex flex-col gap-2 border-t px-4 py-3">
-            {plugin.mcps.length > 0 && (
-              <div>
-                <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
-                  <McpLogo color="currentColor" className="size-3" />
-                  MCP Servers
-                  <span className="ml-auto font-normal text-muted-foreground">
-                    {plugin.mcps.length}
-                  </span>
-                </p>
-                <div className="flex flex-col gap-0.5">
-                  {plugin.mcps.map((mcp) => {
-                    const mcpIssues = validateMcpServer(mcp);
-                    const hasErrors = mcpIssues.some((i) => i.severity !== "warning");
-                    return (
-                      <div
-                        key={mcp.id}
-                        className="group flex items-center rounded-lg transition hover:bg-emerald-500/5"
-                      >
-                        <button
-                          onClick={() => setSelectedItemInPlugin(mcp.id, "mcp")}
-                          className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
-                        >
-                          {mcpIssues.length > 0 ? (
-                            <AlertCircle
-                              className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
-                            />
-                          ) : (
-                            <div className="size-1.5 shrink-0 rounded-full bg-emerald-500/60" />
-                          )}
-                          <span className="flex-1 truncate text-[11px]">
-                            {mcp.name}
-                          </span>
-                          <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
-                        </button>
-                        <button
-                          onClick={() => removeMcpFromPlugin(plugin.id, mcp.id)}
-                          className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
-                          title="Remove MCP"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {plugin.skills.length > 0 && (
-              <div>
-                <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-violet-500/80">
-                  <SkillLogo size={12} color="currentColor" />
-                  Skills
-                  <span className="ml-auto font-normal text-muted-foreground">
-                    {plugin.skills.length}
-                  </span>
-                </p>
-                <div className="flex flex-col gap-0.5">
-                  {plugin.skills.map((skill) => {
-                    const skillIssues = skill._loading ? [] : validateSkill(skill);
-                    const hasErrors = skillIssues.some((i) => i.severity !== "warning");
-                    const dir = getSkillDirName(skill);
-                    const namesDiffer = dir && dir !== skill.name?.trim();
-                    return (
-                      <div
-                        key={skill.id}
-                        className="group flex items-center rounded-lg transition hover:bg-violet-500/5"
-                      >
-                        <button
-                          onClick={() => setSelectedItemInPlugin(skill.id, "skill")}
-                          className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
-                        >
-                          {skillIssues.length > 0 ? (
-                            <AlertCircle
-                              className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
-                            />
-                          ) : (
-                            <div className="size-1.5 shrink-0 rounded-full bg-violet-500/60" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate text-[11px]">
-                              {skill.name}
-                            </span>
-                            {namesDiffer && (
-                              <span className="block truncate font-mono text-[9px] text-muted-foreground">
-                                {dir}/
-                              </span>
-                            )}
-                          </div>
-                          <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
-                        </button>
-                        <button
-                          onClick={() => removeSkillFromPlugin(plugin.id, skill.id)}
-                          className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
-                          title="Remove skill"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+        <div className="flex flex-col gap-2 border-t px-4 py-3">
+          {/* MCP Servers */}
+          <div>
+            <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
+              <McpLogo color="currentColor" className="size-3" />
+              MCP Servers
+              <span className="ml-auto font-normal text-muted-foreground">
+                {plugin.mcps.length}
+              </span>
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {plugin.mcps.map((mcp) => {
+                const mcpIssues = validateMcpServer(mcp);
+                const hasErrors = mcpIssues.some((i) => i.severity !== "warning");
+                return (
+                  <div
+                    key={mcp.id}
+                    className="group flex items-center rounded-lg transition hover:bg-emerald-500/5"
+                  >
+                    <button
+                      onClick={() => setSelectedItemInPlugin(mcp.id, "mcp")}
+                      className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                    >
+                      {mcpIssues.length > 0 ? (
+                        <AlertCircle
+                          className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
+                        />
+                      ) : (
+                        <div className="size-1.5 shrink-0 rounded-full bg-emerald-500/60" />
+                      )}
+                      <span className="flex-1 truncate text-[11px]">
+                        {mcp.name}
+                      </span>
+                      <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => removeMcpFromPlugin(plugin.id, mcp.id)}
+                      className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
+                      title="Remove MCP"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                );
+              })}
+              <p className="mt-0.5 text-[9px] text-muted-foreground">
+                Drag MCP servers from the sidebar to add.
+              </p>
+            </div>
           </div>
-        )}
+
+          {/* Skills */}
+          <div>
+            <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-violet-500/80">
+              <SkillLogo size={12} color="currentColor" />
+              Skills
+              <span className="ml-auto font-normal text-muted-foreground">
+                {plugin.skills.length}
+              </span>
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {plugin.skills.map((skill) => {
+                const skillIssues = skill._loading ? [] : validateSkill(skill);
+                const hasErrors = skillIssues.some((i) => i.severity !== "warning");
+                const dir = getSkillDirName(skill);
+                const namesDiffer = dir && dir !== skill.name?.trim();
+                return (
+                  <div
+                    key={skill.id}
+                    className="group flex items-center rounded-lg transition hover:bg-violet-500/5"
+                  >
+                    <button
+                      onClick={() => setSelectedItemInPlugin(skill.id, "skill")}
+                      className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                    >
+                      {skillIssues.length > 0 ? (
+                        <AlertCircle
+                          className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
+                        />
+                      ) : (
+                        <div className="size-1.5 shrink-0 rounded-full bg-violet-500/60" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px]">
+                          {skill.name}
+                        </span>
+                        {namesDiffer && (
+                          <span className="block truncate font-mono text-[9px] text-muted-foreground">
+                            {dir}/
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => removeSkillFromPlugin(plugin.id, skill.id)}
+                      className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
+                      title="Remove skill"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                );
+              })}
+              <p className="mt-0.5 text-[9px] text-muted-foreground">
+                Drag skills from the sidebar to add.
+              </p>
+            </div>
+          </div>
+
+          {/* Agents */}
+          <div>
+            <div className="mb-1 flex items-center gap-1">
+              <p className="flex flex-1 items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-blue-500/80">
+                <AgentLogo size={12} color="currentColor" />
+                Agents
+                <span className="ml-auto font-normal text-muted-foreground">
+                  {(plugin.agents ?? []).length}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={createBlankAgent}
+                className="ml-1 flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] text-blue-500/70 hover:bg-blue-500/10 hover:text-blue-500"
+                title="New agent"
+              >
+                <Plus className="size-2.5" />
+                New
+              </button>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {(plugin.agents ?? []).map((agent) => {
+                const agentIssues = validateAgent(agent);
+                const hasErrors = agentIssues.some((i) => i.severity !== "warning");
+                return (
+                  <div
+                    key={agent.id}
+                    className="group flex items-center rounded-lg transition hover:bg-blue-500/5"
+                  >
+                    <button
+                      onClick={() => setSelectedItemInPlugin(agent.id, "agent")}
+                      className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                    >
+                      {agentIssues.length > 0 ? (
+                        <AlertCircle
+                          className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
+                        />
+                      ) : (
+                        <div className="size-1.5 shrink-0 rounded-full bg-blue-500/60" />
+                      )}
+                      <span className="flex-1 truncate text-[11px]">
+                        {agent.name}
+                      </span>
+                      <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => removeAgentFromPlugin(plugin.id, agent.id)}
+                      className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
+                      title="Remove agent"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                );
+              })}
+              {(plugin.agents ?? []).length === 0 && (
+                <p className="text-[9px] text-muted-foreground">
+                  No agents yet. Click &quot;New&quot; to create one.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
 
       </div>
 

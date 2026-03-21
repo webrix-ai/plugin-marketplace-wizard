@@ -75,6 +75,22 @@ export const GLOBAL_MCP_PATHS: McpPathDef[] = [
   { app: "gemini", relativePath: ".gemini/settings.json" },
 ];
 
+interface AgentDirDef {
+  app: string;
+  relativePath: string;
+}
+
+export const GLOBAL_AGENT_DIRS: AgentDirDef[] = [
+  { app: "claude", relativePath: ".claude/agents" },
+  { app: "cursor", relativePath: ".cursor/agents" },
+  { app: "codex", relativePath: ".codex/agents" },
+];
+
+export const LOCAL_AGENT_PATTERNS = [
+  { app: "claude", pattern: ".claude/agents" },
+  { app: "cursor", pattern: ".cursor/agents" },
+];
+
 export const GLOBAL_SKILL_DIRS: SkillDirDef[] = [
   { app: "cursor", relativePath: ".cursor/skills" },
   { app: "cursor", relativePath: ".cursor/skills-cursor" },
