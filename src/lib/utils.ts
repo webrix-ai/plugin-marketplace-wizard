@@ -51,6 +51,41 @@ export function parseSkillFrontmatter(content: string): {
   return { frontmatter: fm, body };
 }
 
+export function updateSkillFrontmatter(
+  content: string,
+  updates: { name?: string; description?: string }
+): string {
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmMatch) return content;
+
+  let rawFm = fmMatch[1];
+  const rest = content.slice(fmMatch[0].length);
+
+  if (updates.name !== undefined) {
+    if (/^name:/m.test(rawFm)) {
+      rawFm = rawFm.replace(/^name:.*$/m, `name: ${updates.name}`);
+    } else {
+      rawFm = `name: ${updates.name}\n${rawFm}`;
+    }
+  }
+
+  if (updates.description !== undefined) {
+    const descBlock = /^description:.*(?:\n(?![a-zA-Z_]).*)*$/m;
+    if (descBlock.test(rawFm)) {
+      rawFm = rawFm.replace(
+        descBlock,
+        updates.description ? `description: ${updates.description}` : ""
+      );
+    } else if (updates.description) {
+      rawFm += `\ndescription: ${updates.description}`;
+    }
+  }
+
+  rawFm = rawFm.replace(/\n{2,}/g, "\n").trim();
+
+  return `---\n${rawFm}\n---${rest}`;
+}
+
 export function stripJsonComments(text: string): string {
   let result = "";
   let i = 0;

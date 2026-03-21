@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, Globe, FolderOpen } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
-import { parseSkillFrontmatter } from "@/lib/utils";
+import { parseSkillFrontmatter, updateSkillFrontmatter } from "@/lib/utils";
 import { validateSkill, getSkillDirName } from "@/lib/validate-marketplace";
 import type { Skill } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -47,9 +47,17 @@ export function SkillDetailView({
   const descIssue = issues.find((i) => i.path === "skill.description");
 
   const handleSave = () => {
+    const newName = name.trim() || skill.name;
+    const newDesc = description.trim();
+
+    const updatedContent = skill.content.startsWith("---")
+      ? updateSkillFrontmatter(skill.content, { name: newName, description: newDesc })
+      : skill.content;
+
     updateSkillInPlugin(pluginId, skill.id, {
-      name: name.trim() || skill.name,
-      description: description.trim(),
+      name: newName,
+      description: newDesc,
+      content: updatedContent,
     });
   };
 

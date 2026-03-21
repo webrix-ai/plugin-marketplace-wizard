@@ -56,6 +56,7 @@ interface WizardState {
   _redoStack: PluginData[][];
   _eventSource: EventSource | null;
   _lastExportAt: number;
+  _layoutVersion: number;
 
   registryMcps: RegistryMcpServer[];
   registryMcpsTotal: number;
@@ -163,6 +164,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   _redoStack: [],
   _eventSource: null,
   _lastExportAt: 0,
+  _layoutVersion: 0,
 
   registryMcps: [],
   registryMcpsTotal: 0,
@@ -237,14 +239,15 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         if (p.category?.trim()) seedCats.add(p.category.trim());
       }
 
-      set({
+      set((s) => ({
         plugins: loaded,
         marketplaceSettings,
         categories: [...seedCats],
         _undoStack: [],
         _redoStack: [],
         isPluginsLoading: false,
-      });
+        _layoutVersion: s._layoutVersion + 1,
+      }));
     } catch {
       set({ isPluginsLoading: false });
     }

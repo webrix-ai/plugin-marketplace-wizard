@@ -107,16 +107,18 @@ export function Canvas() {
     importSkillFileToPlugin,
   } = useWizardStore();
   const isPluginsLoading = useWizardStore((s) => s.isPluginsLoading);
+  const layoutVersion = useWizardStore((s) => s._layoutVersion);
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>([]);
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const prevLayoutVersionRef = useRef(layoutVersion);
 
   useEffect(() => {
-    setNodes((prevNodes) => {
-      for (const n of prevNodes) {
-        positionsRef.current.set(n.id, n.position);
-      }
-
+    if (prevLayoutVersionRef.current !== layoutVersion) {
+      positionsRef.current.clear();
+      prevLayoutVersionRef.current = layoutVersion;
+    }
+    setNodes(() => {
       const byCategory = new Map<string, PluginData[]>();
       const uncategorized: PluginData[] = [];
 
@@ -181,7 +183,7 @@ export function Canvas() {
 
       return result;
     });
-  }, [plugins, setNodes]);
+  }, [plugins, setNodes, layoutVersion]);
 
   const handleNodesChange: OnNodesChange<CanvasNode> = useCallback(
     (changes) => {
