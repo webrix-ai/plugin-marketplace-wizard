@@ -2,17 +2,25 @@
   <img alt="Plugin Marketplace Wizard" src="assets/Banner.png" width="100%">
 </picture>
 
-# Plugin Marketplace Wizard
+<h1 align="center">Plugin Marketplace Wizard</h1>
 
-A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
+<p align="center">
+  A visual editor for building agent plugin marketplaces — discover MCPs and skills, drag them onto a canvas, and export ready-to-ship packages.
+</p>
 
-Generates valid marketplace packages for [<img src="https://icons.webrix.workers.dev/ai-hosts/cursor.svg" alt="Cursor" height="20" style="vertical-align:middle" /> Cursor Plugins](https://cursor.com/docs/plugins) and [<img src="https://icons.webrix.workers.dev/ai-hosts/claude-web.svg" alt="Claude Code" height="20" style="vertical-align:middle" /> Claude Code Plugins](https://code.claude.com/docs/en/discover-plugins).
+<p align="center">
+  <a href="https://www.npmjs.com/package/plugin-marketplace-wizard"><img src="https://img.shields.io/npm/v/plugin-marketplace-wizard.svg" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/plugin-marketplace-wizard"><img src="https://img.shields.io/npm/dm/plugin-marketplace-wizard.svg" alt="npm downloads" /></a>
+  <a href="#license"><img src="https://img.shields.io/npm/l/plugin-marketplace-wizard.svg" alt="license" /></a>
+</p>
 
-### Deployment guides
+<p align="center">
+  Generates valid marketplace packages for
+  <a href="https://cursor.com/docs/plugins"><img src="https://icons.webrix.workers.dev/ai-hosts/cursor.svg" alt="Cursor" height="16" style="vertical-align:middle" /> Cursor</a> and
+  <a href="https://code.claude.com/docs/en/discover-plugins"><img src="https://icons.webrix.workers.dev/ai-hosts/claude-web.svg" alt="Claude Code" height="16" style="vertical-align:middle" /> Claude Code</a>
+</p>
 
-- [Adding your marketplace to Cursor](docs/add-marketplace-to-cursor.md)
-- [Adding your marketplace to Claude Code (CLI)](docs/add-marketplace-to-claude-code.md)
-- [Adding your marketplace to Claude (Organization)](docs/add-marketplace-to-claude.md)
+---
 
 ## Quick Start
 
@@ -22,15 +30,58 @@ cd my-marketplace
 npm start
 ```
 
-Or add to an existing project:
+That's it. A browser window opens with the visual editor pointed at your new marketplace.
 
-```bash
-npm install plugin-marketplace-wizard --save-dev
-npx pmw init
-npm start
+> **Adding to an existing project?**
+>
+> ```bash
+> npm install plugin-marketplace-wizard --save-dev
+> npx pmw init
+> npm start
+> ```
+
+## What You Get
+
+Plugin Marketplace Wizard gives you a drag-and-drop canvas for assembling plugin packages. It scans your local environment for MCP servers and skills, lets you search official registries, and writes valid marketplace manifests on every change.
+
+**The output** is a directory you can publish or distribute:
+
+```
+my-marketplace/
+├── .cursor-plugin/
+│   └── marketplace.json
+├── .claude-plugin/
+│   └── marketplace.json
+└── plugins/
+    └── <plugin-slug>/
+        ├── .cursor-plugin/plugin.json
+        ├── .claude-plugin/plugin.json
+        ├── .mcp.json
+        └── skills/
+            └── <skill-name>/
+                └── SKILL.md
 ```
 
-After installing, `pmw` is available in your npm scripts without `npx`:
+## Features
+
+| | |
+|---|---|
+| **Visual Canvas** | Drag-and-drop interface built on ReactFlow for assembling and organizing plugins |
+| **Local Discovery** | Scans Cursor, Claude, VS Code, Windsurf, Zed, Cline, Roo, and other IDE configs for MCP servers and skills |
+| **Official Registries** | Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for community-published servers and skills |
+| **Custom Registries** | Connect any registry that implements the MCP Server Registry API |
+| **Real-time Auto-save** | Persists changes directly to your marketplace directory as you edit |
+| **Inline Validation** | Visual indicators for configuration issues on the canvas |
+| **CI Validation** | Run `pmw test` in your pipeline to catch errors before deploy |
+| **Category Grouping** | Plugins with the same category are automatically grouped into labeled regions |
+| **Plugin Search** | Press `Cmd+K` to find and focus any plugin on the canvas |
+| **Skill File Import** | Drop `.zip` or `.skill` files onto plugin cards or the canvas |
+| **Hot Reload** | Watches for external file changes and syncs automatically |
+| **Undo / Redo** | Full history with `Cmd+Z` / `Cmd+Shift+Z` |
+
+## CLI Reference
+
+After installing, the `pmw` command is available in your npm scripts:
 
 ```json
 {
@@ -41,25 +92,22 @@ After installing, `pmw` is available in your npm scripts without `npx`:
 }
 ```
 
-## CLI
-
 ### `pmw start [dir]`
 
-Start the visual marketplace editor. Opens a browser-based UI for managing your marketplace plugins.
+Start the visual editor. Opens a browser-based UI for managing your marketplace.
 
 ```bash
-pmw start              # Use current directory
-pmw start ./my-market  # Use specific directory
-pmw start -p 4000      # Custom port
+pmw start                # Current directory
+pmw start ./my-market    # Specific directory
+pmw start -p 4000        # Custom port
 ```
 
 ### `pmw test [dir]`
 
-Validate all marketplace files. Runs like a test suite — use in CI.
+Validate all marketplace files. Designed for CI — exits non-zero on failure.
 
 ```bash
 pmw test
-pmw test ./my-marketplace
 ```
 
 ```
@@ -80,24 +128,28 @@ pmw test ./my-marketplace
 
 ### `pmw init [dir]`
 
-Initialize a new marketplace in the current (or specified) directory. Creates the `.cursor-plugin/`, `.claude-plugin/`, and `plugins/` directories with initial manifests.
+Scaffold a new marketplace. Creates `.cursor-plugin/`, `.claude-plugin/`, and `plugins/` directories with initial manifests.
 
 ```bash
 pmw init
 pmw init ./new-marketplace
 ```
 
-### `pmw -v`
+### `pmw -v` / `pmw -h`
 
-Print the version number.
+Print version or show help.
 
-### `pmw -h`
+## Deployment Guides
 
-Show help.
+Once your marketplace is ready, follow the guide for your target platform:
 
-## TypeScript Types
+- [Adding your marketplace to Cursor](docs/add-marketplace-to-cursor.md)
+- [Adding your marketplace to Claude Code (CLI)](docs/add-marketplace-to-claude-code.md)
+- [Adding your marketplace to Claude (Organization)](docs/add-marketplace-to-claude.md)
 
-All types are exported from the package:
+## TypeScript API
+
+All types and validation utilities are exported from the package:
 
 ```typescript
 import type {
@@ -109,11 +161,7 @@ import type {
   MarketplaceSettings,
   ValidationIssue,
 } from "plugin-marketplace-wizard";
-```
 
-Validation utilities are also available:
-
-```typescript
 import {
   validatePluginData,
   validateMarketplaceManifest,
@@ -121,53 +169,6 @@ import {
   validateSkill,
 } from "plugin-marketplace-wizard";
 ```
-
-## Features
-
-- **Marketplace Manifests** — Generates complete [`.cursor-plugin/`](https://cursor.com/docs/plugins) and [`.claude-plugin/`](https://code.claude.com/docs/en/discover-plugins) directory structures ready for distribution
-- **Real-time Auto-save** — Persists plugins directly to your marketplace directory on every change
-- **Inline Validation** — Real-time validation of plugin, MCP server, and skill configurations with visual indicators on the canvas
-- **CLI Validation** — Extensible validation system for CI/CD pipelines
-- **Visual Canvas** — Drag-and-drop interface built on ReactFlow for assembling and organizing plugins
-- **Category Grouping** — Plugins with the same category are automatically grouped into labeled regions on the canvas
-- **Plugin Search** — Press `⌘K` to quickly find and focus any plugin on the canvas
-- **Hot Reload** — Watches for external changes and syncs automatically
-- **Local Discovery** — Automatically scans Cursor, Claude, VS Code, Windsurf, Zed, Cline, Roo, and other IDE configurations for MCP servers and skills
-- **Official Registry** — Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for community-published servers and skills
-- **Skill File Import** — Drop `.zip` or `.skill` files directly onto plugin cards or the canvas to import packaged skills
-- **Custom Registries** — Connect any registry that implements the MCP Server Registry API
-- **Plugin Contents View** — Browse all MCPs and skills across your plugins from the Local sidebar tab
-- **Undo / Redo** — Full history support with keyboard shortcuts (`Cmd+Z` / `Cmd+Shift+Z`)
-
-## Marketplace Structure
-
-```
-my-marketplace/
-├── .cursor-plugin/
-│   └── marketplace.json          # Cursor marketplace manifest
-├── .claude-plugin/
-│   └── marketplace.json          # Claude marketplace manifest
-└── plugins/
-    └── <plugin-slug>/
-        ├── .cursor-plugin/
-        │   └── plugin.json       # Cursor plugin manifest
-        ├── .claude-plugin/
-        │   └── plugin.json       # Claude plugin manifest
-        ├── .mcp.json             # MCP server configurations
-        └── skills/
-            └── <skill-name>/
-                └── SKILL.md      # Skill content
-```
-
-## Usage
-
-1. **Run `pmw start`** — Opens the visual editor on your marketplace directory
-2. **Browse sources** — Use the sidebar to browse local MCPs & skills, search official registries, or add custom registry URLs
-3. **Create plugins** — Click **New Plugin** on the canvas, or drag items from the sidebar onto an empty area
-4. **Assemble plugins** — Drag MCPs and skills from the sidebar onto plugin cards
-5. **Import skill files** — Drop a `.zip` or `.skill` file onto a plugin card to import a packaged skill, or drop it on the canvas to create a new plugin with that skill
-6. **Edit metadata** — Click a plugin card to open the editor panel (name, author, version, category, keywords)
-7. **Auto-save** — Changes are automatically saved to your marketplace directory
 
 ## Tech Stack
 
@@ -182,19 +183,29 @@ my-marketplace/
 | Icons | [Lucide React](https://lucide.dev/) |
 | Notifications | [Sonner](https://sonner.emilkowal.ski/) |
 
-## Development
+## Contributing
+
+Contributions are welcome. Here's how to get started:
 
 ```bash
-# Install dependencies
+git clone https://github.com/webrix-ai/plugin-marketplace-wizard.git
+cd plugin-marketplace-wizard
 npm install
-
-# Start the dev server directly (for developing the tool itself)
 npm run dev
+```
 
-# Or use the CLI
+This starts the Next.js dev server directly. To test via the CLI path instead:
+
+```bash
 node bin/cli.mjs start
 ```
 
+**Before submitting a PR:**
+
+1. Run `npm run lint` to check for lint errors
+2. Run `npm test` to validate the sample marketplace
+3. Keep commits focused — one logical change per PR
+
 ## License
 
-MIT
+[MIT](https://opensource.org/licenses/MIT)

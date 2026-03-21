@@ -7,6 +7,7 @@
     "type": "git",
     "url": "https://github.com/webrix-ai/plugin-marketplace-wizard.git"
   },
+  "license": "MIT",
   "keywords": [
     "mcp",
     "marketplace",
