@@ -90,6 +90,7 @@
     "eslint-config-next": "16.1.7",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.0.1",
+    "monaco-editor": "^0.55.1",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5",
