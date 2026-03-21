@@ -41,19 +41,19 @@ export function PluginSearch() {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        if (open) {
+          setOpen(false);
+        } else {
+          inputRef.current?.focus();
+        }
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [open]);
 
   useEffect(() => {
-    if (open) {
-      requestAnimationFrame(() => inputRef.current?.focus());
-    } else {
-      setQuery("");
-    }
+    if (!open) setQuery("");
   }, [open]);
 
   const handleSelect = useCallback(
@@ -72,74 +72,92 @@ export function PluginSearch() {
     [setCenter, getInternalNode, setSelectedPluginId],
   );
 
+  const filtered = pluginNodes.filter(
+    (n) => !query.trim() || getSearchableText(n.data).includes(query.toLowerCase()),
+  );
+
+  const highlightMatch = (text: string) => {
+    if (!query.trim()) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <span className="bg-primary/20 text-primary">{text.slice(idx, idx + query.length)}</span>
+        {text.slice(idx + query.length)}
+      </>
+    );
+  };
+
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(true)}
+    <Command
+      shouldFilter={false}
+      className="relative"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          setOpen(false);
+          inputRef.current?.blur();
+        }
+      }}
+    >
+      <div
         className={cn(
-          "flex h-7 items-center gap-1.5 rounded-md border bg-card px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+          "flex h-7 items-center gap-1.5 rounded-md border bg-card px-2 text-xs text-muted-foreground transition-colors hover:bg-accent",
           open && "ring-1 ring-primary/50",
         )}
       >
-        <Search className="size-3.5" />
-        <span className="hidden sm:inline">Search plugins…</span>
+        <Search className="size-3.5 shrink-0" />
+        <Command.Input
+          ref={inputRef}
+          value={query}
+          onValueChange={(v) => {
+            setQuery(v);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search plugins…"
+          className="hidden w-32 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/60 sm:inline-block"
+        />
         <kbd className="pointer-events-none hidden select-none rounded border bg-muted px-1 font-mono text-[10px] sm:inline-block">
           ⌘K
         </kbd>
-      </button>
+      </div>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-full z-50 mt-1 w-72 overflow-hidden rounded-lg border bg-card shadow-lg">
-            <Command
-              shouldFilter={false}
-              className="flex flex-col"
-            >
-              <div className="flex items-center gap-2 border-b px-3 py-2">
-                <Search className="size-3.5 shrink-0 text-muted-foreground" />
-                <Command.Input
-                  ref={inputRef}
-                  value={query}
-                  onValueChange={setQuery}
-                  placeholder="Search plugins…"
-                  className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/60"
-                />
-              </div>
-              <Command.List className="max-h-64 overflow-y-auto p-1">
-                <Command.Empty className="px-3 py-6 text-center text-xs text-muted-foreground">
-                  No plugins found
-                </Command.Empty>
-                {pluginNodes
-                  .filter((n) =>
-                    !query.trim() || getSearchableText(n.data).includes(query.toLowerCase()),
-                  )
-                  .map((node) => (
-                    <Command.Item
-                      key={node.id}
-                      value={node.id}
-                      onSelect={() => handleSelect(node.id)}
-                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors data-[selected=true]:bg-accent"
-                    >
-                      <Package className="size-3.5 shrink-0 text-primary/70" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{node.data.name}</p>
-                        {node.data.description && (
-                          <p className="truncate text-[10px] text-muted-foreground">
-                            {node.data.description}
-                          </p>
-                        )}
-                      </div>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {node.data.mcps.length + node.data.skills.length} items
-                      </span>
-                    </Command.Item>
-                  ))}
-              </Command.List>
-            </Command>
+            <Command.List className="max-h-64 overflow-y-auto p-1">
+              <Command.Empty className="px-3 py-6 text-center text-xs text-muted-foreground">
+                No plugins found
+              </Command.Empty>
+              {filtered.map((node) => (
+                <Command.Item
+                  key={node.id}
+                  value={node.id}
+                  onSelect={() => handleSelect(node.id)}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors data-[selected=true]:bg-accent"
+                >
+                  <Package className="size-3.5 shrink-0 text-primary/70" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {highlightMatch(node.data.name)}
+                    </p>
+                    {node.data.description && (
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {node.data.description}
+                      </p>
+                    )}
+                  </div>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {node.data.mcps.length + node.data.skills.length} items
+                  </span>
+                </Command.Item>
+              ))}
+            </Command.List>
           </div>
         </>
       )}
-    </div>
+    </Command>
   );
 }

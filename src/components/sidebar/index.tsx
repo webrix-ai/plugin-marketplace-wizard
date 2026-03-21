@@ -41,7 +41,7 @@ function IconRail({
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => onTabChange("skills")}
-            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all cursor-pointer ${
               tab === "skills"
                 ? "bg-violet-500/15 text-violet-400"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -53,7 +53,7 @@ function IconRail({
 
           <button
             onClick={() => onTabChange("mcps")}
-            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all cursor-pointer ${
               tab === "mcps"
                 ? "bg-emerald-500/15 text-emerald-400"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -65,7 +65,7 @@ function IconRail({
 
           <button
             onClick={() => onTabChange("agents")}
-            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all ${
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all cursor-pointer ${
               tab === "agents"
                 ? "bg-blue-500/15 text-blue-400"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
