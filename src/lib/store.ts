@@ -278,7 +278,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       const es = new EventSource(url.toString());
       let manifest: MarketplaceManifest | null = null;
-      let streamedPlugins: PluginData[] = [];
+      const streamedPlugins: PluginData[] = [];
 
       es.addEventListener("marketplace_dir", (e) => {
         set({ marketplaceDir: JSON.parse(e.data) });

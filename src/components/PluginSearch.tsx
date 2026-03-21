@@ -53,6 +53,7 @@ export function PluginSearch() {
   }, [open]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!open) setQuery("");
   }, [open]);
 
