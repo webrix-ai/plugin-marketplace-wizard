@@ -24,16 +24,18 @@ interface Props {
 }
 
 export function CreatePluginDialog({ open, onClose, position }: Props) {
-  const { addPlugin } = useWizardStore();
+  const { addPlugin, setSelectedPluginId } = useWizardStore();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
   const slug = slugify(name);
+  const isValidSlug = slug.length > 0 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    addPlugin(name.trim(), description.trim(), position);
+    if (!isValidSlug) return;
+    const id = addPlugin(slug, description.trim(), position);
+    setSelectedPluginId(id);
     setName("");
     setDescription("");
     onClose();
@@ -74,13 +76,25 @@ export function CreatePluginDialog({ open, onClose, position }: Props) {
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Awesome Plugin"
+              placeholder="my-awesome-plugin"
+              maxLength={128}
             />
-            {slug && (
-              <p className="text-[10px] text-muted-foreground">
-                Slug: <span className="font-mono">{slug}</span>
-              </p>
-            )}
+            <div className="flex items-center justify-between">
+              {name.trim() && !isValidSlug ? (
+                <p className="text-[10px] text-destructive">
+                  Must be kebab-case (lowercase letters, numbers, hyphens)
+                </p>
+              ) : slug && slug !== name.trim() ? (
+                <p className="text-[10px] text-muted-foreground">
+                  Slug: <span className="font-mono">{slug}</span>
+                </p>
+              ) : (
+                <span />
+              )}
+              <span className="text-[9px] tabular-nums text-muted-foreground">
+                {name.length}/128
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -101,7 +115,7 @@ export function CreatePluginDialog({ open, onClose, position }: Props) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim()}>
+            <Button type="submit" disabled={!isValidSlug}>
               Create Plugin
             </Button>
           </DialogFooter>

@@ -310,10 +310,45 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         const updated: PluginData = JSON.parse(e.data);
         const merged = mergePluginsWithManifest([updated], manifest)[0];
         set((s) => {
-          const exists = s.plugins.some((p) => p.slug === merged.slug);
-          const newPlugins = exists
-            ? s.plugins.map((p) => (p.slug === merged.slug ? { ...merged, id: p.id } : p))
-            : [...s.plugins, merged];
+          const diskSlug = merged.slug;
+          const diskId = merged.id;
+          const match = (p: PluginData) =>
+            p.slug === diskSlug || p.id === diskId;
+
+          const existing = s.plugins.find(match);
+          let newPlugins: PluginData[];
+
+          if (existing) {
+            newPlugins = s.plugins.map((p) => {
+              if (!match(p)) return p;
+
+              const diskSkillIds = new Set(merged.skills.map((sk) => sk.id));
+              const diskMcpIds = new Set(merged.mcps.map((m) => m.id));
+              const uiOnlySkills = p.skills.filter(
+                (sk) => !diskSkillIds.has(sk.id) && !sk.id.startsWith("loaded:")
+              );
+              const uiOnlyMcps = p.mcps.filter(
+                (m) => !diskMcpIds.has(m.id) && !m.id.startsWith("loaded:")
+              );
+
+              return {
+                ...merged,
+                id: p.id,
+                name: p.name,
+                slug: p.slug,
+                description: p.description || merged.description,
+                version: p.version || merged.version,
+                author: p.author ?? merged.author,
+                keywords: p.keywords ?? merged.keywords,
+                category: p.category ?? merged.category,
+                skills: [...merged.skills, ...uiOnlySkills],
+                mcps: [...merged.mcps, ...uiOnlyMcps],
+              };
+            });
+          } else {
+            newPlugins = [...s.plugins, merged];
+          }
+
           const seedCats = new Set(s.categories);
           if (merged.category?.trim()) seedCats.add(merged.category.trim());
           return { plugins: newPlugins, categories: [...seedCats] };
@@ -324,10 +359,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         if (Date.now() - get()._lastExportAt < WRITE_GUARD_MS) return;
 
         const { slug } = JSON.parse(e.data);
+        const match = (p: PluginData) =>
+          p.slug === slug || p.id === `loaded:${slug}`;
         set((s) => ({
-          plugins: s.plugins.filter((p) => p.slug !== slug),
+          plugins: s.plugins.filter((p) => !match(p)),
           selectedPluginId:
-            s.plugins.find((p) => p.slug === slug)?.id === s.selectedPluginId
+            s.plugins.find(match)?.id === s.selectedPluginId
               ? null
               : s.selectedPluginId,
         }));
@@ -689,7 +726,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         localStorage.setItem(STORAGE_KEYS.customSkillRepos, JSON.stringify(urls));
       } catch {}
 
-      sonnerToast.success(`Loaded ${data.skills?.length || 0} skills from ${data.owner}/${data.repo}`);
     } catch (err) {
       set({
         customSkillRepos: get().customSkillRepos.map((r) =>

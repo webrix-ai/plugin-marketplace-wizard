@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, Globe, FolderOpen, Check } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
+import { validateMcpServer } from "@/lib/validate-marketplace";
 import type { McpServer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import McpLogo from "@/components/logo/McpLogo";
-import { JsonBlock } from "./shared";
+import { JsonBlock, ValidationIssueList } from "./shared";
 
 export function McpDetailView({
   mcp,
@@ -40,6 +41,9 @@ export function McpDetailView({
     setEditing(false);
   };
 
+  const issues = useMemo(() => validateMcpServer(mcp), [mcp]);
+  const nameError = issues.find((i) => i.path === "mcp.name")?.message;
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -51,29 +55,35 @@ export function McpDetailView({
         </div>
         <div className="min-w-0 flex-1">
           {editing ? (
-            <div className="flex items-center gap-1">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSave()}
-                className="h-6 text-xs font-semibold"
-                autoFocus
-              />
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={handleSave}
-                className="text-primary"
-              >
-                <Check />
-              </Button>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1">
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                  className="h-6 text-xs font-semibold"
+                  aria-invalid={!!nameError}
+                  autoFocus
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={handleSave}
+                  className="text-primary"
+                >
+                  <Check />
+                </Button>
+              </div>
+              {nameError && (
+                <p className="text-[9px] text-destructive">{nameError}</p>
+              )}
             </div>
           ) : (
             <button
-              className="text-left text-sm font-semibold hover:underline"
+              className={`text-left text-sm font-semibold hover:underline ${nameError ? "text-red-500" : ""}`}
               onClick={() => setEditing(true)}
             >
-              {mcp.name}
+              {mcp.name || "(unnamed)"}
             </button>
           )}
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -91,6 +101,8 @@ export function McpDetailView({
           </div>
         </div>
       </div>
+
+      <ValidationIssueList issues={issues} title="MCP Server" />
 
       <div>
         <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

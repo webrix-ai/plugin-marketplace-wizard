@@ -4,14 +4,20 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Globe, FolderOpen } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { parseSkillFrontmatter } from "@/lib/utils";
+import { validateSkill, getSkillDirName } from "@/lib/validate-marketplace";
 import type { Skill } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import SkillLogo from "@/components/logo/SkillLogo";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { CopyButton } from "./shared";
+import { CopyButton, ValidationIssueList } from "./shared";
+
+const SKILL_NAME_MAX = 64;
+const SKILL_DESC_MAX = 1024;
 
 export function SkillDetailView({
   skill,
@@ -32,18 +38,27 @@ export function SkillDetailView({
 
   const [name, setName] = useState(displayName);
   const [description, setDescription] = useState(displayDesc);
-  const [editing, setEditing] = useState(false);
+
+  const dirName = useMemo(() => getSkillDirName(skill), [skill]);
+  const namesDiffer = dirName && dirName !== (displayName?.trim() ?? "");
+
+  const issues = useMemo(() => validateSkill(skill), [skill]);
+  const nameIssue = issues.find((i) => i.path === "skill.name");
+  const descIssue = issues.find((i) => i.path === "skill.description");
 
   const handleSave = () => {
     updateSkillInPlugin(pluginId, skill.id, {
       name: name.trim() || skill.name,
       description: description.trim(),
     });
-    setEditing(false);
   };
+
+  const isDirty =
+    name !== displayName || description !== displayDesc;
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Header */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon-xs" onClick={onBack}>
           <ArrowLeft />
@@ -52,40 +67,11 @@ export function SkillDetailView({
           <SkillLogo size={16} color="#a78bfa" />
         </div>
         <div className="min-w-0 flex-1">
-          {editing ? (
-            <div className="flex flex-col gap-1">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-6 text-xs font-semibold"
-                autoFocus
-              />
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="h-6 text-[10px]"
-                placeholder="Description..."
-              />
-              <div className="flex gap-1">
-                <Button size="xs" onClick={handleSave}>
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setEditing(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              className="text-left text-sm font-semibold hover:underline"
-              onClick={() => setEditing(true)}
-            >
-              {displayName}
-            </button>
+          <p className="truncate text-sm font-semibold">{displayName || "(unnamed)"}</p>
+          {namesDiffer && (
+            <p className="font-mono text-[9px] text-muted-foreground">
+              slug: {dirName}
+            </p>
           )}
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <span>{skill.sourceApplication}</span>
@@ -103,10 +89,66 @@ export function SkillDetailView({
         </div>
       </div>
 
-      {displayDesc && (
-        <p className="text-xs text-muted-foreground">{displayDesc}</p>
+      <ValidationIssueList issues={issues} title="Skill" />
+
+      {/* Name field */}
+      <div className="flex flex-col gap-1">
+        <Label className="text-[10px] uppercase tracking-wider">Name</Label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="h-7 text-xs"
+          placeholder="my-skill-name"
+          aria-invalid={!!nameIssue}
+          maxLength={SKILL_NAME_MAX}
+        />
+        <div className="flex items-center justify-between">
+          {nameIssue ? (
+            <p className={`text-[9px] ${nameIssue.severity === "warning" ? "text-amber-500" : "text-destructive"}`}>
+              {nameIssue.message}
+            </p>
+          ) : (
+            <span />
+          )}
+          <span className="text-[9px] tabular-nums text-muted-foreground">
+            {(name?.length ?? 0)}/{SKILL_NAME_MAX}
+          </span>
+        </div>
+      </div>
+
+      {/* Description field */}
+      <div className="flex flex-col gap-1">
+        <Label className="text-[10px] uppercase tracking-wider">Description</Label>
+        <Textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="resize-none text-xs"
+          rows={3}
+          placeholder="What this skill does and when to use it..."
+          aria-invalid={!!descIssue}
+          maxLength={SKILL_DESC_MAX}
+        />
+        <div className="flex items-center justify-between">
+          {descIssue ? (
+            <p className={`text-[9px] ${descIssue.severity === "warning" ? "text-amber-500" : "text-destructive"}`}>
+              {descIssue.message}
+            </p>
+          ) : (
+            <span />
+          )}
+          <span className="text-[9px] tabular-nums text-muted-foreground">
+            {(description?.length ?? 0)}/{SKILL_DESC_MAX}
+          </span>
+        </div>
+      </div>
+
+      {isDirty && (
+        <Button size="sm" onClick={handleSave}>
+          Save
+        </Button>
       )}
 
+      {/* Skill content */}
       <div>
         <div className="mb-1.5 flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -119,6 +161,7 @@ export function SkillDetailView({
         </div>
       </div>
 
+      {/* Source file */}
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Source File

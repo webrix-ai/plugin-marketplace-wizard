@@ -5,17 +5,24 @@ import {
   X,
   Package,
   Plus,
-  AlertTriangle,
+  AlertCircle,
+  ChevronRight,
+  Wrench,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { slugify } from "@/lib/utils";
-import { validatePluginEntry } from "@/lib/validate-marketplace";
+import {
+  validatePluginData,
+  validateMcpServer,
+  validateSkill,
+  getSkillDirName,
+  type ValidationIssue,
+} from "@/lib/validate-marketplace";
 import type { PluginData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectTrigger,
@@ -39,6 +46,8 @@ export function PanelBody({
   onClose: () => void;
 }) {
   const updatePlugin = useWizardStore((s) => s.updatePlugin);
+  const removeMcpFromPlugin = useWizardStore((s) => s.removeMcpFromPlugin);
+  const removeSkillFromPlugin = useWizardStore((s) => s.removeSkillFromPlugin);
   const plugins = useWizardStore((s) => s.plugins);
   const categories = useWizardStore((s) => s.categories);
   const addCategory = useWizardStore((s) => s.addCategory);
@@ -71,19 +80,78 @@ export function PanelBody({
     return [...all].sort();
   }, [plugins, plugin.id]);
 
-  const previewEntry = {
-    name: slug,
-    source: "./plugins/" + slug,
-    description,
-    version,
-    author: authorName
-      ? { name: authorName, email: authorEmail || undefined }
+  const livePlugin: PluginData = {
+    ...plugin,
+    name: name.trim(),
+    slug,
+    description: description.trim(),
+    version: version.trim(),
+    author: authorName.trim()
+      ? { name: authorName.trim(), email: authorEmail.trim() || undefined }
       : undefined,
     keywords: tags.length ? tags : undefined,
     category: category.trim() || undefined,
   };
 
-  const issues = validatePluginEntry(previewEntry, 0);
+  const issues = useMemo(() => validatePluginData(livePlugin), [livePlugin]);
+  const issueErrors = useMemo(
+    () => issues.filter((i) => i.severity !== "warning"),
+    [issues],
+  );
+  const issueWarnings = useMemo(
+    () => issues.filter((i) => i.severity === "warning"),
+    [issues],
+  );
+
+  const mcpNames = useMemo(() => new Set(plugin.mcps.map((m) => m.name?.trim()).filter(Boolean)), [plugin.mcps]);
+  const skillLabels = useMemo(() => {
+    const labels = new Set<string>();
+    for (const s of plugin.skills) {
+      const dir = getSkillDirName(s);
+      if (dir) labels.add(dir);
+      if (s.name?.trim()) labels.add(s.name.trim());
+    }
+    return labels;
+  }, [plugin.skills]);
+
+  function findItemByRoot(path: string) {
+    const root = path.split(".")[0];
+    const mcp = plugin.mcps.find((m) => m.name?.trim() === root);
+    if (mcp) return { type: "mcp" as const, id: mcp.id };
+    const skill = plugin.skills.find((s) => {
+      const sDir = getSkillDirName(s);
+      return sDir === root || s.name?.trim() === root;
+    });
+    if (skill) return { type: "skill" as const, id: skill.id };
+    return null;
+  }
+
+  function getFixAction(issue: ValidationIssue): (() => void) | null {
+    if (issue.path === "version" && !version.trim()) {
+      return () => setVersion("1.0.0");
+    }
+    const item = findItemByRoot(issue.path);
+    if (item) return () => setSelectedItemInPlugin(item.id, item.type);
+    return null;
+  }
+
+  function getFixLabel(issue: ValidationIssue): string {
+    if (issue.path === "version") return "Set 1.0.0";
+    const root = issue.path.split(".")[0];
+    if (mcpNames.has(root)) return "Go to MCP";
+    if (skillLabels.has(root)) return "Go to Skill";
+    return "Fix";
+  }
+
+  function fieldError(path: string): string | undefined {
+    const issue = issues.find((i) => i.path === path && i.severity !== "warning");
+    return issue?.message;
+  }
+
+  function fieldWarning(path: string): string | undefined {
+    const issue = issues.find((i) => i.path === path && i.severity === "warning");
+    return issue?.message;
+  }
 
   const save = () => {
     const author = authorName.trim()
@@ -187,6 +255,61 @@ export function PanelBody({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 p-4">
+          {issues.length > 0 && (
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 overflow-hidden">
+              <div className="flex items-center gap-1.5 border-b border-red-500/10 px-2.5 py-1.5">
+                <AlertCircle className="size-3 shrink-0 text-red-500" />
+                <span className="text-[10px] font-semibold text-red-500">
+                  {issueErrors.length > 0 &&
+                    `${issueErrors.length} error${issueErrors.length !== 1 ? "s" : ""}`}
+                  {issueErrors.length > 0 && issueWarnings.length > 0 && " · "}
+                  {issueWarnings.length > 0 && (
+                    <span className="text-amber-500">
+                      {issueWarnings.length} warning{issueWarnings.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="flex flex-col divide-y divide-red-500/10">
+                {issues.map((issue, i) => {
+                  const fix = getFixAction(issue);
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 px-2.5 py-1.5"
+                    >
+                      <span
+                        className={`size-1.5 shrink-0 rounded-full ${
+                          issue.severity === "warning"
+                            ? "bg-amber-500"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[10px]">
+                          {issue.message}
+                        </p>
+                        <p className="truncate font-mono text-[9px] text-muted-foreground">
+                          {issue.path}
+                        </p>
+                      </div>
+                      {fix && (
+                        <button
+                          type="button"
+                          onClick={fix}
+                          className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-[9px] font-medium text-primary transition hover:bg-primary/10"
+                        >
+                          <Wrench className="size-2.5" />
+                          {getFixLabel(issue)}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col gap-1.5">
             <Label className="text-[10px] uppercase tracking-wider">
               Display name
@@ -195,7 +318,20 @@ export function PanelBody({
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="h-7 text-xs"
+              placeholder="my-plugin-name"
+              aria-invalid={!!fieldError("name")}
+              maxLength={128}
             />
+            <div className="flex items-center justify-between">
+              {fieldError("name") ? (
+                <p className="text-[9px] text-destructive">{fieldError("name")}</p>
+              ) : (
+                <span />
+              )}
+              <span className="text-[9px] tabular-nums text-muted-foreground">
+                {name.length}/128
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -206,7 +342,7 @@ export function PanelBody({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="resize-none text-xs"
+              className="resize-none text-xs max-h-32"
             />
           </div>
 
@@ -244,7 +380,11 @@ export function PanelBody({
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
                 className="h-7 text-xs"
+                aria-invalid={!!fieldError("version")}
               />
+              {fieldWarning("version") && (
+                <p className="text-[9px] text-amber-500">{fieldWarning("version")}</p>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-[10px] uppercase tracking-wider">
@@ -333,23 +473,117 @@ export function PanelBody({
             />
           </div>
 
-          {issues.length > 0 && (
-            <Alert variant="destructive">
-              <AlertTriangle />
-              <AlertTitle>Validation issues</AlertTitle>
-              <AlertDescription>
-                <ul className="mt-1 flex flex-col gap-0.5 text-[10px]">
-                  {issues.map((it, i) => (
-                    <li key={i}>
-                      <span className="font-mono">{it.path}:</span>{" "}
-                      {it.message}
-                    </li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
+
+        {(plugin.mcps.length > 0 || plugin.skills.length > 0) && (
+          <div className="flex flex-col gap-2 border-t px-4 py-3">
+            {plugin.mcps.length > 0 && (
+              <div>
+                <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
+                  <McpLogo color="currentColor" className="size-3" />
+                  MCP Servers
+                  <span className="ml-auto font-normal text-muted-foreground">
+                    {plugin.mcps.length}
+                  </span>
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {plugin.mcps.map((mcp) => {
+                    const mcpIssues = validateMcpServer(mcp);
+                    const hasErrors = mcpIssues.some((i) => i.severity !== "warning");
+                    return (
+                      <div
+                        key={mcp.id}
+                        className="group flex items-center rounded-lg transition hover:bg-emerald-500/5"
+                      >
+                        <button
+                          onClick={() => setSelectedItemInPlugin(mcp.id, "mcp")}
+                          className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                        >
+                          {mcpIssues.length > 0 ? (
+                            <AlertCircle
+                              className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
+                            />
+                          ) : (
+                            <div className="size-1.5 shrink-0 rounded-full bg-emerald-500/60" />
+                          )}
+                          <span className="flex-1 truncate text-[11px]">
+                            {mcp.name}
+                          </span>
+                          <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => removeMcpFromPlugin(plugin.id, mcp.id)}
+                          className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
+                          title="Remove MCP"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {plugin.skills.length > 0 && (
+              <div>
+                <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-violet-500/80">
+                  <SkillLogo size={12} color="currentColor" />
+                  Skills
+                  <span className="ml-auto font-normal text-muted-foreground">
+                    {plugin.skills.length}
+                  </span>
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {plugin.skills.map((skill) => {
+                    const skillIssues = skill._loading ? [] : validateSkill(skill);
+                    const hasErrors = skillIssues.some((i) => i.severity !== "warning");
+                    const dir = getSkillDirName(skill);
+                    const namesDiffer = dir && dir !== skill.name?.trim();
+                    return (
+                      <div
+                        key={skill.id}
+                        className="group flex items-center rounded-lg transition hover:bg-violet-500/5"
+                      >
+                        <button
+                          onClick={() => setSelectedItemInPlugin(skill.id, "skill")}
+                          className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                        >
+                          {skillIssues.length > 0 ? (
+                            <AlertCircle
+                              className={`size-3 shrink-0 ${hasErrors ? "text-red-500" : "text-amber-500"}`}
+                            />
+                          ) : (
+                            <div className="size-1.5 shrink-0 rounded-full bg-violet-500/60" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <span className="block truncate text-[11px]">
+                              {skill.name}
+                            </span>
+                            {namesDiffer && (
+                              <span className="block truncate font-mono text-[9px] text-muted-foreground">
+                                {dir}/
+                              </span>
+                            )}
+                          </div>
+                          <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => removeSkillFromPlugin(plugin.id, skill.id)}
+                          className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
+                          title="Remove skill"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       <Separator />
@@ -365,7 +599,7 @@ export function PanelBody({
         <Button
           className="flex-1"
           size="sm"
-          disabled={issues.length > 0}
+          
           onClick={save}
         >
           Save
