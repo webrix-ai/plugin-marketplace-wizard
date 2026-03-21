@@ -334,7 +334,7 @@ export function Canvas() {
               </div>
               <p className="text-sm font-medium text-muted-foreground">No plugins yet</p>
               <p className="mt-1 text-xs text-muted-foreground/70">
-                Use the "New Plugin" button to create one, or drop items from the sidebar
+                Use the &quot;New Plugin&quot; button to create one, or drop items from the sidebar
               </p>
             </div>
           </div>
