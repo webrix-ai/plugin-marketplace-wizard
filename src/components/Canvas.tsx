@@ -260,6 +260,7 @@ export function Canvas() {
                 content: fullSkill.content,
                 description: fullSkill.description,
                 sourceFilePath: fullSkill.sourceFilePath,
+                files: fullSkill.files,
               });
             });
           }

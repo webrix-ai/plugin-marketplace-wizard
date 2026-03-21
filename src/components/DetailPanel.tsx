@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowLeft, Globe, FolderOpen, ExternalLink } from "lucide-react";
+import { ArrowLeft, Globe, FolderOpen, ExternalLink, FolderTree, FileText, FileJson, FileCode } from "lucide-react";
 import McpLogo from "./logo/McpLogo";
 import SkillLogo from "./logo/SkillLogo";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMemo } from "react";
-import type { McpServer, Skill, RegistryMcpServer, RegistrySkillEntry } from "@/lib/types";
+import type { McpServer, Skill, SkillFile, RegistryMcpServer, RegistrySkillEntry } from "@/lib/types";
 import { parseSkillFrontmatter } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,10 +70,101 @@ function McpDetail({ mcp }: { mcp: McpServer }) {
   );
 }
 
+function skillFileIcon(filename: string) {
+  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "json") return <FileJson className="size-3.5 text-amber-500" />;
+  if (ext === "md" || ext === "markdown") return <FileText className="size-3.5 text-blue-500" />;
+  if (["js", "ts", "mjs", "cjs", "py", "sh", "bash", "rb"].includes(ext))
+    return <FileCode className="size-3.5 text-emerald-500" />;
+  return <FileText className="size-3.5 text-muted-foreground" />;
+}
+
+interface ReadonlyFileNode {
+  name: string;
+  children?: ReadonlyFileNode[];
+}
+
+function buildReadonlyTree(files?: SkillFile[]): ReadonlyFileNode {
+  const root: ReadonlyFileNode = { name: "", children: [] };
+
+  function ensureDir(parts: string[]): ReadonlyFileNode {
+    let current = root;
+    for (const part of parts) {
+      if (!current.children) current.children = [];
+      let child = current.children.find((c) => c.name === part && c.children);
+      if (!child) {
+        child = { name: part, children: [] };
+        current.children.push(child);
+      }
+      current = child;
+    }
+    return current;
+  }
+
+  root.children!.push({ name: "SKILL.md" });
+
+  if (files) {
+    for (const file of files) {
+      const parts = file.relativePath.split("/");
+      const fileName = parts.pop()!;
+      const parent = parts.length > 0 ? ensureDir(parts) : root;
+      if (!parent.children) parent.children = [];
+      parent.children.push({ name: fileName });
+    }
+  }
+
+  return root;
+}
+
+function ReadonlyTreeItem({ node, depth }: { node: ReadonlyFileNode; depth: number }) {
+  const isDir = !!node.children;
+  const isRoot = isDir && !node.name;
+
+  if (isRoot) {
+    return (
+      <>
+        {node.children!.map((child, i) => (
+          <ReadonlyTreeItem key={`${child.name}-${i}`} node={child} depth={depth} />
+        ))}
+      </>
+    );
+  }
+
+  if (isDir) {
+    return (
+      <div>
+        <div
+          className="flex items-center gap-1.5 px-1.5 py-0.5 text-[11px]"
+          style={{ paddingLeft: `${depth * 12 + 6}px` }}
+        >
+          <FolderOpen className="size-3.5 text-amber-400" />
+          <span className="truncate font-medium">{node.name}/</span>
+        </div>
+        {node.children!.map((child, i) => (
+          <ReadonlyTreeItem key={`${child.name}-${i}`} node={child} depth={depth + 1} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="flex items-center gap-1.5 px-1.5 py-0.5 text-[11px]"
+      style={{ paddingLeft: `${depth * 12 + 6}px` }}
+    >
+      {skillFileIcon(node.name)}
+      <span className="truncate">{node.name}</span>
+    </div>
+  );
+}
+
 function SkillDetail({ skill }: { skill: Skill }) {
   const { frontmatter, body } = useMemo(() => parseSkillFrontmatter(skill.content), [skill.content]);
   const displayName = frontmatter.name || skill.name;
   const displayDesc = frontmatter.description || skill.description;
+
+  const fileTree = useMemo(() => buildReadonlyTree(skill.files), [skill.files]);
+  const totalFiles = 1 + (skill.files?.length ?? 0);
 
   return (
     <div className="flex flex-col gap-3">
@@ -103,21 +194,33 @@ function SkillDetail({ skill }: { skill: Skill }) {
         <p className="text-xs text-muted-foreground">{displayDesc}</p>
       )}
 
+      {/* File tree */}
+      <div>
+        <p className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <FolderTree className="size-3" />
+          Skill Files
+          <span className="ml-1 font-normal">{totalFiles}</span>
+        </p>
+        <div className="rounded-lg border bg-muted/30 py-0.5">
+          <ReadonlyTreeItem node={fileTree} depth={0} />
+        </div>
+      </div>
+
       <div>
         <div className="mb-1.5 flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Skill Content
+            SKILL.md Preview
           </p>
           <CopyButton text={body} />
         </div>
-        <div className="skill-markdown max-h-[50vh] overflow-y-auto rounded-lg bg-muted p-3">
+        <div className="skill-markdown max-h-[40vh] overflow-y-auto rounded-lg bg-muted p-3">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       </div>
 
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Source File
+          Source Path
         </p>
         <p className="break-all rounded-lg bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground">
           {skill.sourceFilePath}

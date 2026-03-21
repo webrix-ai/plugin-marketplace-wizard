@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   X,
   Package,
@@ -8,6 +8,7 @@ import {
   AlertCircle,
   ChevronRight,
   Wrench,
+  Code,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { slugify } from "@/lib/utils";
@@ -19,7 +20,7 @@ import {
   getSkillDirName,
   type ValidationIssue,
 } from "@/lib/validate-marketplace";
-import type { PluginData, AgentData } from "@/lib/types";
+import type { PluginData, AgentData, McpServer, PluginScalarUpdate } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +41,7 @@ import { McpDetailView } from "./McpDetailView";
 import { SkillDetailView } from "./SkillDetailView";
 import { AgentDetailView } from "./AgentDetailView";
 import { TagInput } from "./TagInput";
+import { CodeEditorDialog } from "@/components/CodeEditorDialog";
 
 export function PanelBody({
   plugin,
@@ -49,6 +51,7 @@ export function PanelBody({
   onClose: () => void;
 }) {
   const updatePlugin = useWizardStore((s) => s.updatePlugin);
+  const addMcpToPlugin = useWizardStore((s) => s.addMcpToPlugin);
   const removeMcpFromPlugin = useWizardStore((s) => s.removeMcpFromPlugin);
   const removeSkillFromPlugin = useWizardStore((s) => s.removeSkillFromPlugin);
   const addAgentToPlugin = useWizardStore((s) => s.addAgentToPlugin);
@@ -71,6 +74,8 @@ export function PanelBody({
   const [category, setCategory] = useState(plugin.category || "");
   const [newCatInput, setNewCatInput] = useState("");
   const [showNewCat, setShowNewCat] = useState(false);
+  const [pluginEditorOpen, setPluginEditorOpen] = useState(false);
+  const [mcpJsonImportOpen, setMcpJsonImportOpen] = useState(false);
 
   const slug = slugify(name);
 
@@ -209,6 +214,139 @@ export function PanelBody({
     setSelectedItemInPlugin(id, "agent");
   }
 
+  const pluginJson = useMemo(() => {
+    const { id, slug, mcps, skills, agents, ...rest } = plugin;
+    return JSON.stringify(rest, null, 2);
+  }, [plugin]);
+
+  const validatePluginJson = useCallback((value: string): string | null => {
+    try {
+      const parsed = JSON.parse(value);
+      if (!parsed || typeof parsed !== "object") return "Must be a JSON object";
+      if (!parsed.name || typeof parsed.name !== "string") return "Plugin must have a 'name' string field";
+      return null;
+    } catch (e) {
+      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+    }
+  }, []);
+
+  const handlePluginJsonSave = useCallback(
+    (value: string) => {
+      try {
+        const parsed = JSON.parse(value);
+        const scalarUpdate: PluginScalarUpdate = {};
+        if (parsed.name != null) scalarUpdate.name = parsed.name;
+        if (parsed.description != null) scalarUpdate.description = parsed.description;
+        if (parsed.version != null) scalarUpdate.version = parsed.version;
+        if (parsed.author != null) scalarUpdate.author = parsed.author;
+        if (parsed.homepage != null) scalarUpdate.homepage = parsed.homepage;
+        if (parsed.repository != null) scalarUpdate.repository = parsed.repository;
+        if (parsed.license != null) scalarUpdate.license = parsed.license;
+        if (parsed.keywords != null) scalarUpdate.keywords = parsed.keywords;
+        if (parsed.category != null) scalarUpdate.category = parsed.category;
+        if (parsed.tags != null) scalarUpdate.tags = parsed.tags;
+        if (parsed.strict != null) scalarUpdate.strict = parsed.strict;
+        if (parsed.sourceOverride != null) scalarUpdate.sourceOverride = parsed.sourceOverride;
+        updatePlugin(plugin.id, scalarUpdate);
+
+        if (scalarUpdate.name != null) setName(scalarUpdate.name);
+        if (scalarUpdate.description != null) setDescription(scalarUpdate.description);
+        if (scalarUpdate.version != null) setVersion(scalarUpdate.version);
+        if (scalarUpdate.author) {
+          setAuthorName(scalarUpdate.author.name || "");
+          setAuthorEmail(scalarUpdate.author.email || "");
+        }
+        if (scalarUpdate.keywords) setTags(scalarUpdate.keywords);
+        if (scalarUpdate.category != null) setCategory(scalarUpdate.category);
+      } catch {
+        // validation should have caught this
+      }
+    },
+    [plugin.id, updatePlugin]
+  );
+
+  const mcpJsonExample = useMemo(
+    () =>
+      JSON.stringify(
+        {
+          mcpServers: {
+            "my-server": {
+              type: "http",
+              url: "https://example.com/mcp",
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    [],
+  );
+
+  const validateMcpJsonImport = useCallback((value: string): string | null => {
+    try {
+      const parsed = JSON.parse(value);
+      if (!parsed || typeof parsed !== "object") return "Must be a JSON object";
+
+      const wrap =
+        parsed.mcpServers && typeof parsed.mcpServers === "object"
+          ? parsed.mcpServers
+          : parsed;
+
+      const keys = Object.keys(wrap);
+      if (keys.length === 0) return "No server entries found";
+
+      for (const key of keys) {
+        const srv = wrap[key];
+        if (!srv || typeof srv !== "object")
+          return `Server "${key}" must be an object`;
+        if (!srv.url && !srv.command)
+          return `Server "${key}" needs either a "url" or a "command" field`;
+      }
+      return null;
+    } catch (e) {
+      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+    }
+  }, []);
+
+  const handleMcpJsonImportSave = useCallback(
+    (value: string) => {
+      try {
+        const parsed = JSON.parse(value);
+
+        const wrap =
+          parsed.mcpServers && typeof parsed.mcpServers === "object"
+            ? parsed.mcpServers
+            : parsed;
+
+        for (const [serverName, serverCfg] of Object.entries(wrap)) {
+          const srv = serverCfg as Record<string, unknown>;
+          const config: McpServer["config"] = {
+            type: (srv.type as string) || "http",
+          };
+          if (srv.command) config.command = srv.command as string;
+          if (srv.args) config.args = srv.args as string[];
+          if (srv.url) config.url = srv.url as string;
+          if (srv.env) config.env = srv.env as Record<string, string>;
+          if (srv.headers)
+            config.headers = srv.headers as Record<string, string>;
+
+          const mcp: McpServer = {
+            id: `json-import:${Date.now()}:${serverName}`,
+            name: serverName,
+            sourceApplication: "json-import",
+            sourceFilePath: "",
+            scope: "global",
+            config,
+          };
+          addMcpToPlugin(plugin.id, mcp);
+        }
+      } catch {
+        // validation should have caught this
+      }
+    },
+    [plugin.id, addMcpToPlugin],
+  );
+
   if (selectedMcp) {
     return (
       <>
@@ -307,9 +445,20 @@ export function PanelBody({
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon-xs" onClick={onClose}>
-          <X />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="xs"
+            className="h-6 gap-1 text-[10px]"
+            onClick={() => setPluginEditorOpen(true)}
+          >
+            <Code className="size-3" />
+            JSON
+          </Button>
+          <Button variant="ghost" size="icon-xs" onClick={onClose}>
+            <X />
+          </Button>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -537,13 +686,24 @@ export function PanelBody({
         <div className="flex flex-col gap-2 border-t px-4 py-3">
           {/* MCP Servers */}
           <div>
-            <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
-              <McpLogo color="currentColor" className="size-3" />
-              MCP Servers
-              <span className="ml-auto font-normal text-muted-foreground">
-                {plugin.mcps.length}
-              </span>
-            </p>
+            <div className="mb-1 flex items-center gap-1">
+              <p className="flex flex-1 items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
+                <McpLogo color="currentColor" className="size-3" />
+                MCP Servers
+                <span className="ml-auto font-normal text-muted-foreground">
+                  {plugin.mcps.length}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setMcpJsonImportOpen(true)}
+                className="ml-1 flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] text-emerald-500/70 hover:bg-emerald-500/10 hover:text-emerald-500"
+                title="Add MCP from JSON"
+              >
+                <Plus className="size-2.5" />
+                JSON
+              </button>
+            </div>
             <div className="flex flex-col gap-0.5">
               {plugin.mcps.map((mcp) => {
                 const mcpIssues = validateMcpServer(mcp);
@@ -729,6 +889,28 @@ export function PanelBody({
           Save
         </Button>
       </div>
+
+      <CodeEditorDialog
+        open={pluginEditorOpen}
+        onOpenChange={setPluginEditorOpen}
+        title={`Edit Plugin: ${plugin.name}`}
+        subtitle="Edit the plugin metadata as JSON (name, version, author, keywords, etc.). MCPs, skills, and agents are edited separately."
+        language="json"
+        value={pluginJson}
+        onSave={handlePluginJsonSave}
+        validate={validatePluginJson}
+      />
+
+      <CodeEditorDialog
+        open={mcpJsonImportOpen}
+        onOpenChange={setMcpJsonImportOpen}
+        title="Add MCP from JSON"
+        subtitle={'Paste an MCP server JSON configuration. If "type" is omitted it defaults to "http". You can wrap entries in "mcpServers" or provide the server object directly.'}
+        language="json"
+        value={mcpJsonExample}
+        onSave={handleMcpJsonImportSave}
+        validate={validateMcpJsonImport}
+      />
     </>
   );
 }

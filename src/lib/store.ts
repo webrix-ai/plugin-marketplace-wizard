@@ -160,7 +160,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   selectedItemId: null,
   selectedItemType: null,
   searchQuery: "",
-  sidebarTab: "mcps",
+  sidebarTab: "skills",
   sidebarSource: "local",
   sidebarCollapsed: false,
   isScanning: false,
@@ -589,7 +589,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         return registrySkillToLocal(entry);
       }
 
-      return registrySkillToLocal(entry, data.content);
+      return registrySkillToLocal(entry, data.content, data.skillFiles);
     } catch {
       return registrySkillToLocal(entry);
     }
@@ -1017,6 +1017,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         sourceFilePath: file.name,
         scope: "global",
         content: data.skill.content,
+        files: data.skill.skillFiles?.length ? data.skill.skillFiles : undefined,
       };
 
       set((s) => ({

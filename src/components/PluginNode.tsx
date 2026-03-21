@@ -125,6 +125,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                 content: fullSkill.content,
                 description: fullSkill.description,
                 sourceFilePath: fullSkill.sourceFilePath,
+                files: fullSkill.files,
               });
             });
           }

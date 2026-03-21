@@ -5,11 +5,17 @@ import os from "os";
 import { execSync } from "child_process";
 import { getMarketplaceDir } from "@/lib/get-marketplace-dir";
 
+interface SkillFileEntry {
+  relativePath: string;
+  content: string;
+}
+
 interface SkillResult {
   name: string;
   description: string;
   content: string;
   files: string[];
+  skillFiles: SkillFileEntry[];
 }
 
 function parseSkillFrontmatter(content: string): {
@@ -70,6 +76,41 @@ function extractZip(zipPath: string, destDir: string): void {
   });
 }
 
+const EDITABLE_EXTENSIONS = new Set([
+  ".md", ".json", ".yaml", ".yml", ".txt", ".sh", ".bash",
+  ".js", ".ts", ".mjs", ".cjs", ".py", ".rb", ".toml", ".cfg", ".ini", ".xml",
+  ".html", ".css", ".env", ".example",
+]);
+
+function collectSkillFileContents(skillDir: string): SkillFileEntry[] {
+  const result: SkillFileEntry[] = [];
+
+  function walk(dir: string, prefix: string) {
+    let entries: fs.Dirent[];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        walk(fullPath, relativePath);
+      } else if (entry.isFile() && relativePath !== "SKILL.md") {
+        const ext = path.extname(entry.name).toLowerCase();
+        if (!ext || !EDITABLE_EXTENSIONS.has(ext)) continue;
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.size > 100_000) continue;
+          const content = fs.readFileSync(fullPath, "utf-8");
+          result.push({ relativePath, content });
+        } catch { /* skip */ }
+      }
+    }
+  }
+
+  walk(skillDir, "");
+  return result;
+}
+
 function processSkillFromDir(dir: string, fallbackName: string): SkillResult | null {
   const skillMdPath = findSkillMd(dir);
   if (!skillMdPath) return null;
@@ -77,12 +118,15 @@ function processSkillFromDir(dir: string, fallbackName: string): SkillResult | n
   const content = fs.readFileSync(skillMdPath, "utf-8");
   const fm = parseSkillFrontmatter(content);
   const files = collectFiles(dir);
+  const skillDir = path.dirname(skillMdPath);
+  const skillFiles = collectSkillFileContents(skillDir);
 
   return {
     name: fm.name || fallbackName,
     description: fm.description || "",
     content,
     files,
+    skillFiles,
   };
 }
 

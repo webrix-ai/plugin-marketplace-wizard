@@ -7,6 +7,11 @@ import { tmpdir } from "node:os";
 
 const exec = promisify(execFile);
 
+interface SkillFileEntry {
+  relativePath: string;
+  content: string;
+}
+
 interface ParsedSkill {
   name: string;
   description: string;
@@ -14,6 +19,44 @@ interface ParsedSkill {
   content: string;
   source: string;
   repository: string;
+  files: SkillFileEntry[];
+}
+
+const EDITABLE_EXTENSIONS = new Set([
+  ".md", ".json", ".yaml", ".yml", ".txt", ".sh", ".bash",
+  ".js", ".ts", ".mjs", ".cjs", ".py", ".rb", ".toml", ".cfg", ".ini", ".xml",
+  ".html", ".css", ".env", ".example",
+]);
+
+const MAX_SKILL_FILE_SIZE = 100_000;
+
+async function collectEditableFiles(dir: string, prefix = ""): Promise<SkillFileEntry[]> {
+  const results: SkillFileEntry[] = [];
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    return results;
+  }
+  for (const name of entries) {
+    if (name.startsWith(".")) continue;
+    const fullPath = join(dir, name);
+    const relativePath = prefix ? `${prefix}/${name}` : name;
+    const s = await stat(fullPath).catch(() => null);
+    if (!s) continue;
+    if (s.isDirectory()) {
+      results.push(...await collectEditableFiles(fullPath, relativePath));
+    } else if (s.isFile() && relativePath !== "SKILL.md") {
+      const ext = "." + (name.split(".").pop()?.toLowerCase() ?? "");
+      if (!EDITABLE_EXTENSIONS.has(ext)) continue;
+      if (s.size > MAX_SKILL_FILE_SIZE) continue;
+      try {
+        const content = await readFile(fullPath, "utf-8");
+        results.push({ relativePath, content });
+      } catch { /* skip */ }
+    }
+  }
+  return results;
 }
 
 function parseSkillMd(content: string): { name: string; description: string } {
@@ -201,6 +244,7 @@ export async function GET(request: Request) {
       }
 
       const { name, description } = parseSkillMd(content);
+      const files = await collectEditableFiles(dirPath);
       skills.push({
         name: name || dirName,
         description,
@@ -208,6 +252,7 @@ export async function GET(request: Request) {
         content,
         source: owner && repo ? `${owner}/${repo}` : display,
         repository: display,
+        files,
       });
     }
 

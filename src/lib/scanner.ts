@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
-import { McpServer, Skill, AgentData, ScanResult } from "./types";
+import { McpServer, Skill, SkillFile, AgentData, ScanResult } from "./types";
 import { stripJsonComments, parseAgentFrontmatter } from "./utils";
 import {
   SKIP_DIRS,
@@ -113,6 +113,52 @@ function parseSkillMd(content: string): { name?: string; description?: string; b
   return result;
 }
 
+const EDITABLE_EXTENSIONS = new Set([
+  ".md", ".json", ".yaml", ".yml", ".txt", ".sh", ".bash",
+  ".js", ".ts", ".mjs", ".cjs", ".py", ".rb", ".toml", ".cfg", ".ini", ".xml",
+  ".html", ".css", ".env", ".example",
+]);
+
+const MAX_SKILL_FILE_SIZE = 100_000;
+
+function collectSkillFiles(skillDir: string): SkillFile[] {
+  const files: SkillFile[] = [];
+
+  function walk(dir: string, prefix: string) {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+      if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name)) continue;
+        walk(fullPath, relativePath);
+      } else if (entry.isFile()) {
+        if (relativePath === "SKILL.md") continue;
+        const ext = path.extname(entry.name).toLowerCase();
+        if (!ext || !EDITABLE_EXTENSIONS.has(ext)) continue;
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.size > MAX_SKILL_FILE_SIZE) continue;
+        } catch { continue; }
+        const content = safeReadFile(fullPath);
+        if (content !== null) {
+          files.push({ relativePath, content });
+        }
+      }
+    }
+  }
+
+  walk(skillDir, "");
+  return files;
+}
+
 function scanSkillDirectory(
   dirPath: string,
   app: string,
@@ -134,6 +180,7 @@ function scanSkillDirectory(
       if (!content) continue;
 
       const parsed = parseSkillMd(content);
+      const files = collectSkillFiles(skillDir);
 
       skills.push({
         id: `${app}:${scope}:${entry.name}:${skillMdPath}`,
@@ -143,6 +190,7 @@ function scanSkillDirectory(
         sourceFilePath: skillMdPath,
         scope,
         content: content.slice(0, 50000),
+        files: files.length > 0 ? files : undefined,
       });
     }
   } catch {
