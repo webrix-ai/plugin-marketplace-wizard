@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "jira": {
-      "type": "streamable-http",
-      "url": "https://run.my-mcp-s.com/mcp/mcp/jira"
-    }
-  }
-}

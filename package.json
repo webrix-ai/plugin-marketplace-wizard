@@ -29,6 +29,12 @@
     "claude",
     "webrix"
   ],
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts"
+    }
+  },
   "bin": {
     "pmw": "./bin/cli.mjs",
     "create-plugin-marketplace-wizard": "./bin/create.mjs"
