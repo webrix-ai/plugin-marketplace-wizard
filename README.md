@@ -1,5 +1,9 @@
 # Plugin Marketplace Wizard
 
+[![CI](https://github.com/webrix-ai/plugin-marketplace-wizard/actions/workflows/ci.yml/badge.svg)](https://github.com/webrix-ai/plugin-marketplace-wizard/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/plugin-marketplace-wizard)](https://www.npmjs.com/package/plugin-marketplace-wizard)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
 
 Generates valid marketplace packages for [<img src="https://icons.webrix.workers.dev/ai-hosts/cursor.svg" alt="Cursor" height="20" style="vertical-align:middle" /> Cursor Plugins](https://cursor.com/docs/plugins) and [<img src="https://icons.webrix.workers.dev/ai-hosts/claude-web.svg" alt="Claude Code" height="20" style="vertical-align:middle" /> Claude Code Plugins](https://code.claude.com/docs/en/discover-plugins).
@@ -130,6 +134,12 @@ npm run dev
 node bin/cli.mjs start
 ```
 
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
+
+For security issues, see [SECURITY.md](SECURITY.md).
+
 ## License
 
-MIT
+[MIT](LICENSE)
