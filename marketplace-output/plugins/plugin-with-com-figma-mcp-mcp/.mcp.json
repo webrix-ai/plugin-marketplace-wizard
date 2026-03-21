@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "com.figma.mcp/mcp": {
-      "type": "streamable-http",
-      "url": "https://mcp.figma.com/mcp"
-    }
-  }
-}

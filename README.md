@@ -1,3 +1,7 @@
+<picture>
+  <img alt="Plugin Marketplace Wizard" src="assets/Banner.png" width="100%">
+</picture>
+
 # Plugin Marketplace Wizard
 
 A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
@@ -13,7 +17,6 @@ Generates valid marketplace packages for [<img src="https://icons.webrix.workers
 ## Quick Start
 
 ```bash
-# Create a new marketplace
 npx create-plugin-marketplace-wizard my-marketplace
 cd my-marketplace
 npm start
@@ -22,12 +25,23 @@ npm start
 Or add to an existing project:
 
 ```bash
-npm install plugin-marketplace-wizard
+npm install plugin-marketplace-wizard --save-dev
 npx pmw init
-npx pmw start
+npm start
 ```
 
-## CLI Commands
+After installing, `pmw` is available in your npm scripts without `npx`:
+
+```json
+{
+  "scripts": {
+    "start": "pmw start",
+    "test": "pmw test"
+  }
+}
+```
+
+## CLI
 
 ### `pmw start [dir]`
 
@@ -39,6 +53,31 @@ pmw start ./my-market  # Use specific directory
 pmw start -p 4000      # Custom port
 ```
 
+### `pmw test [dir]`
+
+Validate all marketplace files. Runs like a test suite — use in CI.
+
+```bash
+pmw test
+pmw test ./my-marketplace
+```
+
+```
+ PMW v0.1.4
+
+ /Users/you/my-marketplace
+
+ PASS marketplace structure
+ PASS marketplace manifest
+ PASS plugin structure
+ PASS plugin manifests
+ PASS mcp configurations
+ PASS skill files
+
+ Tests:  6 passed, 6 total
+ Time:   0.02s
+```
+
 ### `pmw init [dir]`
 
 Initialize a new marketplace in the current (or specified) directory. Creates the `.cursor-plugin/`, `.claude-plugin/`, and `plugins/` directories with initial manifests.
@@ -48,13 +87,39 @@ pmw init
 pmw init ./new-marketplace
 ```
 
-### `pmw validate [dir]`
+### `pmw -v`
 
-Validate the marketplace structure and content. Checks for proper directory structure, valid manifests, and correct plugin configurations.
+Print the version number.
 
-```bash
-pmw validate
-pmw validate ./my-marketplace
+### `pmw -h`
+
+Show help.
+
+## TypeScript Types
+
+All types are exported from the package:
+
+```typescript
+import type {
+  PluginData,
+  McpServer,
+  Skill,
+  AgentData,
+  MarketplaceManifest,
+  MarketplaceSettings,
+  ValidationIssue,
+} from "plugin-marketplace-wizard";
+```
+
+Validation utilities are also available:
+
+```typescript
+import {
+  validatePluginData,
+  validateMarketplaceManifest,
+  validateMcpServer,
+  validateSkill,
+} from "plugin-marketplace-wizard";
 ```
 
 ## Features

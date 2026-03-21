@@ -38,8 +38,8 @@ function showBanner() {
   console.log();
   console.log(`${BOLD}  Commands:${RESET}`);
   console.log(`    ${TEXT}start${RESET}  ${DIM}[dir]${RESET}   Start the visual marketplace editor`);
-  console.log(`    ${TEXT}init${RESET}   ${DIM}[dir]${RESET}   Initialize a new marketplace in the current directory`);
-  console.log(`    ${TEXT}validate${RESET} ${DIM}[dir]${RESET} Validate marketplace structure and content`);
+  console.log(`    ${TEXT}test${RESET}   ${DIM}[dir]${RESET}   Validate marketplace files`);
+  console.log(`    ${TEXT}init${RESET}   ${DIM}[dir]${RESET}   Initialize a new marketplace`);
   console.log();
   console.log(`${BOLD}  Options:${RESET}`);
   console.log(`    ${TEXT}--port${RESET}, ${TEXT}-p${RESET}     Port to run the server on ${DIM}(default: 3000)${RESET}`);
@@ -49,8 +49,8 @@ function showBanner() {
   console.log(`${BOLD}  Examples:${RESET}`);
   console.log(`    ${DIM}$${RESET} pmw start`);
   console.log(`    ${DIM}$${RESET} pmw start ./my-marketplace`);
+  console.log(`    ${DIM}$${RESET} pmw test`);
   console.log(`    ${DIM}$${RESET} pmw init`);
-  console.log(`    ${DIM}$${RESET} pmw validate`);
   console.log();
 }
 
@@ -127,7 +127,7 @@ function runInit(targetDir) {
 }
 
 // ---------------------------------------------------------------------------
-// validate command
+// test command (test-runner style validation)
 // ---------------------------------------------------------------------------
 
 const KEBAB_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -144,7 +144,7 @@ function createValidator(name, fn) {
 
 function getValidators() {
   return [
-    createValidator("marketplace-structure", (dir) => {
+    createValidator("marketplace structure", (dir) => {
       const issues = [];
       const hasCursor = existsSync(join(dir, ".cursor-plugin", "marketplace.json"));
       const hasClaude = existsSync(join(dir, ".claude-plugin", "marketplace.json"));
@@ -161,7 +161,7 @@ function getValidators() {
       return issues;
     }),
 
-    createValidator("marketplace-manifest", (dir) => {
+    createValidator("marketplace manifest", (dir) => {
       const issues = [];
       for (const sub of [".cursor-plugin", ".claude-plugin"]) {
         const manifestPath = join(dir, sub, "marketplace.json");
@@ -198,7 +198,7 @@ function getValidators() {
       return issues;
     }),
 
-    createValidator("plugin-structure", (dir) => {
+    createValidator("plugin structure", (dir) => {
       const issues = [];
       const pluginsDir = join(dir, "plugins");
       if (!existsSync(pluginsDir)) return issues;
@@ -214,7 +214,7 @@ function getValidators() {
         const hasClaudePlugin = existsSync(join(pluginDir, ".claude-plugin", "plugin.json"));
 
         if (!hasCursorPlugin && !hasClaudePlugin) {
-          issues.push({ severity: "warning", path: `plugins/${entry.name}`, message: "Plugin missing both .cursor-plugin/plugin.json and .claude-plugin/plugin.json" });
+          issues.push({ severity: "warning", path: `plugins/${entry.name}`, message: "Missing both .cursor-plugin/plugin.json and .claude-plugin/plugin.json" });
         }
 
         if (!KEBAB_RE.test(entry.name)) {
@@ -248,49 +248,158 @@ function getValidators() {
       }
       return issues;
     }),
+
+    createValidator("plugin manifests", (dir) => {
+      const issues = [];
+      const pluginsDir = join(dir, "plugins");
+      if (!existsSync(pluginsDir)) return issues;
+
+      let entries;
+      try { entries = readdirSync(pluginsDir, { withFileTypes: true }); } catch { return issues; }
+
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+        const pluginDir = join(pluginsDir, entry.name);
+
+        for (const sub of [".cursor-plugin", ".claude-plugin"]) {
+          const manifestPath = join(pluginDir, sub, "plugin.json");
+          if (!existsSync(manifestPath)) continue;
+
+          try {
+            const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+            if (!manifest.name?.trim()) {
+              issues.push({ severity: "error", path: `plugins/${entry.name}/${sub}/plugin.json`, message: "Missing required field: name" });
+            }
+          } catch (e) {
+            issues.push({ severity: "error", path: `plugins/${entry.name}/${sub}/plugin.json`, message: `Invalid JSON: ${e.message}` });
+          }
+        }
+      }
+      return issues;
+    }),
+
+    createValidator("mcp configurations", (dir) => {
+      const issues = [];
+      const pluginsDir = join(dir, "plugins");
+      if (!existsSync(pluginsDir)) return issues;
+
+      let entries;
+      try { entries = readdirSync(pluginsDir, { withFileTypes: true }); } catch { return issues; }
+
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+        const mcpPath = join(pluginsDir, entry.name, ".mcp.json");
+        if (!existsSync(mcpPath)) continue;
+
+        try {
+          const mcpJson = JSON.parse(readFileSync(mcpPath, "utf-8"));
+          if (!mcpJson.mcpServers) continue;
+
+          for (const [name, config] of Object.entries(mcpJson.mcpServers)) {
+            const pfx = `plugins/${entry.name}/.mcp.json → ${name}`;
+            const type = config.type || "";
+            const isStdio = !type || type === "stdio";
+            const isRemote = type === "sse" || type === "streamable-http";
+
+            if (isStdio && !config.command?.trim()) {
+              issues.push({ severity: "error", path: pfx, message: "stdio server requires a command" });
+            }
+            if (isRemote && !config.url?.trim()) {
+              issues.push({ severity: "error", path: pfx, message: `${type} server requires a url` });
+            }
+          }
+        } catch {}
+      }
+      return issues;
+    }),
+
+    createValidator("skill files", (dir) => {
+      const issues = [];
+      const pluginsDir = join(dir, "plugins");
+      if (!existsSync(pluginsDir)) return issues;
+
+      let entries;
+      try { entries = readdirSync(pluginsDir, { withFileTypes: true }); } catch { return issues; }
+
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+        const skillsDir = join(pluginsDir, entry.name, "skills");
+        if (!existsSync(skillsDir)) continue;
+
+        try {
+          const skillEntries = readdirSync(skillsDir, { withFileTypes: true });
+          for (const skillEntry of skillEntries) {
+            if (!skillEntry.isDirectory()) continue;
+            const skillMd = join(skillsDir, skillEntry.name, "SKILL.md");
+            if (!existsSync(skillMd)) {
+              issues.push({ severity: "warning", path: `plugins/${entry.name}/skills/${skillEntry.name}`, message: "Missing SKILL.md" });
+              continue;
+            }
+            const content = readFileSync(skillMd, "utf-8").trim();
+            if (!content) {
+              issues.push({ severity: "warning", path: `plugins/${entry.name}/skills/${skillEntry.name}/SKILL.md`, message: "Skill file is empty" });
+            }
+          }
+        } catch {}
+      }
+      return issues;
+    }),
   ];
 }
 
-function runValidate(targetDir) {
+function runTest(targetDir) {
   const dir = resolve(targetDir || ".");
+  const startTime = Date.now();
 
   console.log();
-  console.log(`${BOLD}  Validating marketplace at ${CYAN}${dir}${RESET}`);
+  console.log(`${BOLD} PMW ${DIM}v${VERSION}${RESET}`);
+  console.log();
+  console.log(` ${DIM}${dir}${RESET}`);
   console.log();
 
   const validators = getValidators();
-  let totalErrors = 0;
-  let totalWarnings = 0;
+  let passed = 0;
+  let failed = 0;
+  let warned = 0;
 
   for (const validator of validators) {
     const issues = validator.validate(dir);
     const errors = issues.filter((i) => i.severity === "error");
     const warnings = issues.filter((i) => i.severity === "warning");
-    totalErrors += errors.length;
-    totalWarnings += warnings.length;
 
-    if (issues.length === 0) {
-      console.log(`  ${GREEN}✓${RESET} ${validator.name}`);
-    } else {
-      console.log(`  ${errors.length > 0 ? RED + "✗" : YELLOW + "⚠"}${RESET} ${validator.name}`);
-      for (const issue of issues) {
-        const icon = issue.severity === "error" ? `${RED}✗${RESET}` : `${YELLOW}⚠${RESET}`;
-        console.log(`    ${icon} ${DIM}${issue.path}:${RESET} ${issue.message}`);
+    if (errors.length > 0) {
+      failed++;
+      console.log(` ${RED}FAIL${RESET} ${validator.name}`);
+      for (const issue of errors) {
+        console.log(`      ${RED}✕${RESET} ${issue.message}`);
+        console.log(`        ${DIM}${issue.path}${RESET}`);
       }
+      for (const issue of warnings) {
+        console.log(`      ${YELLOW}⚠${RESET} ${issue.message}`);
+        console.log(`        ${DIM}${issue.path}${RESET}`);
+      }
+    } else if (warnings.length > 0) {
+      warned++;
+      console.log(` ${YELLOW}WARN${RESET} ${validator.name}`);
+      for (const issue of warnings) {
+        console.log(`      ${YELLOW}⚠${RESET} ${issue.message}`);
+        console.log(`        ${DIM}${issue.path}${RESET}`);
+      }
+    } else {
+      passed++;
+      console.log(` ${GREEN}PASS${RESET} ${validator.name}`);
     }
   }
 
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  const total = passed + failed + warned;
+
   console.log();
-  if (totalErrors === 0 && totalWarnings === 0) {
-    console.log(`  ${GREEN}${BOLD}✓ Marketplace is valid${RESET}`);
-  } else if (totalErrors === 0) {
-    console.log(`  ${YELLOW}${BOLD}⚠ ${totalWarnings} warning(s)${RESET}`);
-  } else {
-    console.log(`  ${RED}${BOLD}✗ ${totalErrors} error(s)${RESET}${totalWarnings > 0 ? `, ${YELLOW}${totalWarnings} warning(s)${RESET}` : ""}`);
-  }
+  console.log(`${BOLD} Tests:${RESET}  ${failed > 0 ? `${RED}${failed} failed${RESET}, ` : ""}${warned > 0 ? `${YELLOW}${warned} warned${RESET}, ` : ""}${GREEN}${passed} passed${RESET}, ${total} total`);
+  console.log(`${BOLD} Time:${RESET}   ${elapsed}s`);
   console.log();
 
-  if (totalErrors > 0) process.exit(1);
+  if (failed > 0) process.exit(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -370,8 +479,9 @@ switch (parsed.command) {
   case "init":
     runInit(parsed.dir);
     break;
+  case "test":
   case "validate":
-    runValidate(parsed.dir);
+    runTest(parsed.dir);
     break;
   case "version":
     console.log(VERSION);
