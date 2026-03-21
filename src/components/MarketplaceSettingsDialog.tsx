@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import Image from "next/image";
-import { Settings2, AlertTriangle, Trash2 } from "lucide-react";
-import { toast as sonnerToast } from "sonner";
-import { useWizardStore } from "@/lib/store";
-import { validateMarketplaceSettings } from "@/lib/validate-marketplace";
-import type { MarketplaceSettings } from "@/lib/marketplace-schema";
-import type { ExportTargets } from "@/lib/types";
+import { useEffect, useState, useCallback } from "react"
+import Image from "next/image"
+import { Settings2, AlertTriangle, Trash2 } from "lucide-react"
+import { toast as sonnerToast } from "sonner"
+import { useWizardStore } from "@/lib/store"
+import { validateMarketplaceSettings } from "@/lib/validate-marketplace"
+import type { MarketplaceSettings } from "@/lib/marketplace-schema"
+import type { ExportTargets } from "@/lib/types"
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -26,32 +26,32 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+} from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 interface Props {
-  open: boolean;
-  onClose: () => void;
+  open: boolean
+  onClose: () => void
 }
 
 const TARGET_LABELS: Record<string, string> = {
   cursor: "Cursor",
   claude: "Claude",
-};
+}
 
 interface SavePayload {
   settings: {
-    name: string;
-    owner: { name: string; email?: string };
-    metadata: { description?: string; version?: string };
-  };
-  targets: ExportTargets;
-  removedTargets: string[];
+    name: string
+    owner: { name: string; email?: string }
+    metadata: { description?: string; version?: string }
+  }
+  targets: ExportTargets
+  removedTargets: string[]
 }
 
 function MarketplaceSettingsFormBody({
@@ -59,39 +59,41 @@ function MarketplaceSettingsFormBody({
   onSave,
   onClose,
 }: {
-  initial: MarketplaceSettings;
-  onSave: (payload: SavePayload) => void;
-  onClose: () => void;
+  initial: MarketplaceSettings
+  onSave: (payload: SavePayload) => void
+  onClose: () => void
 }) {
-  const storeTargets = useWizardStore((s) => s.exportTargets);
+  const storeTargets = useWizardStore((s) => s.exportTargets)
 
-  const [name, setName] = useState(initial.name);
-  const [ownerName, setOwnerName] = useState(initial.owner.name);
-  const [ownerEmail, setOwnerEmail] = useState(initial.owner.email || "");
-  const [description, setDescription] = useState(initial.metadata.description || "");
-  const [version, setVersion] = useState(initial.metadata.version || "");
+  const [name, setName] = useState(initial.name)
+  const [ownerName, setOwnerName] = useState(initial.owner.name)
+  const [ownerEmail, setOwnerEmail] = useState(initial.owner.email || "")
+  const [description, setDescription] = useState(
+    initial.metadata.description || "",
+  )
+  const [version, setVersion] = useState(initial.metadata.version || "")
 
   const [localTargets, setLocalTargets] = useState<ExportTargets>({
     cursor: storeTargets.cursor,
     claude: storeTargets.claude,
-  });
+  })
 
   const issues = validateMarketplaceSettings({
     name,
     owner: { name: ownerName, email: ownerEmail || undefined },
     metadata: { description, version },
-  });
+  })
 
-  const noneSelected = !localTargets.cursor && !localTargets.claude;
+  const noneSelected = !localTargets.cursor && !localTargets.claude
 
   const toggleTarget = (key: keyof ExportTargets) => {
-    setLocalTargets((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+    setLocalTargets((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const save = () => {
     const removedTargets = (["cursor", "claude"] as const).filter(
-      (t) => storeTargets[t] && !localTargets[t]
-    );
+      (t) => storeTargets[t] && !localTargets[t],
+    )
 
     onSave({
       settings: {
@@ -107,8 +109,8 @@ function MarketplaceSettingsFormBody({
       },
       targets: localTargets,
       removedTargets,
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -141,7 +143,9 @@ function MarketplaceSettingsFormBody({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="mkt-owner" className="text-xs">Owner name</Label>
+            <Label htmlFor="mkt-owner" className="text-xs">
+              Owner name
+            </Label>
             <Input
               id="mkt-owner"
               value={ownerName}
@@ -149,7 +153,9 @@ function MarketplaceSettingsFormBody({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="mkt-email" className="text-xs">Owner email</Label>
+            <Label htmlFor="mkt-email" className="text-xs">
+              Owner email
+            </Label>
             <Input
               id="mkt-email"
               type="email"
@@ -160,7 +166,9 @@ function MarketplaceSettingsFormBody({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="mkt-desc" className="text-xs">Description</Label>
+          <Label htmlFor="mkt-desc" className="text-xs">
+            Description
+          </Label>
           <Textarea
             id="mkt-desc"
             value={description}
@@ -191,8 +199,8 @@ function MarketplaceSettingsFormBody({
               onClick={() => toggleTarget("cursor")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleTarget("cursor");
+                  e.preventDefault()
+                  toggleTarget("cursor")
                 }
               }}
               className={`flex flex-1 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors select-none ${
@@ -221,8 +229,8 @@ function MarketplaceSettingsFormBody({
               onClick={() => toggleTarget("claude")}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleTarget("claude");
+                  e.preventDefault()
+                  toggleTarget("claude")
                 }
               }}
               className={`flex flex-1 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors select-none ${
@@ -278,84 +286,85 @@ function MarketplaceSettingsFormBody({
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          disabled={issues.length > 0 || noneSelected}
-          onClick={save}
-        >
+        <Button disabled={issues.length > 0 || noneSelected} onClick={save}>
           Save
         </Button>
       </DialogFooter>
     </>
-  );
+  )
 }
 
 export function MarketplaceSettingsDialog({ open, onClose }: Props) {
-  const marketplaceSettings = useWizardStore((s) => s.marketplaceSettings);
-  const exportTargets = useWizardStore((s) => s.exportTargets);
-  const refreshGitDefaults = useWizardStore((s) => s.refreshGitDefaults);
-  const setMarketplaceSettings = useWizardStore((s) => s.setMarketplaceSettings);
-  const setExportTargets = useWizardStore((s) => s.setExportTargets);
-  const deleteExportFolders = useWizardStore((s) => s.deleteExportFolders);
+  const marketplaceSettings = useWizardStore((s) => s.marketplaceSettings)
+  const exportTargets = useWizardStore((s) => s.exportTargets)
+  const refreshGitDefaults = useWizardStore((s) => s.refreshGitDefaults)
+  const setMarketplaceSettings = useWizardStore((s) => s.setMarketplaceSettings)
+  const setExportTargets = useWizardStore((s) => s.setExportTargets)
+  const deleteExportFolders = useWizardStore((s) => s.deleteExportFolders)
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const pendingPayloadRef = useRef<SavePayload | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingPayload, setPendingPayload] = useState<SavePayload | null>(null)
 
   useEffect(() => {
-    if (open) refreshGitDefaults();
-  }, [open, refreshGitDefaults]);
+    if (open) refreshGitDefaults()
+  }, [open, refreshGitDefaults])
 
   const commitSave = useCallback(
     async (payload: SavePayload, doDelete: boolean) => {
       if (doDelete && payload.removedTargets.length > 0) {
         const names = payload.removedTargets
           .map((t) => TARGET_LABELS[t])
-          .join(" and ");
-        await deleteExportFolders(payload.removedTargets);
-        sonnerToast.success(`Removed ${names} configuration folders`);
+          .join(" and ")
+        await deleteExportFolders(payload.removedTargets)
+        sonnerToast.success(`Removed ${names} configuration folders`)
       }
 
-      setExportTargets(payload.targets);
-      setMarketplaceSettings(payload.settings);
+      setExportTargets(payload.targets)
+      setMarketplaceSettings(payload.settings)
     },
-    [deleteExportFolders, setExportTargets, setMarketplaceSettings]
-  );
+    [deleteExportFolders, setExportTargets, setMarketplaceSettings],
+  )
 
   const handleSave = useCallback(
     (payload: SavePayload) => {
       if (payload.removedTargets.length > 0) {
-        pendingPayloadRef.current = payload;
-        onClose();
-        setTimeout(() => setConfirmOpen(true), 150);
-        return;
+        setPendingPayload(payload)
+        onClose()
+        setTimeout(() => setConfirmOpen(true), 150)
+        return
       }
 
-      commitSave(payload, false);
-      onClose();
+      commitSave(payload, false)
+      onClose()
     },
-    [commitSave, onClose]
-  );
+    [commitSave, onClose],
+  )
 
   const handleConfirm = useCallback(async () => {
-    const payload = pendingPayloadRef.current;
-    if (!payload) return;
-    await commitSave(payload, true);
-    pendingPayloadRef.current = null;
-  }, [commitSave]);
+    if (!pendingPayload) return
+    await commitSave(pendingPayload, true)
+    setPendingPayload(null)
+  }, [commitSave, pendingPayload])
 
   const handleConfirmCancel = useCallback(() => {
-    pendingPayloadRef.current = null;
-  }, []);
+    setPendingPayload(null)
+  }, [])
 
-  const confirmLabel = pendingPayloadRef.current?.removedTargets
+  const confirmLabel = pendingPayload?.removedTargets
     .map((t) => TARGET_LABELS[t])
-    .join(" and ");
-  const confirmFolders = pendingPayloadRef.current?.removedTargets
+    .join(" and ")
+  const confirmFolders = pendingPayload?.removedTargets
     .map((t) => `.${t}-plugin`)
-    .join(" and ");
+    .join(" and ")
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <Dialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) onClose()
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <MarketplaceSettingsFormBody
             key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}|${exportTargets.cursor}|${exportTargets.claude}`}
@@ -369,8 +378,8 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
       <AlertDialog
         open={confirmOpen}
         onOpenChange={(isOpen) => {
-          setConfirmOpen(isOpen);
-          if (!isOpen) handleConfirmCancel();
+          setConfirmOpen(isOpen)
+          if (!isOpen) handleConfirmCancel()
         }}
       >
         <AlertDialogContent>
@@ -382,21 +391,18 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
               Remove {confirmLabel} configurations?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete all {confirmFolders} folders
-              from the marketplace root and every plugin directory.
+              This will permanently delete all {confirmFolders} folders from the
+              marketplace root and every plugin directory.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleConfirm}
-            >
+            <AlertDialogAction variant="destructive" onClick={handleConfirm}>
               Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
+  )
 }

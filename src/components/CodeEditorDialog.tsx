@@ -56,12 +56,16 @@ export function CodeEditorDialog({
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const isMarkdown = language === "markdown";
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevOpen !== open || prevValue !== value) {
+    setPrevOpen(open);
+    setPrevValue(value);
     if (open) {
       setDraft(value);
       setError(null);
     }
-  }, [open, value]);
+  }
 
   const handleEditorMount: OnMount = useCallback((editor) => {
     editorRef.current = editor;

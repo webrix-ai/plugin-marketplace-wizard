@@ -2,6 +2,11 @@
   <img alt="Plugin Marketplace Wizard" src="assets/Banner.png" width="100%">
 </picture>
 
+[![CI](https://github.com/webrix-ai/plugin-marketplace-wizard/actions/workflows/ci.yml/badge.svg)](https://github.com/webrix-ai/plugin-marketplace-wizard/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/plugin-marketplace-wizard)](https://www.npmjs.com/package/plugin-marketplace-wizard)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
 <h1 align="center">Plugin Marketplace Wizard</h1>
 
 <p align="center">
@@ -199,6 +204,10 @@ This starts the Next.js dev server directly. To test via the CLI path instead:
 ```bash
 node bin/cli.mjs start
 ```
+
+Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
+
+For security issues, see [SECURITY.md](SECURITY.md).
 
 **Before submitting a PR:**
 

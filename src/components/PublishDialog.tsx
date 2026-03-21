@@ -44,6 +44,7 @@ export function PublishDialog({ open, onClose }: Props) {
 
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase("idle");
     setResult(null);
     setGitStatus({ status: "loading" });
