@@ -41,7 +41,7 @@ jobs:
 
       - name: Format check
         if: matrix.node-version == 22 # format is version-agnostic, run once on latest
-        run: pnpm format:checks
+        run: pnpm format:check
 
       - name: Test
         run: pnpm test
