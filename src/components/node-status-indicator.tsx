@@ -1,22 +1,22 @@
-import { type ReactNode } from "react";
-import { LoaderCircle } from "lucide-react";
+import { type ReactNode } from "react"
+import { LoaderCircle } from "lucide-react"
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
-export type NodeStatus = "loading" | "success" | "error" | "initial";
+export type NodeStatus = "loading" | "success" | "error" | "initial"
 
-export type NodeStatusVariant = "overlay" | "border";
+export type NodeStatusVariant = "overlay" | "border"
 
 export type NodeStatusIndicatorProps = {
-  status?: NodeStatus;
-  variant?: NodeStatusVariant;
-  children: ReactNode;
-};
+  status?: NodeStatus
+  variant?: NodeStatusVariant
+  children: ReactNode
+}
 
 export const SpinnerLoadingIndicator = ({
   children,
 }: {
-  children: ReactNode;
+  children: ReactNode
 }) => {
   return (
     <div className="relative">
@@ -29,13 +29,13 @@ export const SpinnerLoadingIndicator = ({
         <LoaderCircle className="absolute top-[calc(50%-0.75rem)] left-[calc(50%-0.75rem)] size-6 animate-spin text-blue-700" />
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const BorderLoadingIndicator = ({
   children,
 }: {
-  children: ReactNode;
+  children: ReactNode
 }) => {
   return (
     <>
@@ -63,15 +63,15 @@ export const BorderLoadingIndicator = ({
       </div>
       {children}
     </>
-  );
-};
+  )
+}
 
 const StatusBorder = ({
   children,
   className,
 }: {
-  children: ReactNode;
-  className?: string;
+  children: ReactNode
+  className?: string
 }) => {
   return (
     <>
@@ -83,8 +83,8 @@ const StatusBorder = ({
       />
       {children}
     </>
-  );
-};
+  )
+}
 
 export const NodeStatusIndicator = ({
   status,
@@ -95,19 +95,19 @@ export const NodeStatusIndicator = ({
     case "loading":
       switch (variant) {
         case "overlay":
-          return <SpinnerLoadingIndicator>{children}</SpinnerLoadingIndicator>;
+          return <SpinnerLoadingIndicator>{children}</SpinnerLoadingIndicator>
         case "border":
-          return <BorderLoadingIndicator>{children}</BorderLoadingIndicator>;
+          return <BorderLoadingIndicator>{children}</BorderLoadingIndicator>
         default:
-          return <>{children}</>;
+          return <>{children}</>
       }
     case "success":
       return (
         <StatusBorder className="border-emerald-600">{children}</StatusBorder>
-      );
+      )
     case "error":
-      return <StatusBorder className="border-red-400">{children}</StatusBorder>;
+      return <StatusBorder className="border-red-400">{children}</StatusBorder>
     default:
-      return <>{children}</>;
+      return <>{children}</>
   }
-};
+}

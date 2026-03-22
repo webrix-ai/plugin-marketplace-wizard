@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import { useRef, useCallback } from "react";
-import { Search, Loader2 } from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import type { DetailItem } from "@/components/DetailPanel";
-import { Input } from "@/components/ui/input";
-import { RegistryMcpItem, RegistrySkillItem } from "./SidebarItems";
+import { useRef, useCallback } from "react"
+import { Search, Loader2 } from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import type { DetailItem } from "@/components/DetailPanel"
+import { Input } from "@/components/ui/input"
+import { RegistryMcpItem, RegistrySkillItem } from "./SidebarItems"
 
 export function RegistryContent({
   tab,
   onSelectItem,
 }: {
-  tab: "mcps" | "skills";
-  onSelectItem: (item: DetailItem) => void;
+  tab: "mcps" | "skills"
+  onSelectItem: (item: DetailItem) => void
 }) {
   const {
     registryMcps,
@@ -24,21 +24,21 @@ export function RegistryContent({
     setRegistryQuery,
     searchRegistryMcps,
     searchRegistrySkills,
-  } = useWizardStore();
+  } = useWizardStore()
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const handleSearch = useCallback(
     (value: string) => {
-      setRegistryQuery(value);
-      clearTimeout(debounceRef.current);
+      setRegistryQuery(value)
+      clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
-        searchRegistryMcps(value);
-        searchRegistrySkills(value);
-      }, 350);
+        searchRegistryMcps(value)
+        searchRegistrySkills(value)
+      }, 350)
     },
-    [setRegistryQuery, searchRegistryMcps, searchRegistrySkills]
-  );
+    [setRegistryQuery, searchRegistryMcps, searchRegistrySkills],
+  )
 
   return (
     <>
@@ -48,23 +48,29 @@ export function RegistryContent({
           <Input
             value={registryQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder={tab === "mcps" ? "Search MCP registry..." : "Search skills.sh..."}
+            placeholder={
+              tab === "mcps" ? "Search MCP registry..." : "Search skills.sh..."
+            }
             className="h-8 pl-8 text-xs"
           />
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {tab === "mcps" && (
-          registryMcpsLoading ? (
+        {tab === "mcps" &&
+          (registryMcpsLoading ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="size-4 animate-spin text-emerald-500" />
-              <span className="ml-2 text-[11px] text-muted-foreground">Loading registry...</span>
+              <span className="ml-2 text-[11px] text-muted-foreground">
+                Loading registry...
+              </span>
             </div>
           ) : registryMcps.length === 0 ? (
             <div className="px-3 py-6 text-center">
               <p className="text-[11px] text-muted-foreground">
-                {registryQuery.length >= 2 ? "No MCPs match your search" : "Type at least 2 characters to search"}
+                {registryQuery.length >= 2
+                  ? "No MCPs match your search"
+                  : "Type at least 2 characters to search"}
               </p>
             </div>
           ) : (
@@ -73,7 +79,9 @@ export function RegistryContent({
                 <RegistryMcpItem
                   key={server.name + server.version}
                   server={server}
-                  onSelect={() => onSelectItem({ kind: "registry-mcp", data: server })}
+                  onSelect={() =>
+                    onSelectItem({ kind: "registry-mcp", data: server })
+                  }
                 />
               ))}
               {registryMcpsTotal > registryMcps.length && (
@@ -82,19 +90,22 @@ export function RegistryContent({
                 </p>
               )}
             </div>
-          )
-        )}
+          ))}
 
-        {tab === "skills" && (
-          registrySkillsLoading ? (
+        {tab === "skills" &&
+          (registrySkillsLoading ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="size-4 animate-spin text-violet-500" />
-              <span className="ml-2 text-[11px] text-muted-foreground">Searching skills...</span>
+              <span className="ml-2 text-[11px] text-muted-foreground">
+                Searching skills...
+              </span>
             </div>
           ) : registrySkills.length === 0 ? (
             <div className="px-3 py-6 text-center">
               <p className="text-[11px] text-muted-foreground">
-                {registryQuery.length >= 2 ? "No skills match your search" : "Type at least 2 characters to search"}
+                {registryQuery.length >= 2
+                  ? "No skills match your search"
+                  : "Type at least 2 characters to search"}
               </p>
             </div>
           ) : (
@@ -103,13 +114,14 @@ export function RegistryContent({
                 <RegistrySkillItem
                   key={entry.id}
                   entry={entry}
-                  onSelect={() => onSelectItem({ kind: "registry-skill", data: entry })}
+                  onSelect={() =>
+                    onSelectItem({ kind: "registry-skill", data: entry })
+                  }
                 />
               ))}
             </div>
-          )
-        )}
+          ))}
       </div>
     </>
-  );
+  )
 }

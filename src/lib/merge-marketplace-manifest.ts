@@ -2,30 +2,30 @@ import type {
   MarketplaceManifest,
   MarketplaceSettings,
   PluginSource,
-} from "./marketplace-schema";
-import type { PluginData } from "./types";
+} from "./marketplace-schema"
+import type { PluginData } from "./types"
 
 function normalizeSourceOverride(
   slug: string,
-  source: PluginSource | undefined
+  source: PluginSource | undefined,
 ): string | Record<string, unknown> | undefined {
-  if (source === undefined) return undefined;
+  if (source === undefined) return undefined
   if (typeof source === "string") {
-    if (source === slug || source === `./plugins/${slug}`) return undefined;
-    return source;
+    if (source === slug || source === `./plugins/${slug}`) return undefined
+    return source
   }
-  return source;
+  return source
 }
 
 export function mergePluginsWithManifest(
   plugins: PluginData[],
-  manifest: MarketplaceManifest | null | undefined
+  manifest: MarketplaceManifest | null | undefined,
 ): PluginData[] {
-  if (!manifest?.plugins?.length) return plugins;
-  const byName = new Map(manifest.plugins.map((p) => [p.name, p]));
+  if (!manifest?.plugins?.length) return plugins
+  const byName = new Map(manifest.plugins.map((p) => [p.name, p]))
   return plugins.map((pl) => {
-    const entry = byName.get(pl.slug);
-    if (!entry) return pl;
+    const entry = byName.get(pl.slug)
+    if (!entry) return pl
     return {
       ...pl,
       description: entry.description ?? pl.description,
@@ -41,11 +41,13 @@ export function mergePluginsWithManifest(
       tags: entry.tags ?? pl.tags,
       strict: entry.strict ?? pl.strict,
       sourceOverride: normalizeSourceOverride(pl.slug, entry.source),
-    };
-  });
+    }
+  })
 }
 
-export function settingsFromManifest(manifest: MarketplaceManifest): MarketplaceSettings {
+export function settingsFromManifest(
+  manifest: MarketplaceManifest,
+): MarketplaceSettings {
   return {
     name: manifest.name,
     owner: {
@@ -56,5 +58,5 @@ export function settingsFromManifest(manifest: MarketplaceManifest): Marketplace
       description: manifest.metadata?.description,
       version: manifest.metadata?.version,
     },
-  };
+  }
 }

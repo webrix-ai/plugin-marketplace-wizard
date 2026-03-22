@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Package } from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import { slugify } from "@/lib/utils";
+import { useState } from "react"
+import { Package } from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import { slugify } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -11,43 +11,43 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 
 interface Props {
-  open: boolean;
-  onClose: () => void;
-  position?: { x: number; y: number };
+  open: boolean
+  onClose: () => void
+  position?: { x: number; y: number }
 }
 
 export function CreatePluginDialog({ open, onClose, position }: Props) {
-  const { addPlugin, setSelectedPluginId } = useWizardStore();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const { addPlugin, setSelectedPluginId } = useWizardStore()
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
 
-  const slug = slugify(name);
-  const isValidSlug = slug.length > 0 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+  const slug = slugify(name)
+  const isValidSlug = slug.length > 0 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isValidSlug) return;
-    const id = addPlugin(slug, description.trim(), position);
-    setSelectedPluginId(id);
-    setName("");
-    setDescription("");
-    onClose();
-  };
+    e.preventDefault()
+    if (!isValidSlug) return
+    const id = addPlugin(slug, description.trim(), position)
+    setSelectedPluginId(id)
+    setName("")
+    setDescription("")
+    onClose()
+  }
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setName("");
-      setDescription("");
-      onClose();
+      setName("")
+      setDescription("")
+      onClose()
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -122,5 +122,5 @@ export function CreatePluginDialog({ open, onClose, position }: Props) {
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

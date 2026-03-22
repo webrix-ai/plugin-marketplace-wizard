@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import { memo } from "react";
-import type { NodeProps, Node } from "@xyflow/react";
+import { memo } from "react"
+import type { NodeProps, Node } from "@xyflow/react"
 
-export type CategoryGroupData = { label: string };
-export type CategoryGroupNodeType = Node<CategoryGroupData, "categoryGroup">;
+export type CategoryGroupData = { label: string }
+export type CategoryGroupNodeType = Node<CategoryGroupData, "categoryGroup">
 
 function CategoryGroupNode({ data }: NodeProps<CategoryGroupNodeType>) {
   return (
@@ -15,7 +15,7 @@ function CategoryGroupNode({ data }: NodeProps<CategoryGroupNodeType>) {
         </span>
       </div>
     </div>
-  );
+  )
 }
 
-export default memo(CategoryGroupNode);
+export default memo(CategoryGroupNode)

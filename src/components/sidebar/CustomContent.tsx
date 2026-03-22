@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 import {
   Search,
   Loader2,
@@ -10,14 +10,23 @@ import {
   Link,
   AlertCircle,
   Github,
-} from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
-import type { CustomRegistry, CustomSkillRepo, CustomGitHubSkill, Skill } from "@/lib/types";
-import type { DetailItem } from "@/components/DetailPanel";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { RegistryMcpItem, CustomGitHubSkillItem, CollapsibleSection } from "./SidebarItems";
+} from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import { cn } from "@/lib/utils"
+import type {
+  CustomRegistry,
+  CustomSkillRepo,
+  CustomGitHubSkill,
+  Skill,
+} from "@/lib/types"
+import type { DetailItem } from "@/components/DetailPanel"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  RegistryMcpItem,
+  CustomGitHubSkillItem,
+  CollapsibleSection,
+} from "./SidebarItems"
 
 function CustomRegistrySection({
   registry,
@@ -25,21 +34,21 @@ function CustomRegistrySection({
   onRemove,
   onRefresh,
 }: {
-  registry: CustomRegistry;
-  onSelectItem: (item: DetailItem) => void;
-  onRemove: () => void;
-  onRefresh: () => void;
+  registry: CustomRegistry
+  onSelectItem: (item: DetailItem) => void
+  onRemove: () => void
+  onRefresh: () => void
 }) {
   const filteredServers = useWizardStore((s) => {
-    const q = s.customRegistryQuery.toLowerCase();
-    if (!q) return registry.servers;
+    const q = s.customRegistryQuery.toLowerCase()
+    if (!q) return registry.servers
     return registry.servers.filter(
       (srv) =>
         srv.name?.toLowerCase().includes(q) ||
         srv.description?.toLowerCase().includes(q) ||
-        srv.title?.toLowerCase().includes(q)
-    );
-  });
+        srv.title?.toLowerCase().includes(q),
+    )
+  })
 
   return (
     <CollapsibleSection
@@ -47,7 +56,9 @@ function CustomRegistrySection({
       count={registry.loading ? -1 : filteredServers.length}
     >
       <div className="mb-1 flex items-center gap-1 px-1">
-        <span className="truncate text-[9px] text-muted-foreground/70">{registry.url}</span>
+        <span className="truncate text-[9px] text-muted-foreground/70">
+          {registry.url}
+        </span>
         <Button
           variant="ghost"
           size="sm"
@@ -55,7 +66,9 @@ function CustomRegistrySection({
           onClick={onRefresh}
           disabled={registry.loading}
         >
-          <RefreshCw className={cn("size-3", registry.loading && "animate-spin")} />
+          <RefreshCw
+            className={cn("size-3", registry.loading && "animate-spin")}
+          />
         </Button>
         <Button
           variant="ghost"
@@ -70,13 +83,20 @@ function CustomRegistrySection({
       {registry.loading ? (
         <div className="flex items-center justify-center py-6">
           <Loader2 className="size-4 animate-spin text-emerald-500" />
-          <span className="ml-2 text-[11px] text-muted-foreground">Connecting...</span>
+          <span className="ml-2 text-[11px] text-muted-foreground">
+            Connecting...
+          </span>
         </div>
       ) : registry.error ? (
         <div className="flex flex-col items-center gap-1.5 px-3 py-4 text-center">
           <AlertCircle className="size-4 text-destructive" />
           <p className="text-[11px] text-destructive">{registry.error}</p>
-          <Button variant="outline" size="sm" className="mt-1 h-6 text-[10px]" onClick={onRefresh}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-1 h-6 text-[10px]"
+            onClick={onRefresh}
+          >
             Retry
           </Button>
         </div>
@@ -90,7 +110,9 @@ function CustomRegistrySection({
             <RegistryMcpItem
               key={server.name + server.version}
               server={server}
-              onSelect={() => onSelectItem({ kind: "registry-mcp", data: server })}
+              onSelect={() =>
+                onSelectItem({ kind: "registry-mcp", data: server })
+              }
             />
           ))}
           {registry.total > filteredServers.length && (
@@ -101,7 +123,7 @@ function CustomRegistrySection({
         </>
       )}
     </CollapsibleSection>
-  );
+  )
 }
 
 function CustomSkillRepoSection({
@@ -110,12 +132,13 @@ function CustomSkillRepoSection({
   onRemove,
   onRefresh,
 }: {
-  repo: CustomSkillRepo;
-  onSelectItem: (item: DetailItem) => void;
-  onRemove: () => void;
-  onRefresh: () => void;
+  repo: CustomSkillRepo
+  onSelectItem: (item: DetailItem) => void
+  onRemove: () => void
+  onRefresh: () => void
 }) {
-  const title = repo.owner && repo.repo ? `${repo.owner}/${repo.repo}` : repo.url;
+  const title =
+    repo.owner && repo.repo ? `${repo.owner}/${repo.repo}` : repo.url
 
   function ghSkillToLocal(skill: CustomGitHubSkill): Skill {
     return {
@@ -126,7 +149,7 @@ function CustomSkillRepoSection({
       sourceFilePath: `${skill.repository}/tree/HEAD/skills/${skill.dirName}`,
       scope: "global",
       content: skill.content,
-    };
+    }
   }
 
   return (
@@ -135,7 +158,9 @@ function CustomSkillRepoSection({
       count={repo.loading ? -1 : repo.skills.length}
     >
       <div className="mb-1 flex items-center gap-1 px-1">
-        <span className="truncate text-[9px] text-muted-foreground/70">{repo.url}</span>
+        <span className="truncate text-[9px] text-muted-foreground/70">
+          {repo.url}
+        </span>
         <Button
           variant="ghost"
           size="sm"
@@ -158,19 +183,28 @@ function CustomSkillRepoSection({
       {repo.loading ? (
         <div className="flex items-center justify-center py-6">
           <Loader2 className="size-4 animate-spin text-violet-500" />
-          <span className="ml-2 text-[11px] text-muted-foreground">Loading skills...</span>
+          <span className="ml-2 text-[11px] text-muted-foreground">
+            Loading skills...
+          </span>
         </div>
       ) : repo.error ? (
         <div className="flex flex-col items-center gap-1.5 px-3 py-4 text-center">
           <AlertCircle className="size-4 text-destructive" />
           <p className="text-[11px] text-destructive">{repo.error}</p>
-          <Button variant="outline" size="sm" className="mt-1 h-6 text-[10px]" onClick={onRefresh}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-1 h-6 text-[10px]"
+            onClick={onRefresh}
+          >
             Retry
           </Button>
         </div>
       ) : repo.skills.length === 0 ? (
         <div className="px-3 py-4 text-center">
-          <p className="text-[11px] text-muted-foreground">No skills found in skills/ folder</p>
+          <p className="text-[11px] text-muted-foreground">
+            No skills found in skills/ folder
+          </p>
         </div>
       ) : (
         <>
@@ -189,15 +223,15 @@ function CustomSkillRepoSection({
         </>
       )}
     </CollapsibleSection>
-  );
+  )
 }
 
 export function CustomContent({
   tab,
   onSelectItem,
 }: {
-  tab: "mcps" | "skills";
-  onSelectItem: (item: DetailItem) => void;
+  tab: "mcps" | "skills"
+  onSelectItem: (item: DetailItem) => void
 }) {
   const {
     customRegistries,
@@ -210,19 +244,19 @@ export function CustomContent({
     addCustomSkillRepo,
     removeCustomSkillRepo,
     refreshCustomSkillRepo,
-  } = useWizardStore();
+  } = useWizardStore()
 
-  const [newUrl, setNewUrl] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
+  const [newUrl, setNewUrl] = useState("")
+  const [isAdding, setIsAdding] = useState(false)
 
   if (tab === "skills") {
     const handleAddRepo = async () => {
-      if (!newUrl.trim()) return;
-      setIsAdding(true);
-      await addCustomSkillRepo(newUrl);
-      setNewUrl("");
-      setIsAdding(false);
-    };
+      if (!newUrl.trim()) return
+      setIsAdding(true)
+      await addCustomSkillRepo(newUrl)
+      setNewUrl("")
+      setIsAdding(false)
+    }
 
     return (
       <>
@@ -234,7 +268,7 @@ export function CustomContent({
               placeholder="github.com/owner/repo"
               className="h-8 text-xs"
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddRepo();
+                if (e.key === "Enter") handleAddRepo()
               }}
             />
             <Button
@@ -243,7 +277,11 @@ export function CustomContent({
               onClick={handleAddRepo}
               disabled={!newUrl.trim() || isAdding}
             >
-              {isAdding ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
+              {isAdding ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Plus className="size-3" />
+              )}
               Add
             </Button>
           </div>
@@ -253,7 +291,9 @@ export function CustomContent({
           {customSkillRepos.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
               <Github className="size-6 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">No custom skill repos</p>
+              <p className="text-xs text-muted-foreground">
+                No custom skill repos
+              </p>
               <p className="text-[10px] text-muted-foreground/70">
                 Add a GitHub repo URL with a skills/ folder in the root
               </p>
@@ -273,16 +313,16 @@ export function CustomContent({
           )}
         </div>
       </>
-    );
+    )
   }
 
   const handleAdd = async () => {
-    if (!newUrl.trim()) return;
-    setIsAdding(true);
-    await addCustomRegistry(newUrl);
-    setNewUrl("");
-    setIsAdding(false);
-  };
+    if (!newUrl.trim()) return
+    setIsAdding(true)
+    await addCustomRegistry(newUrl)
+    setNewUrl("")
+    setIsAdding(false)
+  }
 
   return (
     <>
@@ -294,7 +334,7 @@ export function CustomContent({
             placeholder="https://registry.example.com"
             className="h-8 text-xs"
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleAdd();
+              if (e.key === "Enter") handleAdd()
             }}
           />
           <Button
@@ -303,7 +343,11 @@ export function CustomContent({
             onClick={handleAdd}
             disabled={!newUrl.trim() || isAdding}
           >
-            {isAdding ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
+            {isAdding ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <Plus className="size-3" />
+            )}
             Add
           </Button>
         </div>
@@ -325,7 +369,9 @@ export function CustomContent({
         {customRegistries.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
             <Link className="size-6 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">No custom registries</p>
+            <p className="text-xs text-muted-foreground">
+              No custom registries
+            </p>
             <p className="text-[10px] text-muted-foreground/70">
               Add a registry URL that implements the MCP Server Registry API
             </p>
@@ -345,5 +391,5 @@ export function CustomContent({
         )}
       </div>
     </>
-  );
+  )
 }

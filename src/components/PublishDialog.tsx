@@ -1,7 +1,13 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useState } from "react";
-import { Github, Loader2, CheckCircle2, AlertCircle, GitBranch } from "lucide-react";
+import { useCallback, useEffect, useState } from "react"
+import {
+  Github,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  GitBranch,
+} from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -9,83 +15,81 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface Props {
-  open: boolean;
-  onClose: () => void;
+  open: boolean
+  onClose: () => void
 }
 
 type GitStatus =
   | { status: "loading" }
   | { status: "no-git" }
   | { status: "no-remote" }
-  | { status: "ready"; remoteUrl: string };
+  | { status: "ready"; remoteUrl: string }
 
-type PublishPhase =
-  | "idle"
-  | "pushing"
-  | "success"
-  | "error";
+type PublishPhase = "idle" | "pushing" | "success" | "error"
 
 interface PublishResult {
-  message?: string;
-  branch?: string;
-  commitMessage?: string;
-  remoteUrl?: string;
-  error?: string;
+  message?: string
+  branch?: string
+  commitMessage?: string
+  remoteUrl?: string
+  error?: string
 }
 
 export function PublishDialog({ open, onClose }: Props) {
-  const [gitStatus, setGitStatus] = useState<GitStatus>({ status: "loading" });
-  const [phase, setPhase] = useState<PublishPhase>("idle");
-  const [result, setResult] = useState<PublishResult | null>(null);
+  const [gitStatus, setGitStatus] = useState<GitStatus>({ status: "loading" })
+  const [phase, setPhase] = useState<PublishPhase>("idle")
+  const [result, setResult] = useState<PublishResult | null>(null)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPhase("idle");
-    setResult(null);
-    setGitStatus({ status: "loading" });
+    setPhase("idle")
+    setResult(null)
+    setGitStatus({ status: "loading" })
 
     fetch("/api/publish")
       .then((r) => r.json())
       .then((data) => {
-        if (data.status === "no-git") setGitStatus({ status: "no-git" });
-        else if (data.status === "no-remote") setGitStatus({ status: "no-remote" });
-        else setGitStatus({ status: "ready", remoteUrl: data.remoteUrl });
+        if (data.status === "no-git") setGitStatus({ status: "no-git" })
+        else if (data.status === "no-remote")
+          setGitStatus({ status: "no-remote" })
+        else setGitStatus({ status: "ready", remoteUrl: data.remoteUrl })
       })
-      .catch(() => setGitStatus({ status: "no-git" }));
-  }, [open]);
+      .catch(() => setGitStatus({ status: "no-git" }))
+  }, [open])
 
   const handlePublish = useCallback(async () => {
-    setPhase("pushing");
+    setPhase("pushing")
     try {
-      const res = await fetch("/api/publish", { method: "POST" });
-      const data = await res.json();
+      const res = await fetch("/api/publish", { method: "POST" })
+      const data = await res.json()
       if (!res.ok) {
-        setPhase("error");
-        setResult({ error: data.error ?? "Unknown error" });
-        return;
+        setPhase("error")
+        setResult({ error: data.error ?? "Unknown error" })
+        return
       }
-      setPhase("success");
-      setResult(data);
+      setPhase("success")
+      setResult(data)
     } catch (e) {
-      setPhase("error");
-      setResult({ error: e instanceof Error ? e.message : "Network error" });
+      setPhase("error")
+      setResult({ error: e instanceof Error ? e.message : "Network error" })
     }
-  }, []);
+  }, [])
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen && phase !== "pushing") onClose();
-  };
+    if (!isOpen && phase !== "pushing") onClose()
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         {gitStatus.status === "loading" && <LoadingState />}
-        {(gitStatus.status === "no-git" || gitStatus.status === "no-remote") && (
+        {(gitStatus.status === "no-git" ||
+          gitStatus.status === "no-remote") && (
           <NoRepoState onClose={onClose} />
         )}
         {gitStatus.status === "ready" && (
@@ -99,7 +103,7 @@ export function PublishDialog({ open, onClose }: Props) {
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 function LoadingState() {
@@ -115,7 +119,7 @@ function LoadingState() {
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     </>
-  );
+  )
 }
 
 function NoRepoState({ onClose }: { onClose: () => void }) {
@@ -137,8 +141,8 @@ function NoRepoState({ onClose }: { onClose: () => void }) {
 
       <div className="flex flex-col gap-3 text-sm text-muted-foreground">
         <p>
-          This directory doesn&apos;t have a remote git repository configured. To
-          publish your marketplace, connect it to GitHub first:
+          This directory doesn&apos;t have a remote git repository configured.
+          To publish your marketplace, connect it to GitHub first:
         </p>
         <ol className="flex flex-col gap-1.5 pl-5 list-decimal text-xs">
           <li>
@@ -168,7 +172,7 @@ function NoRepoState({ onClose }: { onClose: () => void }) {
         </Button>
       </DialogFooter>
     </>
-  );
+  )
 }
 
 function ReadyState({
@@ -178,11 +182,11 @@ function ReadyState({
   onPublish,
   onClose,
 }: {
-  remoteUrl: string;
-  phase: PublishPhase;
-  result: PublishResult | null;
-  onPublish: () => void;
-  onClose: () => void;
+  remoteUrl: string
+  phase: PublishPhase
+  result: PublishResult | null
+  onPublish: () => void
+  onClose: () => void
 }) {
   return (
     <>
@@ -271,5 +275,5 @@ function ReadyState({
         )}
       </DialogFooter>
     </>
-  );
+  )
 }

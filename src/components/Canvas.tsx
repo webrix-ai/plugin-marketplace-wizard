@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useRef, useMemo } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react"
 import {
   ReactFlow,
   Background,
@@ -10,59 +10,62 @@ import {
   useReactFlow,
   type OnNodesChange,
   BackgroundVariant,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import { Plus, Loader2 } from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import { slugify } from "@/lib/utils";
-import PluginNodeComponent from "./PluginNode";
-import type { PluginNodeType } from "./PluginNode";
-import CategoryGroupNodeComponent from "./CategoryGroupNode";
-import type { CategoryGroupNodeType } from "./CategoryGroupNode";
-import { PluginSearch } from "./PluginSearch";
-import type { DragPayload, PluginData, RegistrySkillEntry } from "@/lib/types";
+} from "@xyflow/react"
+import "@xyflow/react/dist/style.css"
+import { Plus, Loader2 } from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import { slugify } from "@/lib/utils"
+import PluginNodeComponent from "./PluginNode"
+import type { PluginNodeType } from "./PluginNode"
+import CategoryGroupNodeComponent from "./CategoryGroupNode"
+import type { CategoryGroupNodeType } from "./CategoryGroupNode"
+import { PluginSearch } from "./PluginSearch"
+import type { DragPayload, PluginData, RegistrySkillEntry } from "@/lib/types"
 
-type CanvasNode = PluginNodeType | CategoryGroupNodeType;
+type CanvasNode = PluginNodeType | CategoryGroupNodeType
 
 const nodeTypes = {
   plugin: PluginNodeComponent,
   categoryGroup: CategoryGroupNodeComponent,
-};
+}
 
-const GROUP_COLS = 3;
-const PLUGIN_SPACING_X = 370;
-const PLUGIN_SPACING_Y = 400;
-const PLUGIN_W = 320;
-const PLUGIN_H_ESTIMATE = 320;
-const GROUP_PAD_TOP = 70;
-const GROUP_PAD_X = 50;
-const GROUP_PAD_BOTTOM = 50;
-const GROUP_GAP = 80;
+const GROUP_COLS = 3
+const PLUGIN_SPACING_X = 370
+const PLUGIN_SPACING_Y = 400
+const PLUGIN_W = 320
+const PLUGIN_H_ESTIMATE = 320
+const GROUP_PAD_TOP = 70
+const GROUP_PAD_X = 50
+const GROUP_PAD_BOTTOM = 50
+const GROUP_GAP = 80
 
-const UNGROUPED_OFFSET_X = 60;
-const UNGROUPED_OFFSET_Y = 160;
+const UNGROUPED_OFFSET_X = 60
+const UNGROUPED_OFFSET_Y = 160
 
 function gridPosition(index: number, yOffset = 0) {
-  const col = index % GROUP_COLS;
-  const row = Math.floor(index / GROUP_COLS);
+  const col = index % GROUP_COLS
+  const row = Math.floor(index / GROUP_COLS)
   return {
     x: col * PLUGIN_SPACING_X + UNGROUPED_OFFSET_X,
     y: yOffset + row * PLUGIN_SPACING_Y + UNGROUPED_OFFSET_Y,
-  };
+  }
 }
 
-function findNodeAtPoint(e: React.DragEvent, currentNodes: readonly { id: string }[]) {
+function findNodeAtPoint(
+  e: React.DragEvent,
+  currentNodes: readonly { id: string }[],
+) {
   return currentNodes.find((node) => {
-    const el = document.querySelector(`[data-id="${node.id}"]`);
-    if (!el) return false;
-    const rect = el.getBoundingClientRect();
+    const el = document.querySelector(`[data-id="${node.id}"]`)
+    if (!el) return false
+    const rect = el.getBoundingClientRect()
     return (
       e.clientX >= rect.left &&
       e.clientX <= rect.right &&
       e.clientY >= rect.top &&
       e.clientY <= rect.bottom
-    );
-  });
+    )
+  })
 }
 
 function PluginSkeleton({ style }: { style?: React.CSSProperties }) {
@@ -94,7 +97,7 @@ function PluginSkeleton({ style }: { style?: React.CSSProperties }) {
         <div className="h-2 w-12 rounded bg-muted/40" />
       </div>
     </div>
-  );
+  )
 }
 
 export function Canvas() {
@@ -106,42 +109,47 @@ export function Canvas() {
     updateSkillInPlugin,
     fetchRegistrySkillContent,
     importSkillFileToPlugin,
-  } = useWizardStore();
-  const isPluginsLoading = useWizardStore((s) => s.isPluginsLoading);
-  const layoutVersion = useWizardStore((s) => s._layoutVersion);
-  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>([]);
-  const { screenToFlowPosition, getNodes } = useReactFlow();
-  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
-  const prevLayoutVersionRef = useRef(layoutVersion);
+  } = useWizardStore()
+  const isPluginsLoading = useWizardStore((s) => s.isPluginsLoading)
+  const layoutVersion = useWizardStore((s) => s._layoutVersion)
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>([])
+  const { screenToFlowPosition, getNodes } = useReactFlow()
+  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map())
+  const prevLayoutVersionRef = useRef(layoutVersion)
 
   useEffect(() => {
     if (prevLayoutVersionRef.current !== layoutVersion) {
-      positionsRef.current.clear();
-      prevLayoutVersionRef.current = layoutVersion;
+      positionsRef.current.clear()
+      prevLayoutVersionRef.current = layoutVersion
     }
     setNodes(() => {
-      const byCategory = new Map<string, PluginData[]>();
-      const uncategorized: PluginData[] = [];
+      const byCategory = new Map<string, PluginData[]>()
+      const uncategorized: PluginData[] = []
 
       for (const plugin of plugins) {
-        const cat = plugin.category?.trim();
+        const cat = plugin.category?.trim()
         if (cat) {
-          if (!byCategory.has(cat)) byCategory.set(cat, []);
-          byCategory.get(cat)!.push(plugin);
+          if (!byCategory.has(cat)) byCategory.set(cat, [])
+          byCategory.get(cat)!.push(plugin)
         } else {
-          uncategorized.push(plugin);
+          uncategorized.push(plugin)
         }
       }
 
-      const result: CanvasNode[] = [];
-      let offsetY = 0;
+      const result: CanvasNode[] = []
+      let offsetY = 0
 
       for (const [category, catPlugins] of byCategory) {
-        const groupId = `group:${category}`;
-        const cols = Math.min(catPlugins.length, GROUP_COLS);
-        const rows = Math.ceil(catPlugins.length / GROUP_COLS);
-        const w = GROUP_PAD_X + (cols - 1) * PLUGIN_SPACING_X + PLUGIN_W + GROUP_PAD_X;
-        const h = GROUP_PAD_TOP + (rows - 1) * PLUGIN_SPACING_Y + PLUGIN_H_ESTIMATE + GROUP_PAD_BOTTOM;
+        const groupId = `group:${category}`
+        const cols = Math.min(catPlugins.length, GROUP_COLS)
+        const rows = Math.ceil(catPlugins.length / GROUP_COLS)
+        const w =
+          GROUP_PAD_X + (cols - 1) * PLUGIN_SPACING_X + PLUGIN_W + GROUP_PAD_X
+        const h =
+          GROUP_PAD_TOP +
+          (rows - 1) * PLUGIN_SPACING_Y +
+          PLUGIN_H_ESTIMATE +
+          GROUP_PAD_BOTTOM
 
         result.push({
           id: groupId,
@@ -151,11 +159,11 @@ export function Canvas() {
           style: { width: w, height: h },
           draggable: true,
           selectable: false,
-        } as CategoryGroupNodeType);
+        } as CategoryGroupNodeType)
 
         catPlugins.forEach((plugin, idx) => {
-          const col = idx % GROUP_COLS;
-          const row = Math.floor(idx / GROUP_COLS);
+          const col = idx % GROUP_COLS
+          const row = Math.floor(idx / GROUP_COLS)
           result.push({
             id: plugin.id,
             type: "plugin" as const,
@@ -166,111 +174,122 @@ export function Canvas() {
             parentId: groupId,
             extent: "parent" as const,
             data: plugin,
-          } as PluginNodeType);
-        });
+          } as PluginNodeType)
+        })
 
-        offsetY += h + GROUP_GAP;
+        offsetY += h + GROUP_GAP
       }
 
       uncategorized.forEach((plugin, idx) => {
-        const existing = positionsRef.current.get(plugin.id);
+        const existing = positionsRef.current.get(plugin.id)
         result.push({
           id: plugin.id,
           type: "plugin" as const,
-          position: existing || gridPosition(idx, byCategory.size > 0 ? offsetY : 0),
+          position:
+            existing || gridPosition(idx, byCategory.size > 0 ? offsetY : 0),
           data: plugin,
-        } as PluginNodeType);
-      });
+        } as PluginNodeType)
+      })
 
-      return result;
-    });
-  }, [plugins, setNodes, layoutVersion]);
+      return result
+    })
+  }, [plugins, setNodes, layoutVersion])
 
   const handleNodesChange: OnNodesChange<CanvasNode> = useCallback(
     (changes) => {
-      onNodesChange(changes);
+      onNodesChange(changes)
       for (const change of changes) {
         if (change.type === "position" && change.position) {
-          positionsRef.current.set(change.id, change.position);
+          positionsRef.current.set(change.id, change.position)
         }
       }
     },
-    [onNodesChange]
-  );
+    [onNodesChange],
+  )
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  }, []);
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "copy"
+  }, [])
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
-      e.preventDefault();
+      e.preventDefault()
 
-      const files = e.dataTransfer.files;
+      const files = e.dataTransfer.files
       const hasSkillFile =
-        files.length > 0 &&
-        /\.(zip|skill)$/i.test(files[0].name);
+        files.length > 0 && /\.(zip|skill)$/i.test(files[0].name)
 
       if (hasSkillFile) {
-        const file = files[0];
-        const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+        const file = files[0]
+        const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY })
 
-        if (findNodeAtPoint(e, getNodes())) return;
+        if (findNodeAtPoint(e, getNodes())) return
 
-        const baseName = file.name.replace(/\.(zip|skill)$/i, "");
-        const pluginId = addPlugin(slugify(`plugin-with-${baseName}`), "");
-        positionsRef.current.set(pluginId, flowPos);
-        setTimeout(() => importSkillFileToPlugin(pluginId, file), 0);
-        return;
+        const baseName = file.name.replace(/\.(zip|skill)$/i, "")
+        const pluginId = addPlugin(slugify(`plugin-with-${baseName}`), "")
+        positionsRef.current.set(pluginId, flowPos)
+        setTimeout(() => importSkillFileToPlugin(pluginId, file), 0)
+        return
       }
 
-      let payload: DragPayload;
+      let payload: DragPayload
       try {
-        const raw = e.dataTransfer.getData("application/json");
-        if (!raw) return;
-        payload = JSON.parse(raw);
+        const raw = e.dataTransfer.getData("application/json")
+        if (!raw) return
+        payload = JSON.parse(raw)
       } catch {
-        return;
+        return
       }
 
-      const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      const flowPos = screenToFlowPosition({ x: e.clientX, y: e.clientY })
 
-      if (findNodeAtPoint(e, getNodes())) return;
+      if (findNodeAtPoint(e, getNodes())) return
 
       const itemName =
         payload.type === "mcp"
           ? (payload.item as PluginData["mcps"][0]).name
-          : (payload.item as PluginData["skills"][0]).name;
+          : (payload.item as PluginData["skills"][0]).name
 
-      const pluginId = addPlugin(slugify(`plugin-with-${itemName}`), "");
+      const pluginId = addPlugin(slugify(`plugin-with-${itemName}`), "")
 
-      positionsRef.current.set(pluginId, flowPos);
+      positionsRef.current.set(pluginId, flowPos)
 
       setTimeout(() => {
         if (payload.type === "mcp") {
-          addMcpToPlugin(pluginId, payload.item as PluginData["mcps"][0]);
+          addMcpToPlugin(pluginId, payload.item as PluginData["mcps"][0])
         } else {
-          const skill = payload.item as PluginData["skills"][0];
-          addSkillToPlugin(pluginId, skill);
+          const skill = payload.item as PluginData["skills"][0]
+          addSkillToPlugin(pluginId, skill)
 
           if (skill._registryEntry) {
-            fetchRegistrySkillContent(skill._registryEntry as RegistrySkillEntry).then((fullSkill) => {
+            fetchRegistrySkillContent(
+              skill._registryEntry as RegistrySkillEntry,
+            ).then((fullSkill) => {
               updateSkillInPlugin(pluginId, skill.id, {
                 content: fullSkill.content,
                 description: fullSkill.description,
                 sourceFilePath: fullSkill.sourceFilePath,
                 files: fullSkill.files,
-              });
-            });
+              })
+            })
           }
         }
-      }, 0);
+      }, 0)
     },
-    [screenToFlowPosition, getNodes, addPlugin, addMcpToPlugin, addSkillToPlugin, fetchRegistrySkillContent, updateSkillInPlugin, importSkillFileToPlugin]
-  );
+    [
+      screenToFlowPosition,
+      getNodes,
+      addPlugin,
+      addMcpToPlugin,
+      addSkillToPlugin,
+      fetchRegistrySkillContent,
+      updateSkillInPlugin,
+      importSkillFileToPlugin,
+    ],
+  )
 
-  const proOptions = useMemo(() => ({ hideAttribution: true }), []);
+  const proOptions = useMemo(() => ({ hideAttribution: true }), [])
 
   return (
     <>
@@ -332,15 +351,17 @@ export function Canvas() {
               <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-muted">
                 <Plus className="size-6 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">No plugins yet</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                No plugins yet
+              </p>
               <p className="mt-1 text-xs text-muted-foreground/70">
-                Use the &quot;New Plugin&quot; button to create one, or drop items from the sidebar
+                Use the &quot;New Plugin&quot; button to create one, or drop
+                items from the sidebar
               </p>
             </div>
           </div>
         )}
-
       </div>
     </>
-  );
+  )
 }

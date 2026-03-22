@@ -1,78 +1,89 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import { Search, Bot } from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import type { DetailItem } from "@/components/DetailPanel";
-import McpLogo from "@/components/logo/McpLogo";
-import SkillLogo from "@/components/logo/SkillLogo";
-import { Input } from "@/components/ui/input";
-import { McpItem, SkillItem, AgentItem, SkeletonItem } from "./SidebarItems";
+import { useMemo } from "react"
+import { Search, Bot } from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import type { DetailItem } from "@/components/DetailPanel"
+import McpLogo from "@/components/logo/McpLogo"
+import SkillLogo from "@/components/logo/SkillLogo"
+import { Input } from "@/components/ui/input"
+import { McpItem, SkillItem, AgentItem, SkeletonItem } from "./SidebarItems"
 
 export function LocalContent({
   tab,
   onSelectItem,
 }: {
-  tab: "mcps" | "skills" | "agents";
-  onSelectItem: (item: DetailItem) => void;
+  tab: "mcps" | "skills" | "agents"
+  onSelectItem: (item: DetailItem) => void
 }) {
-  const { mcpServers, skills, agents, plugins, searchQuery, setSearchQuery, isScanning } =
-    useWizardStore();
+  const {
+    mcpServers,
+    skills,
+    agents,
+    plugins,
+    searchQuery,
+    setSearchQuery,
+    isScanning,
+  } = useWizardStore()
 
   const mcpUsage = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, number>()
     for (const p of plugins) {
       for (const m of p.mcps) {
-        counts.set(m.id, (counts.get(m.id) || 0) + 1);
+        counts.set(m.id, (counts.get(m.id) || 0) + 1)
       }
     }
-    return counts;
-  }, [plugins]);
+    return counts
+  }, [plugins])
 
   const skillUsage = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, number>()
     for (const p of plugins) {
       for (const s of p.skills) {
-        counts.set(s.id, (counts.get(s.id) || 0) + 1);
+        counts.set(s.id, (counts.get(s.id) || 0) + 1)
       }
     }
-    return counts;
-  }, [plugins]);
+    return counts
+  }, [plugins])
 
   const agentUsage = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, number>()
     for (const p of plugins) {
       for (const a of p.agents ?? []) {
-        counts.set(a.id, (counts.get(a.id) || 0) + 1);
+        counts.set(a.id, (counts.get(a.id) || 0) + 1)
       }
     }
-    return counts;
-  }, [plugins]);
+    return counts
+  }, [plugins])
 
   const filteredMcps = mcpServers.filter(
     (m) =>
       !searchQuery ||
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.sourceApplication.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      m.sourceApplication.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   const filteredSkills = skills.filter(
     (s) =>
       !searchQuery ||
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.sourceApplication.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      s.sourceApplication.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   const filteredAgents = agents.filter(
     (a) =>
       !searchQuery ||
       a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      a.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      a.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   const placeholder =
-    tab === "mcps" ? "Filter MCP servers..." : tab === "skills" ? "Filter skills..." : "Filter agents...";
+    tab === "mcps"
+      ? "Filter MCP servers..."
+      : tab === "skills"
+        ? "Filter skills..."
+        : "Filter agents..."
 
   return (
     <>
@@ -99,8 +110,13 @@ export function LocalContent({
 
         {!isScanning && tab === "mcps" && mcpServers.length === 0 && (
           <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
-            <McpLogo color="currentColor" className="size-6 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">No MCP servers found</p>
+            <McpLogo
+              color="currentColor"
+              className="size-6 text-muted-foreground"
+            />
+            <p className="text-xs text-muted-foreground">
+              No MCP servers found
+            </p>
             <p className="text-[10px] text-muted-foreground/70">
               Configure MCP servers in your IDE
             </p>
@@ -109,7 +125,11 @@ export function LocalContent({
 
         {!isScanning && tab === "skills" && skills.length === 0 && (
           <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
-            <SkillLogo size={24} color="currentColor" className="text-muted-foreground" />
+            <SkillLogo
+              size={24}
+              color="currentColor"
+              className="text-muted-foreground"
+            />
             <p className="text-xs text-muted-foreground">No skills found</p>
             <p className="text-[10px] text-muted-foreground/70">
               Configure skills in your IDE
@@ -167,5 +187,5 @@ export function LocalContent({
         )}
       </div>
     </>
-  );
+  )
 }

@@ -1,31 +1,48 @@
-"use client";
+"use client"
 
-import { ArrowLeft, Globe, FolderOpen, ExternalLink, FolderTree, FileText, FileJson, FileCode } from "lucide-react";
-import McpLogo from "./logo/McpLogo";
-import SkillLogo from "./logo/SkillLogo";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { useMemo } from "react";
-import type { McpServer, Skill, SkillFile, RegistryMcpServer, RegistrySkillEntry } from "@/lib/types";
-import { parseSkillFrontmatter } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CopyButton, JsonBlock } from "@/components/plugin-editor/shared";
+import {
+  ArrowLeft,
+  Globe,
+  FolderOpen,
+  ExternalLink,
+  FolderTree,
+  FileText,
+  FileJson,
+  FileCode,
+} from "lucide-react"
+import McpLogo from "./logo/McpLogo"
+import SkillLogo from "./logo/SkillLogo"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import { useMemo } from "react"
+import type {
+  McpServer,
+  Skill,
+  SkillFile,
+  RegistryMcpServer,
+  RegistrySkillEntry,
+} from "@/lib/types"
+import { parseSkillFrontmatter } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { CopyButton, JsonBlock } from "@/components/plugin-editor/shared"
 
 type DetailItem =
   | { kind: "mcp"; data: McpServer }
   | { kind: "skill"; data: Skill }
   | { kind: "registry-mcp"; data: RegistryMcpServer }
-  | { kind: "registry-skill"; data: RegistrySkillEntry };
+  | { kind: "registry-skill"; data: RegistrySkillEntry }
 
 function McpDetail({ mcp }: { mcp: McpServer }) {
-  const configJson: Record<string, unknown> = {};
-  if (mcp.config.type) configJson.type = mcp.config.type;
-  if (mcp.config.command) configJson.command = mcp.config.command;
-  if (mcp.config.args?.length) configJson.args = mcp.config.args;
-  if (mcp.config.url) configJson.url = mcp.config.url;
-  if (mcp.config.env && Object.keys(mcp.config.env).length) configJson.env = mcp.config.env;
-  if (mcp.config.headers && Object.keys(mcp.config.headers).length) configJson.headers = mcp.config.headers;
+  const configJson: Record<string, unknown> = {}
+  if (mcp.config.type) configJson.type = mcp.config.type
+  if (mcp.config.command) configJson.command = mcp.config.command
+  if (mcp.config.args?.length) configJson.args = mcp.config.args
+  if (mcp.config.url) configJson.url = mcp.config.url
+  if (mcp.config.env && Object.keys(mcp.config.env).length)
+    configJson.env = mcp.config.env
+  if (mcp.config.headers && Object.keys(mcp.config.headers).length)
+    configJson.headers = mcp.config.headers
 
   return (
     <div className="flex flex-col gap-3">
@@ -39,11 +56,17 @@ function McpDetail({ mcp }: { mcp: McpServer }) {
             <span>{mcp.sourceApplication}</span>
             <span>·</span>
             {mcp.scope === "global" ? (
-              <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-[9px]">
+              <Badge
+                variant="secondary"
+                className="h-4 gap-0.5 px-1 text-[9px]"
+              >
                 <Globe className="size-2.5" /> Global
               </Badge>
             ) : (
-              <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-[9px]">
+              <Badge
+                variant="secondary"
+                className="h-4 gap-0.5 px-1 text-[9px]"
+              >
                 <FolderOpen className="size-2.5" /> Local
               </Badge>
             )}
@@ -67,67 +90,78 @@ function McpDetail({ mcp }: { mcp: McpServer }) {
         </p>
       </div>
     </div>
-  );
+  )
 }
 
 function skillFileIcon(filename: string) {
-  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
-  if (ext === "json") return <FileJson className="size-3.5 text-amber-500" />;
-  if (ext === "md" || ext === "markdown") return <FileText className="size-3.5 text-blue-500" />;
+  const ext = filename.split(".").pop()?.toLowerCase() ?? ""
+  if (ext === "json") return <FileJson className="size-3.5 text-amber-500" />
+  if (ext === "md" || ext === "markdown")
+    return <FileText className="size-3.5 text-blue-500" />
   if (["js", "ts", "mjs", "cjs", "py", "sh", "bash", "rb"].includes(ext))
-    return <FileCode className="size-3.5 text-emerald-500" />;
-  return <FileText className="size-3.5 text-muted-foreground" />;
+    return <FileCode className="size-3.5 text-emerald-500" />
+  return <FileText className="size-3.5 text-muted-foreground" />
 }
 
 interface ReadonlyFileNode {
-  name: string;
-  children?: ReadonlyFileNode[];
+  name: string
+  children?: ReadonlyFileNode[]
 }
 
 function buildReadonlyTree(files?: SkillFile[]): ReadonlyFileNode {
-  const root: ReadonlyFileNode = { name: "", children: [] };
+  const root: ReadonlyFileNode = { name: "", children: [] }
 
   function ensureDir(parts: string[]): ReadonlyFileNode {
-    let current = root;
+    let current = root
     for (const part of parts) {
-      if (!current.children) current.children = [];
-      let child = current.children.find((c) => c.name === part && c.children);
+      if (!current.children) current.children = []
+      let child = current.children.find((c) => c.name === part && c.children)
       if (!child) {
-        child = { name: part, children: [] };
-        current.children.push(child);
+        child = { name: part, children: [] }
+        current.children.push(child)
       }
-      current = child;
+      current = child
     }
-    return current;
+    return current
   }
 
-  root.children!.push({ name: "SKILL.md" });
+  root.children!.push({ name: "SKILL.md" })
 
   if (files) {
     for (const file of files) {
-      const parts = file.relativePath.split("/");
-      const fileName = parts.pop()!;
-      const parent = parts.length > 0 ? ensureDir(parts) : root;
-      if (!parent.children) parent.children = [];
-      parent.children.push({ name: fileName });
+      const parts = file.relativePath.split("/")
+      const fileName = parts.pop()!
+      const parent = parts.length > 0 ? ensureDir(parts) : root
+      if (!parent.children) parent.children = []
+      parent.children.push({ name: fileName })
     }
   }
 
-  return root;
+  return root
 }
 
-function ReadonlyTreeItem({ node, depth }: { node: ReadonlyFileNode; depth: number }) {
-  const isDir = !!node.children;
-  const isRoot = isDir && !node.name;
+function ReadonlyTreeItem({
+  node,
+  depth,
+}: {
+  node: ReadonlyFileNode
+  depth: number
+}) {
+  const isDir = !!node.children
+  const isRoot = isDir && !node.name
 
   if (isRoot) {
     return (
       <>
         {node.children!.map((child, i) => (
-          <ReadonlyTreeItem key={`${child.name}-${i}`} node={child} depth={depth} />
+          <ReadonlyTreeItem
+            key={`${child.name}-${i}`}
+            node={child}
+            depth={depth}
+          />
         ))}
       </>
-    );
+    )
   }
 
   if (isDir) {
@@ -141,10 +175,14 @@ function ReadonlyTreeItem({ node, depth }: { node: ReadonlyFileNode; depth: numb
           <span className="truncate font-medium">{node.name}/</span>
         </div>
         {node.children!.map((child, i) => (
-          <ReadonlyTreeItem key={`${child.name}-${i}`} node={child} depth={depth + 1} />
+          <ReadonlyTreeItem
+            key={`${child.name}-${i}`}
+            node={child}
+            depth={depth + 1}
+          />
         ))}
       </div>
-    );
+    )
   }
 
   return (
@@ -155,16 +193,19 @@ function ReadonlyTreeItem({ node, depth }: { node: ReadonlyFileNode; depth: numb
       {skillFileIcon(node.name)}
       <span className="truncate">{node.name}</span>
     </div>
-  );
+  )
 }
 
 function SkillDetail({ skill }: { skill: Skill }) {
-  const { frontmatter, body } = useMemo(() => parseSkillFrontmatter(skill.content), [skill.content]);
-  const displayName = frontmatter.name || skill.name;
-  const displayDesc = frontmatter.description || skill.description;
+  const { frontmatter, body } = useMemo(
+    () => parseSkillFrontmatter(skill.content),
+    [skill.content],
+  )
+  const displayName = frontmatter.name || skill.name
+  const displayDesc = frontmatter.description || skill.description
 
-  const fileTree = useMemo(() => buildReadonlyTree(skill.files), [skill.files]);
-  const totalFiles = 1 + (skill.files?.length ?? 0);
+  const fileTree = useMemo(() => buildReadonlyTree(skill.files), [skill.files])
+  const totalFiles = 1 + (skill.files?.length ?? 0)
 
   return (
     <div className="flex flex-col gap-3">
@@ -178,11 +219,17 @@ function SkillDetail({ skill }: { skill: Skill }) {
             <span>{skill.sourceApplication}</span>
             <span>·</span>
             {skill.scope === "global" ? (
-              <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-[9px]">
+              <Badge
+                variant="secondary"
+                className="h-4 gap-0.5 px-1 text-[9px]"
+              >
                 <Globe className="size-2.5" /> Global
               </Badge>
             ) : (
-              <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-[9px]">
+              <Badge
+                variant="secondary"
+                className="h-4 gap-0.5 px-1 text-[9px]"
+              >
                 <FolderOpen className="size-2.5" /> Local
               </Badge>
             )}
@@ -227,14 +274,14 @@ function SkillDetail({ skill }: { skill: Skill }) {
         </p>
       </div>
     </div>
-  );
+  )
 }
 
 function RegistryMcpDetail({ server }: { server: RegistryMcpServer }) {
-  const configJson: Record<string, unknown> = { name: server.name };
-  if (server.version) configJson.version = server.version;
-  if (server.remotes?.length) configJson.remotes = server.remotes;
-  if (server.packages?.length) configJson.packages = server.packages;
+  const configJson: Record<string, unknown> = { name: server.name }
+  if (server.version) configJson.version = server.version
+  if (server.remotes?.length) configJson.remotes = server.remotes
+  if (server.packages?.length) configJson.packages = server.packages
 
   return (
     <div className="flex flex-col gap-3">
@@ -243,13 +290,19 @@ function RegistryMcpDetail({ server }: { server: RegistryMcpServer }) {
           <McpLogo color="#34d399" className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold">{server.title || server.name}</h3>
-          <p className="text-[10px] text-muted-foreground">MCP Registry · v{server.version}</p>
+          <h3 className="truncate text-sm font-semibold">
+            {server.title || server.name}
+          </h3>
+          <p className="text-[10px] text-muted-foreground">
+            MCP Registry · v{server.version}
+          </p>
         </div>
       </div>
 
       {server.description && (
-        <p className="text-xs leading-relaxed text-muted-foreground">{server.description}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {server.description}
+        </p>
       )}
 
       <div>
@@ -262,19 +315,39 @@ function RegistryMcpDetail({ server }: { server: RegistryMcpServer }) {
       {(server.websiteUrl || server.repository?.url) && (
         <div className="flex flex-wrap gap-2">
           {server.websiteUrl && (
-            <Button variant="outline" size="xs" render={<a href={server.websiteUrl} target="_blank" rel="noopener noreferrer" />}>
+            <Button
+              variant="outline"
+              size="xs"
+              render={
+                <a
+                  href={server.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
               <ExternalLink data-icon="inline-start" /> Website
             </Button>
           )}
           {server.repository?.url && (
-            <Button variant="outline" size="xs" render={<a href={server.repository.url} target="_blank" rel="noopener noreferrer" />}>
+            <Button
+              variant="outline"
+              size="xs"
+              render={
+                <a
+                  href={server.repository.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
               <ExternalLink data-icon="inline-start" /> Repository
             </Button>
           )}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 function RegistrySkillDetail({ entry }: { entry: RegistrySkillEntry }) {
@@ -320,15 +393,15 @@ function RegistrySkillDetail({ entry }: { entry: RegistrySkillEntry }) {
         <ExternalLink data-icon="inline-start" /> View on GitHub
       </Button>
     </div>
-  );
+  )
 }
 
 export function DetailPanel({
   item,
   onClose,
 }: {
-  item: DetailItem;
-  onClose: () => void;
+  item: DetailItem
+  onClose: () => void
 }) {
   return (
     <div className="absolute inset-0 z-20 flex flex-col bg-card">
@@ -341,11 +414,15 @@ export function DetailPanel({
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         {item.kind === "mcp" && <McpDetail mcp={item.data} />}
         {item.kind === "skill" && <SkillDetail skill={item.data} />}
-        {item.kind === "registry-mcp" && <RegistryMcpDetail server={item.data} />}
-        {item.kind === "registry-skill" && <RegistrySkillDetail entry={item.data} />}
+        {item.kind === "registry-mcp" && (
+          <RegistryMcpDetail server={item.data} />
+        )}
+        {item.kind === "registry-skill" && (
+          <RegistrySkillDetail entry={item.data} />
+        )}
       </div>
     </div>
-  );
+  )
 }
 
-export type { DetailItem };
+export type { DetailItem }

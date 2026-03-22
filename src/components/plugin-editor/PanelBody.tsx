@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react"
 import {
   X,
   Package,
@@ -9,9 +9,9 @@ import {
   ChevronRight,
   Wrench,
   Code,
-} from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import { slugify } from "@/lib/utils";
+} from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import { slugify } from "@/lib/utils"
 import {
   validatePluginData,
   validateMcpServer,
@@ -19,12 +19,17 @@ import {
   validateAgent,
   getSkillDirName,
   type ValidationIssue,
-} from "@/lib/validate-marketplace";
-import type { PluginData, AgentData, McpServer, PluginScalarUpdate } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+} from "@/lib/validate-marketplace"
+import type {
+  PluginData,
+  AgentData,
+  McpServer,
+  PluginScalarUpdate,
+} from "@/lib/types"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectTrigger,
@@ -32,63 +37,63 @@ import {
   SelectItem,
   SelectValue,
   SelectGroup,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import McpLogo from "@/components/logo/McpLogo";
-import SkillLogo from "@/components/logo/SkillLogo";
-import AgentLogo from "@/components/logo/AgentLogo";
-import { McpDetailView } from "./McpDetailView";
-import { SkillDetailView } from "./SkillDetailView";
-import { AgentDetailView } from "./AgentDetailView";
-import { TagInput } from "./TagInput";
-import { CodeEditorDialog } from "@/components/CodeEditorDialog";
+} from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import McpLogo from "@/components/logo/McpLogo"
+import SkillLogo from "@/components/logo/SkillLogo"
+import AgentLogo from "@/components/logo/AgentLogo"
+import { McpDetailView } from "./McpDetailView"
+import { SkillDetailView } from "./SkillDetailView"
+import { AgentDetailView } from "./AgentDetailView"
+import { TagInput } from "./TagInput"
+import { CodeEditorDialog } from "@/components/CodeEditorDialog"
 
 export function PanelBody({
   plugin,
   onClose,
 }: {
-  plugin: PluginData;
-  onClose: () => void;
+  plugin: PluginData
+  onClose: () => void
 }) {
-  const updatePlugin = useWizardStore((s) => s.updatePlugin);
-  const addMcpToPlugin = useWizardStore((s) => s.addMcpToPlugin);
-  const removeMcpFromPlugin = useWizardStore((s) => s.removeMcpFromPlugin);
-  const removeSkillFromPlugin = useWizardStore((s) => s.removeSkillFromPlugin);
-  const addAgentToPlugin = useWizardStore((s) => s.addAgentToPlugin);
-  const removeAgentFromPlugin = useWizardStore((s) => s.removeAgentFromPlugin);
-  const plugins = useWizardStore((s) => s.plugins);
-  const categories = useWizardStore((s) => s.categories);
-  const addCategory = useWizardStore((s) => s.addCategory);
-  const selectedItemId = useWizardStore((s) => s.selectedItemId);
-  const selectedItemType = useWizardStore((s) => s.selectedItemType);
+  const updatePlugin = useWizardStore((s) => s.updatePlugin)
+  const addMcpToPlugin = useWizardStore((s) => s.addMcpToPlugin)
+  const removeMcpFromPlugin = useWizardStore((s) => s.removeMcpFromPlugin)
+  const removeSkillFromPlugin = useWizardStore((s) => s.removeSkillFromPlugin)
+  const addAgentToPlugin = useWizardStore((s) => s.addAgentToPlugin)
+  const removeAgentFromPlugin = useWizardStore((s) => s.removeAgentFromPlugin)
+  const plugins = useWizardStore((s) => s.plugins)
+  const categories = useWizardStore((s) => s.categories)
+  const addCategory = useWizardStore((s) => s.addCategory)
+  const selectedItemId = useWizardStore((s) => s.selectedItemId)
+  const selectedItemType = useWizardStore((s) => s.selectedItemType)
   const setSelectedItemInPlugin = useWizardStore(
-    (s) => s.setSelectedItemInPlugin
-  );
+    (s) => s.setSelectedItemInPlugin,
+  )
 
-  const [name, setName] = useState(plugin.name);
-  const [description, setDescription] = useState(plugin.description);
-  const [authorName, setAuthorName] = useState(plugin.author?.name || "");
-  const [authorEmail, setAuthorEmail] = useState(plugin.author?.email || "");
-  const [version, setVersion] = useState(plugin.version);
-  const [tags, setTags] = useState<string[]>(plugin.keywords || []);
-  const [category, setCategory] = useState(plugin.category || "");
-  const [newCatInput, setNewCatInput] = useState("");
-  const [showNewCat, setShowNewCat] = useState(false);
-  const [pluginEditorOpen, setPluginEditorOpen] = useState(false);
-  const [mcpJsonImportOpen, setMcpJsonImportOpen] = useState(false);
+  const [name, setName] = useState(plugin.name)
+  const [description, setDescription] = useState(plugin.description)
+  const [authorName, setAuthorName] = useState(plugin.author?.name || "")
+  const [authorEmail, setAuthorEmail] = useState(plugin.author?.email || "")
+  const [version, setVersion] = useState(plugin.version)
+  const [tags, setTags] = useState<string[]>(plugin.keywords || [])
+  const [category, setCategory] = useState(plugin.category || "")
+  const [newCatInput, setNewCatInput] = useState("")
+  const [showNewCat, setShowNewCat] = useState(false)
+  const [pluginEditorOpen, setPluginEditorOpen] = useState(false)
+  const [mcpJsonImportOpen, setMcpJsonImportOpen] = useState(false)
 
-  const slug = slugify(name);
+  const slug = slugify(name)
 
   const keywordSuggestions = useMemo(() => {
-    const all = new Set<string>();
+    const all = new Set<string>()
     for (const p of plugins) {
-      if (p.id === plugin.id) continue;
+      if (p.id === plugin.id) continue
       for (const kw of p.keywords || []) {
-        all.add(kw.toLowerCase());
+        all.add(kw.toLowerCase())
       }
     }
-    return [...all].sort();
-  }, [plugins, plugin.id]);
+    return [...all].sort()
+  }, [plugins, plugin.id])
 
   const livePlugin: PluginData = {
     ...plugin,
@@ -102,79 +107,87 @@ export function PanelBody({
     keywords: tags.length ? tags : undefined,
     category: category.trim() || undefined,
     agents: plugin.agents ?? [],
-  };
+  }
 
-  const issues = useMemo(() => validatePluginData(livePlugin), [livePlugin]);
+  const issues = useMemo(() => validatePluginData(livePlugin), [livePlugin])
   const issueErrors = useMemo(
     () => issues.filter((i) => i.severity !== "warning"),
     [issues],
-  );
+  )
   const issueWarnings = useMemo(
     () => issues.filter((i) => i.severity === "warning"),
     [issues],
-  );
+  )
 
-  const mcpNames = useMemo(() => new Set(plugin.mcps.map((m) => m.name?.trim()).filter(Boolean)), [plugin.mcps]);
+  const mcpNames = useMemo(
+    () => new Set(plugin.mcps.map((m) => m.name?.trim()).filter(Boolean)),
+    [plugin.mcps],
+  )
   const skillLabels = useMemo(() => {
-    const labels = new Set<string>();
+    const labels = new Set<string>()
     for (const s of plugin.skills) {
-      const dir = getSkillDirName(s);
-      if (dir) labels.add(dir);
-      if (s.name?.trim()) labels.add(s.name.trim());
+      const dir = getSkillDirName(s)
+      if (dir) labels.add(dir)
+      if (s.name?.trim()) labels.add(s.name.trim())
     }
-    return labels;
-  }, [plugin.skills]);
+    return labels
+  }, [plugin.skills])
   const agentNames = useMemo(
-    () => new Set((plugin.agents ?? []).map((a) => a.name?.trim()).filter(Boolean)),
-    [plugin.agents]
-  );
+    () =>
+      new Set((plugin.agents ?? []).map((a) => a.name?.trim()).filter(Boolean)),
+    [plugin.agents],
+  )
 
   function findItemByRoot(path: string) {
-    const root = path.split(".")[0];
-    const mcp = plugin.mcps.find((m) => m.name?.trim() === root);
-    if (mcp) return { type: "mcp" as const, id: mcp.id };
+    const root = path.split(".")[0]
+    const mcp = plugin.mcps.find((m) => m.name?.trim() === root)
+    if (mcp) return { type: "mcp" as const, id: mcp.id }
     const skill = plugin.skills.find((s) => {
-      const sDir = getSkillDirName(s);
-      return sDir === root || s.name?.trim() === root;
-    });
-    if (skill) return { type: "skill" as const, id: skill.id };
-    const agent = (plugin.agents ?? []).find((a) => a.name?.trim() === root);
-    if (agent) return { type: "agent" as const, id: agent.id };
-    return null;
+      const sDir = getSkillDirName(s)
+      return sDir === root || s.name?.trim() === root
+    })
+    if (skill) return { type: "skill" as const, id: skill.id }
+    const agent = (plugin.agents ?? []).find((a) => a.name?.trim() === root)
+    if (agent) return { type: "agent" as const, id: agent.id }
+    return null
   }
 
   function getFixAction(issue: ValidationIssue): (() => void) | null {
     if (issue.path === "version" && !version.trim()) {
-      return () => setVersion("1.0.0");
+      return () => setVersion("1.0.0")
     }
-    const item = findItemByRoot(issue.path);
-    if (item) return () => setSelectedItemInPlugin(item.id, item.type);
-    return null;
+    const item = findItemByRoot(issue.path)
+    if (item) return () => setSelectedItemInPlugin(item.id, item.type)
+    return null
   }
 
   function getFixLabel(issue: ValidationIssue): string {
-    if (issue.path === "version") return "Set 1.0.0";
-    const root = issue.path.split(".")[0];
-    if (mcpNames.has(root)) return "Go to MCP";
-    if (skillLabels.has(root)) return "Go to Skill";
-    if (agentNames.has(root)) return "Go to Agent";
-    return "Fix";
+    if (issue.path === "version") return "Set 1.0.0"
+    const root = issue.path.split(".")[0]
+    if (mcpNames.has(root)) return "Go to MCP"
+    if (skillLabels.has(root)) return "Go to Skill"
+    if (agentNames.has(root)) return "Go to Agent"
+    return "Fix"
   }
 
   function fieldError(path: string): string | undefined {
-    const issue = issues.find((i) => i.path === path && i.severity !== "warning");
-    return issue?.message;
+    const issue = issues.find(
+      (i) => i.path === path && i.severity !== "warning",
+    )
+    return issue?.message
   }
 
   function fieldWarning(path: string): string | undefined {
-    const issue = issues.find((i) => i.path === path && i.severity === "warning");
-    return issue?.message;
+    const issue = issues.find(
+      (i) => i.path === path && i.severity === "warning",
+    )
+    return issue?.message
   }
 
   const save = () => {
     const author = authorName.trim()
       ? { name: authorName.trim(), email: authorEmail.trim() || undefined }
-      : undefined;
+      : undefined
 
     updatePlugin(plugin.id, {
       name: name.trim(),
@@ -183,87 +196,93 @@ export function PanelBody({
       author,
       keywords: tags.length ? tags : undefined,
       category: category.trim() || undefined,
-    });
-    onClose();
-  };
+    })
+    onClose()
+  }
 
   const selectedMcp =
     selectedItemId && selectedItemType === "mcp"
       ? plugin.mcps.find((m) => m.id === selectedItemId)
-      : null;
+      : null
   const selectedSkill =
     selectedItemId && selectedItemType === "skill"
       ? plugin.skills.find((s) => s.id === selectedItemId)
-      : null;
+      : null
   const selectedAgent =
     selectedItemId && selectedItemType === "agent"
       ? (plugin.agents ?? []).find((a) => a.id === selectedItemId)
-      : null;
+      : null
 
   function createBlankAgent() {
-    const id = crypto.randomUUID();
+    const id = crypto.randomUUID()
     const agent: AgentData = {
       id,
       name: "new-agent",
       description: "",
       sourceFilePath: ".claude/agents/new-agent.md",
       scope: "local",
-      content: "---\nname: new-agent\ndescription: Describe when Claude should delegate to this agent\ntools: Read, Grep, Glob\n---\n\n# System Prompt\n\nDescribe how this agent should behave and what it should focus on.\n",
-    };
-    addAgentToPlugin(plugin.id, agent);
-    setSelectedItemInPlugin(id, "agent");
+      content:
+        "---\nname: new-agent\ndescription: Describe when Claude should delegate to this agent\ntools: Read, Grep, Glob\n---\n\n# System Prompt\n\nDescribe how this agent should behave and what it should focus on.\n",
+    }
+    addAgentToPlugin(plugin.id, agent)
+    setSelectedItemInPlugin(id, "agent")
   }
 
   const pluginJson = useMemo(() => {
-    const { id, slug, mcps, skills, agents, ...rest } = plugin;
-    return JSON.stringify(rest, null, 2);
-  }, [plugin]);
+    const { id, slug, mcps, skills, agents, ...rest } = plugin
+    return JSON.stringify(rest, null, 2)
+  }, [plugin])
 
   const validatePluginJson = useCallback((value: string): string | null => {
     try {
-      const parsed = JSON.parse(value);
-      if (!parsed || typeof parsed !== "object") return "Must be a JSON object";
-      if (!parsed.name || typeof parsed.name !== "string") return "Plugin must have a 'name' string field";
-      return null;
+      const parsed = JSON.parse(value)
+      if (!parsed || typeof parsed !== "object") return "Must be a JSON object"
+      if (!parsed.name || typeof parsed.name !== "string")
+        return "Plugin must have a 'name' string field"
+      return null
     } catch (e) {
-      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`
     }
-  }, []);
+  }, [])
 
   const handlePluginJsonSave = useCallback(
     (value: string) => {
       try {
-        const parsed = JSON.parse(value);
-        const scalarUpdate: PluginScalarUpdate = {};
-        if (parsed.name != null) scalarUpdate.name = parsed.name;
-        if (parsed.description != null) scalarUpdate.description = parsed.description;
-        if (parsed.version != null) scalarUpdate.version = parsed.version;
-        if (parsed.author != null) scalarUpdate.author = parsed.author;
-        if (parsed.homepage != null) scalarUpdate.homepage = parsed.homepage;
-        if (parsed.repository != null) scalarUpdate.repository = parsed.repository;
-        if (parsed.license != null) scalarUpdate.license = parsed.license;
-        if (parsed.keywords != null) scalarUpdate.keywords = parsed.keywords;
-        if (parsed.category != null) scalarUpdate.category = parsed.category;
-        if (parsed.tags != null) scalarUpdate.tags = parsed.tags;
-        if (parsed.strict != null) scalarUpdate.strict = parsed.strict;
-        if (parsed.sourceOverride != null) scalarUpdate.sourceOverride = parsed.sourceOverride;
-        updatePlugin(plugin.id, scalarUpdate);
+        const parsed = JSON.parse(value)
+        const scalarUpdate: PluginScalarUpdate = {}
+        if (parsed.name != null) scalarUpdate.name = parsed.name
+        if (parsed.description != null)
+          scalarUpdate.description = parsed.description
+        if (parsed.version != null) scalarUpdate.version = parsed.version
+        if (parsed.author != null) scalarUpdate.author = parsed.author
+        if (parsed.homepage != null) scalarUpdate.homepage = parsed.homepage
+        if (parsed.repository != null)
+          scalarUpdate.repository = parsed.repository
+        if (parsed.license != null) scalarUpdate.license = parsed.license
+        if (parsed.keywords != null) scalarUpdate.keywords = parsed.keywords
+        if (parsed.category != null) scalarUpdate.category = parsed.category
+        if (parsed.tags != null) scalarUpdate.tags = parsed.tags
+        if (parsed.strict != null) scalarUpdate.strict = parsed.strict
+        if (parsed.sourceOverride != null)
+          scalarUpdate.sourceOverride = parsed.sourceOverride
+        updatePlugin(plugin.id, scalarUpdate)
 
-        if (scalarUpdate.name != null) setName(scalarUpdate.name);
-        if (scalarUpdate.description != null) setDescription(scalarUpdate.description);
-        if (scalarUpdate.version != null) setVersion(scalarUpdate.version);
+        if (scalarUpdate.name != null) setName(scalarUpdate.name)
+        if (scalarUpdate.description != null)
+          setDescription(scalarUpdate.description)
+        if (scalarUpdate.version != null) setVersion(scalarUpdate.version)
         if (scalarUpdate.author) {
-          setAuthorName(scalarUpdate.author.name || "");
-          setAuthorEmail(scalarUpdate.author.email || "");
+          setAuthorName(scalarUpdate.author.name || "")
+          setAuthorEmail(scalarUpdate.author.email || "")
         }
-        if (scalarUpdate.keywords) setTags(scalarUpdate.keywords);
-        if (scalarUpdate.category != null) setCategory(scalarUpdate.category);
+        if (scalarUpdate.keywords) setTags(scalarUpdate.keywords)
+        if (scalarUpdate.category != null) setCategory(scalarUpdate.category)
       } catch {
         // validation should have caught this
       }
     },
-    [plugin.id, updatePlugin]
-  );
+    [plugin.id, updatePlugin],
+  )
 
   const mcpJsonExample = useMemo(
     () =>
@@ -280,55 +299,55 @@ export function PanelBody({
         2,
       ),
     [],
-  );
+  )
 
   const validateMcpJsonImport = useCallback((value: string): string | null => {
     try {
-      const parsed = JSON.parse(value);
-      if (!parsed || typeof parsed !== "object") return "Must be a JSON object";
+      const parsed = JSON.parse(value)
+      if (!parsed || typeof parsed !== "object") return "Must be a JSON object"
 
       const wrap =
         parsed.mcpServers && typeof parsed.mcpServers === "object"
           ? parsed.mcpServers
-          : parsed;
+          : parsed
 
-      const keys = Object.keys(wrap);
-      if (keys.length === 0) return "No server entries found";
+      const keys = Object.keys(wrap)
+      if (keys.length === 0) return "No server entries found"
 
       for (const key of keys) {
-        const srv = wrap[key];
+        const srv = wrap[key]
         if (!srv || typeof srv !== "object")
-          return `Server "${key}" must be an object`;
+          return `Server "${key}" must be an object`
         if (!srv.url && !srv.command)
-          return `Server "${key}" needs either a "url" or a "command" field`;
+          return `Server "${key}" needs either a "url" or a "command" field`
       }
-      return null;
+      return null
     } catch (e) {
-      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+      return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`
     }
-  }, []);
+  }, [])
 
   const handleMcpJsonImportSave = useCallback(
     (value: string) => {
       try {
-        const parsed = JSON.parse(value);
+        const parsed = JSON.parse(value)
 
         const wrap =
           parsed.mcpServers && typeof parsed.mcpServers === "object"
             ? parsed.mcpServers
-            : parsed;
+            : parsed
 
         for (const [serverName, serverCfg] of Object.entries(wrap)) {
-          const srv = serverCfg as Record<string, unknown>;
+          const srv = serverCfg as Record<string, unknown>
           const config: McpServer["config"] = {
             type: (srv.type as string) || "http",
-          };
-          if (srv.command) config.command = srv.command as string;
-          if (srv.args) config.args = srv.args as string[];
-          if (srv.url) config.url = srv.url as string;
-          if (srv.env) config.env = srv.env as Record<string, string>;
+          }
+          if (srv.command) config.command = srv.command as string
+          if (srv.args) config.args = srv.args as string[]
+          if (srv.url) config.url = srv.url as string
+          if (srv.env) config.env = srv.env as Record<string, string>
           if (srv.headers)
-            config.headers = srv.headers as Record<string, string>;
+            config.headers = srv.headers as Record<string, string>
 
           const mcp: McpServer = {
             id: `json-import:${Date.now()}:${serverName}`,
@@ -337,15 +356,15 @@ export function PanelBody({
             sourceFilePath: "",
             scope: "global",
             config,
-          };
-          addMcpToPlugin(plugin.id, mcp);
+          }
+          addMcpToPlugin(plugin.id, mcp)
         }
       } catch {
         // validation should have caught this
       }
     },
     [plugin.id, addMcpToPlugin],
-  );
+  )
 
   if (selectedMcp) {
     return (
@@ -372,7 +391,7 @@ export function PanelBody({
           />
         </div>
       </>
-    );
+    )
   }
 
   if (selectedSkill) {
@@ -400,7 +419,7 @@ export function PanelBody({
           />
         </div>
       </>
-    );
+    )
   }
 
   if (selectedAgent) {
@@ -428,7 +447,7 @@ export function PanelBody({
           />
         </div>
       </>
-    );
+    )
   }
 
   return (
@@ -440,9 +459,7 @@ export function PanelBody({
           </div>
           <div>
             <h2 className="text-xs font-semibold">Edit plugin</h2>
-            <p className="font-mono text-[9px] text-muted-foreground">
-              {slug}
-            </p>
+            <p className="font-mono text-[9px] text-muted-foreground">{slug}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -473,14 +490,15 @@ export function PanelBody({
                   {issueErrors.length > 0 && issueWarnings.length > 0 && " · "}
                   {issueWarnings.length > 0 && (
                     <span className="text-amber-500">
-                      {issueWarnings.length} warning{issueWarnings.length !== 1 ? "s" : ""}
+                      {issueWarnings.length} warning
+                      {issueWarnings.length !== 1 ? "s" : ""}
                     </span>
                   )}
                 </span>
               </div>
               <div className="flex flex-col divide-y divide-red-500/10">
                 {issues.map((issue, i) => {
-                  const fix = getFixAction(issue);
+                  const fix = getFixAction(issue)
                   return (
                     <div
                       key={i}
@@ -494,9 +512,7 @@ export function PanelBody({
                         }`}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[10px]">
-                          {issue.message}
-                        </p>
+                        <p className="truncate text-[10px]">{issue.message}</p>
                         <p className="truncate font-mono text-[9px] text-muted-foreground">
                           {issue.path}
                         </p>
@@ -512,7 +528,7 @@ export function PanelBody({
                         </button>
                       )}
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -532,7 +548,9 @@ export function PanelBody({
             />
             <div className="flex items-center justify-between">
               {fieldError("name") ? (
-                <p className="text-[9px] text-destructive">{fieldError("name")}</p>
+                <p className="text-[9px] text-destructive">
+                  {fieldError("name")}
+                </p>
               ) : (
                 <span />
               )}
@@ -591,7 +609,9 @@ export function PanelBody({
                 aria-invalid={!!fieldError("version")}
               />
               {fieldWarning("version") && (
-                <p className="text-[9px] text-amber-500">{fieldWarning("version")}</p>
+                <p className="text-[9px] text-amber-500">
+                  {fieldWarning("version")}
+                </p>
               )}
             </div>
             <div className="flex flex-col gap-1.5">
@@ -623,10 +643,10 @@ export function PanelBody({
                     onChange={(e) => setNewCatInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && newCatInput.trim()) {
-                        addCategory(newCatInput.trim());
-                        setCategory(newCatInput.trim());
-                        setNewCatInput("");
-                        setShowNewCat(false);
+                        addCategory(newCatInput.trim())
+                        setCategory(newCatInput.trim())
+                        setNewCatInput("")
+                        setShowNewCat(false)
                       }
                     }}
                     placeholder="Category name..."
@@ -637,11 +657,11 @@ export function PanelBody({
                     size="xs"
                     onClick={() => {
                       if (newCatInput.trim()) {
-                        addCategory(newCatInput.trim());
-                        setCategory(newCatInput.trim());
+                        addCategory(newCatInput.trim())
+                        setCategory(newCatInput.trim())
                       }
-                      setNewCatInput("");
-                      setShowNewCat(false);
+                      setNewCatInput("")
+                      setShowNewCat(false)
                     }}
                   >
                     Add
@@ -650,8 +670,8 @@ export function PanelBody({
                     variant="ghost"
                     size="icon-xs"
                     onClick={() => {
-                      setShowNewCat(false);
-                      setNewCatInput("");
+                      setShowNewCat(false)
+                      setNewCatInput("")
                     }}
                   >
                     <X />
@@ -680,7 +700,6 @@ export function PanelBody({
               suggestions={keywordSuggestions}
             />
           </div>
-
         </div>
 
         <div className="flex flex-col gap-2 border-t px-4 py-3">
@@ -706,8 +725,10 @@ export function PanelBody({
             </div>
             <div className="flex flex-col gap-0.5">
               {plugin.mcps.map((mcp) => {
-                const mcpIssues = validateMcpServer(mcp);
-                const hasErrors = mcpIssues.some((i) => i.severity !== "warning");
+                const mcpIssues = validateMcpServer(mcp)
+                const hasErrors = mcpIssues.some(
+                  (i) => i.severity !== "warning",
+                )
                 return (
                   <div
                     key={mcp.id}
@@ -737,7 +758,7 @@ export function PanelBody({
                       <X className="size-3" />
                     </button>
                   </div>
-                );
+                )
               })}
               <p className="mt-0.5 text-[9px] text-muted-foreground">
                 Drag MCP servers from the sidebar to add.
@@ -756,10 +777,12 @@ export function PanelBody({
             </p>
             <div className="flex flex-col gap-0.5">
               {plugin.skills.map((skill) => {
-                const skillIssues = skill._loading ? [] : validateSkill(skill);
-                const hasErrors = skillIssues.some((i) => i.severity !== "warning");
-                const dir = getSkillDirName(skill);
-                const namesDiffer = dir && dir !== skill.name?.trim();
+                const skillIssues = skill._loading ? [] : validateSkill(skill)
+                const hasErrors = skillIssues.some(
+                  (i) => i.severity !== "warning",
+                )
+                const dir = getSkillDirName(skill)
+                const namesDiffer = dir && dir !== skill.name?.trim()
                 return (
                   <div
                     key={skill.id}
@@ -796,7 +819,7 @@ export function PanelBody({
                       <X className="size-3" />
                     </button>
                   </div>
-                );
+                )
               })}
               <p className="mt-0.5 text-[9px] text-muted-foreground">
                 Drag skills from the sidebar to add.
@@ -826,8 +849,10 @@ export function PanelBody({
             </div>
             <div className="flex flex-col gap-0.5">
               {(plugin.agents ?? []).map((agent) => {
-                const agentIssues = validateAgent(agent);
-                const hasErrors = agentIssues.some((i) => i.severity !== "warning");
+                const agentIssues = validateAgent(agent)
+                const hasErrors = agentIssues.some(
+                  (i) => i.severity !== "warning",
+                )
                 return (
                   <div
                     key={agent.id}
@@ -857,7 +882,7 @@ export function PanelBody({
                       <X className="size-3" />
                     </button>
                   </div>
-                );
+                )
               })}
               {(plugin.agents ?? []).length === 0 && (
                 <p className="text-[9px] text-muted-foreground">
@@ -867,7 +892,6 @@ export function PanelBody({
             </div>
           </div>
         </div>
-
       </div>
 
       <Separator />
@@ -880,12 +904,7 @@ export function PanelBody({
         >
           Cancel
         </Button>
-        <Button
-          className="flex-1"
-          size="sm"
-          
-          onClick={save}
-        >
+        <Button className="flex-1" size="sm" onClick={save}>
           Save
         </Button>
       </div>
@@ -905,12 +924,14 @@ export function PanelBody({
         open={mcpJsonImportOpen}
         onOpenChange={setMcpJsonImportOpen}
         title="Add MCP from JSON"
-        subtitle={'Paste an MCP server JSON configuration. If "type" is omitted it defaults to "http". You can wrap entries in "mcpServers" or provide the server object directly.'}
+        subtitle={
+          'Paste an MCP server JSON configuration. If "type" is omitted it defaults to "http". You can wrap entries in "mcpServers" or provide the server object directly.'
+        }
         language="json"
         value={mcpJsonExample}
         onSave={handleMcpJsonImportSave}
         validate={validateMcpJsonImport}
       />
     </>
-  );
+  )
 }

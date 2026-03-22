@@ -1,63 +1,69 @@
-"use client";
+"use client"
 
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { useWizardStore } from "@/lib/store";
-import { PanelBody } from "./PanelBody";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react"
+import { useWizardStore } from "@/lib/store"
+import { PanelBody } from "./PanelBody"
 
-const DEFAULT_WIDTH = 320;
-const MIN_WIDTH = 280;
-const MAX_WIDTH = 700;
+const DEFAULT_WIDTH = 320
+const MIN_WIDTH = 280
+const MAX_WIDTH = 700
 
 export function PluginEditorPanel() {
-  const selectedPluginId = useWizardStore((s) => s.selectedPluginId);
-  const plugins = useWizardStore((s) => s.plugins);
-  const setSelectedPluginId = useWizardStore((s) => s.setSelectedPluginId);
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const startWidth = useRef(DEFAULT_WIDTH);
+  const selectedPluginId = useWizardStore((s) => s.selectedPluginId)
+  const plugins = useWizardStore((s) => s.plugins)
+  const setSelectedPluginId = useWizardStore((s) => s.setSelectedPluginId)
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const isDragging = useRef(false)
+  const startX = useRef(0)
+  const startWidth = useRef(DEFAULT_WIDTH)
 
   const plugin = useMemo(
     () =>
       selectedPluginId
         ? plugins.find((p) => p.id === selectedPluginId)
         : undefined,
-    [plugins, selectedPluginId]
-  );
+    [plugins, selectedPluginId],
+  )
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
-    startX.current = e.clientX;
-    startWidth.current = width;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  }, [width]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      isDragging.current = true
+      startX.current = e.clientX
+      startWidth.current = width
+      document.body.style.cursor = "col-resize"
+      document.body.style.userSelect = "none"
+    },
+    [width],
+  )
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const delta = startX.current - e.clientX;
-      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth.current + delta));
-      setWidth(newWidth);
-    };
+      if (!isDragging.current) return
+      const delta = startX.current - e.clientX
+      const newWidth = Math.min(
+        MAX_WIDTH,
+        Math.max(MIN_WIDTH, startWidth.current + delta),
+      )
+      setWidth(newWidth)
+    }
 
     const handleMouseUp = () => {
-      if (!isDragging.current) return;
-      isDragging.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
+      if (!isDragging.current) return
+      isDragging.current = false
+      document.body.style.cursor = ""
+      document.body.style.userSelect = ""
+    }
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove)
+    document.addEventListener("mouseup", handleMouseUp)
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [])
 
-  if (!plugin) return null;
+  if (!plugin) return null
 
   return (
     <aside
@@ -74,5 +80,5 @@ export function PluginEditorPanel() {
         onClose={() => setSelectedPluginId(null)}
       />
     </aside>
-  );
+  )
 }

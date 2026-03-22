@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Copy, Check, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { ValidationIssue } from "@/lib/validate-marketplace";
+import { useState } from "react"
+import { Copy, Check, AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import type { ValidationIssue } from "@/lib/validate-marketplace"
 
 export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
   const copy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
   return (
     <Button variant="ghost" size="icon-xs" onClick={copy} title="Copy">
       {copied ? <Check className="text-emerald-500" /> : <Copy />}
     </Button>
-  );
+  )
 }
 
 export function JsonBlock({ data }: { data: unknown }) {
-  const json = JSON.stringify(data, null, 2);
+  const json = JSON.stringify(data, null, 2)
   return (
     <div className="relative">
       <div className="absolute top-1.5 right-1.5 z-10">
@@ -30,20 +30,20 @@ export function JsonBlock({ data }: { data: unknown }) {
         <code>{json}</code>
       </pre>
     </div>
-  );
+  )
 }
 
 export function ValidationIssueList({
   issues,
   title = "Issues",
 }: {
-  issues: ValidationIssue[];
-  title?: string;
+  issues: ValidationIssue[]
+  title?: string
 }) {
-  if (issues.length === 0) return null;
+  if (issues.length === 0) return null
 
-  const errors = issues.filter((i) => i.severity !== "warning");
-  const warnings = issues.filter((i) => i.severity === "warning");
+  const errors = issues.filter((i) => i.severity !== "warning")
+  const warnings = issues.filter((i) => i.severity === "warning")
 
   return (
     <div className="rounded-lg border border-red-500/20 bg-red-500/5 overflow-hidden">
@@ -86,5 +86,5 @@ export function ValidationIssueList({
         ))}
       </div>
     </div>
-  );
+  )
 }
