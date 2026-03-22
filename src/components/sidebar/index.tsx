@@ -1,24 +1,34 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Monitor, Globe, Link, Plus, Sun, Moon, Bot, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useWizardStore } from "@/lib/store";
-import { DetailPanel, type DetailItem } from "@/components/DetailPanel";
-import McpLogo from "@/components/logo/McpLogo";
-import SkillLogo from "@/components/logo/SkillLogo";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { useState, useEffect } from "react"
+import {
+  Monitor,
+  Globe,
+  Link,
+  Plus,
+  Sun,
+  Moon,
+  Bot,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react"
+import { useTheme } from "next-themes"
+import { useWizardStore } from "@/lib/store"
+import { DetailPanel, type DetailItem } from "@/components/DetailPanel"
+import McpLogo from "@/components/logo/McpLogo"
+import SkillLogo from "@/components/logo/SkillLogo"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { LocalContent } from "./LocalContent";
-import { RegistryContent } from "./OfficialContent";
-import { CustomContent } from "./CustomContent";
-import { CreatePluginDialog } from "@/components/CreatePluginDialog";
+} from "@/components/ui/tooltip"
+import { LocalContent } from "./LocalContent"
+import { RegistryContent } from "./OfficialContent"
+import { CustomContent } from "./CustomContent"
+import { CreatePluginDialog } from "@/components/CreatePluginDialog"
 
 function IconRail({
   tab,
@@ -26,15 +36,15 @@ function IconRail({
   onTabChange,
   onToggleCollapse,
 }: {
-  tab: "mcps" | "skills" | "agents";
-  collapsed: boolean;
-  onTabChange: (t: "mcps" | "skills" | "agents") => void;
-  onToggleCollapse: () => void;
+  tab: "mcps" | "skills" | "agents"
+  collapsed: boolean
+  onTabChange: (t: "mcps" | "skills" | "agents") => void
+  onToggleCollapse: () => void
 }) {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), []);
+  useEffect(() => setMounted(true), [])
 
   return (
     <TooltipProvider delay={300}>
@@ -98,7 +108,9 @@ function IconRail({
 
           <Tooltip>
             <TooltipTrigger
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              onClick={() =>
+                setTheme(resolvedTheme === "dark" ? "light" : "dark")
+              }
               className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
             >
               {mounted && resolvedTheme === "dark" ? (
@@ -109,22 +121,24 @@ function IconRail({
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={6}>
               <p className="text-xs">
-                {mounted && resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+                {mounted && resolvedTheme === "dark"
+                  ? "Light mode"
+                  : "Dark mode"}
               </p>
             </TooltipContent>
           </Tooltip>
         </div>
       </div>
     </TooltipProvider>
-  );
+  )
 }
 
 function SourceTabs({
   source,
   onChange,
 }: {
-  source: "local" | "registry" | "custom";
-  onChange: (s: "local" | "registry" | "custom") => void;
+  source: "local" | "registry" | "custom"
+  onChange: (s: "local" | "registry" | "custom") => void
 }) {
   return (
     <div className="flex rounded-lg border p-0.5">
@@ -156,7 +170,7 @@ function SourceTabs({
         Custom
       </Button>
     </div>
-  );
+  )
 }
 
 export function Sidebar() {
@@ -167,16 +181,16 @@ export function Sidebar() {
     setSidebarSource,
     sidebarCollapsed,
     setSidebarCollapsed,
-  } = useWizardStore();
-  const [selectedItem, setSelectedItem] = useState<DetailItem | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  } = useWizardStore()
+  const [selectedItem, setSelectedItem] = useState<DetailItem | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const handleTabChange = (tab: "mcps" | "skills" | "agents") => {
     if (sidebarCollapsed) {
-      setSidebarCollapsed(false);
+      setSidebarCollapsed(false)
     }
-    setSidebarTab(tab);
-  };
+    setSidebarTab(tab)
+  }
 
   return (
     <>
@@ -192,7 +206,10 @@ export function Sidebar() {
           <div className="flex w-64 flex-col">
             {sidebarTab !== "agents" && (
               <div className="border-b p-3">
-                <SourceTabs source={sidebarSource} onChange={setSidebarSource} />
+                <SourceTabs
+                  source={sidebarSource}
+                  onChange={setSidebarSource}
+                />
               </div>
             )}
 
@@ -200,10 +217,16 @@ export function Sidebar() {
               <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
             )}
             {sidebarTab !== "agents" && sidebarSource === "registry" && (
-              <RegistryContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
+              <RegistryContent
+                tab={sidebarTab as "mcps" | "skills"}
+                onSelectItem={setSelectedItem}
+              />
             )}
             {sidebarTab !== "agents" && sidebarSource === "custom" && (
-              <CustomContent tab={sidebarTab as "mcps" | "skills"} onSelectItem={setSelectedItem} />
+              <CustomContent
+                tab={sidebarTab as "mcps" | "skills"}
+                onSelectItem={setSelectedItem}
+              />
             )}
 
             <Separator />
@@ -222,7 +245,10 @@ export function Sidebar() {
             </div>
 
             {selectedItem && (
-              <DetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} />
+              <DetailPanel
+                item={selectedItem}
+                onClose={() => setSelectedItem(null)}
+              />
             )}
           </div>
         )}
@@ -233,5 +259,5 @@ export function Sidebar() {
         onClose={() => setDialogOpen(false)}
       />
     </>
-  );
+  )
 }

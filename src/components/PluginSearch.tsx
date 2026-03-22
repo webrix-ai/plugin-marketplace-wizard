@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { Command } from "cmdk";
-import { useReactFlow, useNodes, type Node } from "@xyflow/react";
-import { Search, Package } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { PluginData } from "@/lib/types";
-import { useWizardStore } from "@/lib/store";
+import { useState, useCallback, useRef, useEffect } from "react"
+import { Command } from "cmdk"
+import { useReactFlow, useNodes, type Node } from "@xyflow/react"
+import { Search, Package } from "lucide-react"
+import { cn } from "@/lib/utils"
+import type { PluginData } from "@/lib/types"
+import { useWizardStore } from "@/lib/store"
 
-type PluginNode = Node<PluginData, "plugin">;
+type PluginNode = Node<PluginData, "plugin">
 
 function isPluginNode(n: Node): n is PluginNode {
-  return n.type === "plugin";
+  return n.type === "plugin"
 }
 
 function getSearchableText(data: PluginData): string {
@@ -24,71 +24,74 @@ function getSearchableText(data: PluginData): string {
     ...data.skills.map((s) => s.name),
     ...(data.keywords ?? []),
     ...(data.tags ?? []),
-  ];
-  return parts.filter(Boolean).join(" ").toLowerCase();
+  ]
+  return parts.filter(Boolean).join(" ").toLowerCase()
 }
 
 export function PluginSearch() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const allNodes = useNodes();
-  const pluginNodes = allNodes.filter(isPluginNode);
-  const { setCenter, getInternalNode } = useReactFlow();
-  const setSelectedPluginId = useWizardStore((s) => s.setSelectedPluginId);
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+  const allNodes = useNodes()
+  const pluginNodes = allNodes.filter(isPluginNode)
+  const { setCenter, getInternalNode } = useReactFlow()
+  const setSelectedPluginId = useWizardStore((s) => s.setSelectedPluginId)
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
+        e.preventDefault()
         if (open) {
-          setOpen(false);
+          setOpen(false)
         } else {
-          inputRef.current?.focus();
+          inputRef.current?.focus()
         }
       }
     }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [open])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!open) setQuery("");
-  }, [open]);
+    if (!open) setQuery("")
+  }, [open])
 
   const handleSelect = useCallback(
     (nodeId: string) => {
-      setSelectedPluginId(nodeId);
-      setOpen(false);
+      setSelectedPluginId(nodeId)
+      setOpen(false)
 
-      const internal = getInternalNode(nodeId);
+      const internal = getInternalNode(nodeId)
       if (internal) {
-        const { width = 320, height = 300 } = internal.measured ?? {};
-        const x = internal.internals.positionAbsolute.x + width / 2;
-        const y = internal.internals.positionAbsolute.y + height / 2;
-        setCenter(x, y, { zoom: 1.2, duration: 400 });
+        const { width = 320, height = 300 } = internal.measured ?? {}
+        const x = internal.internals.positionAbsolute.x + width / 2
+        const y = internal.internals.positionAbsolute.y + height / 2
+        setCenter(x, y, { zoom: 1.2, duration: 400 })
       }
     },
     [setCenter, getInternalNode, setSelectedPluginId],
-  );
+  )
 
   const filtered = pluginNodes.filter(
-    (n) => !query.trim() || getSearchableText(n.data).includes(query.toLowerCase()),
-  );
+    (n) =>
+      !query.trim() || getSearchableText(n.data).includes(query.toLowerCase()),
+  )
 
   const highlightMatch = (text: string) => {
-    if (!query.trim()) return text;
-    const idx = text.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return text;
+    if (!query.trim()) return text
+    const idx = text.toLowerCase().indexOf(query.toLowerCase())
+    if (idx === -1) return text
     return (
       <>
         {text.slice(0, idx)}
-        <span className="bg-primary/20 text-primary">{text.slice(idx, idx + query.length)}</span>
+        <span className="bg-primary/20 text-primary">
+          {text.slice(idx, idx + query.length)}
+        </span>
         {text.slice(idx + query.length)}
       </>
-    );
-  };
+    )
+  }
 
   return (
     <Command
@@ -96,8 +99,8 @@ export function PluginSearch() {
       className="relative"
       onKeyDown={(e) => {
         if (e.key === "Escape") {
-          setOpen(false);
-          inputRef.current?.blur();
+          setOpen(false)
+          inputRef.current?.blur()
         }
       }}
     >
@@ -112,8 +115,8 @@ export function PluginSearch() {
           ref={inputRef}
           value={query}
           onValueChange={(v) => {
-            setQuery(v);
-            if (!open) setOpen(true);
+            setQuery(v)
+            if (!open) setOpen(true)
           }}
           onFocus={() => setOpen(true)}
           placeholder="Search plugins…"
@@ -160,5 +163,5 @@ export function PluginSearch() {
         </>
       )}
     </Command>
-  );
+  )
 }

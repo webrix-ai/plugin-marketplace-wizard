@@ -32,17 +32,17 @@ pnpm dev
 
 ### Available Scripts
 
-| Command              | Description                        |
-| -------------------- | ---------------------------------- |
-| `pnpm dev`           | Start the Next.js dev server       |
-| `pnpm build`         | Build for production               |
-| `pnpm lint`          | Run ESLint                         |
-| `pnpm format`        | Format code with Prettier          |
-| `pnpm format:check`  | Check formatting without writing   |
-| `pnpm type-check`    | Run TypeScript type checking       |
-| `pnpm test`          | Run tests                          |
-| `pnpm test:watch`    | Run tests in watch mode            |
-| `pnpm test:coverage` | Run tests with coverage report     |
+| Command              | Description                      |
+| -------------------- | -------------------------------- |
+| `pnpm dev`           | Start the Next.js dev server     |
+| `pnpm build`         | Build for production             |
+| `pnpm lint`          | Run ESLint                       |
+| `pnpm format`        | Format code with Prettier        |
+| `pnpm format:check`  | Check formatting without writing |
+| `pnpm type-check`    | Run TypeScript type checking     |
+| `pnpm test`          | Run tests                        |
+| `pnpm test:watch`    | Run tests in watch mode          |
+| `pnpm test:coverage` | Run tests with coverage report   |
 
 ## Making Changes
 

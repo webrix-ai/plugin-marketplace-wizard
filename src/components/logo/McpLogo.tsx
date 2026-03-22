@@ -5,10 +5,7 @@ interface McpLogoProps {
   className?: string
 }
 
-const McpLogo: React.FC<McpLogoProps> = ({
-  color = "white",
-  className,
-}) => {
+const McpLogo: React.FC<McpLogoProps> = ({ color = "white", className }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

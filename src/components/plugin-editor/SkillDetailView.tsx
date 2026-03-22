@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react"
 import {
   ArrowLeft,
   Globe,
@@ -12,117 +12,120 @@ import {
   FolderTree,
   Plus,
   Trash2,
-} from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import { parseSkillFrontmatter, updateSkillFrontmatter } from "@/lib/utils";
-import { validateSkill, getSkillDirName } from "@/lib/validate-marketplace";
-import type { Skill, SkillFile } from "@/lib/types";
-import type { EditorLanguage } from "@/components/CodeEditorDialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import SkillLogo from "@/components/logo/SkillLogo";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { CopyButton, ValidationIssueList } from "./shared";
-import { CodeEditorDialog } from "@/components/CodeEditorDialog";
+} from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import { parseSkillFrontmatter, updateSkillFrontmatter } from "@/lib/utils"
+import { validateSkill, getSkillDirName } from "@/lib/validate-marketplace"
+import type { Skill, SkillFile } from "@/lib/types"
+import type { EditorLanguage } from "@/components/CodeEditorDialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import SkillLogo from "@/components/logo/SkillLogo"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import { CopyButton, ValidationIssueList } from "./shared"
+import { CodeEditorDialog } from "@/components/CodeEditorDialog"
 
-const SKILL_NAME_MAX = 64;
-const SKILL_DESC_MAX = 1024;
+const SKILL_NAME_MAX = 64
+const SKILL_DESC_MAX = 1024
 
 function extToLanguage(filename: string): EditorLanguage {
-  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  const ext = filename.split(".").pop()?.toLowerCase() ?? ""
   switch (ext) {
     case "json":
-      return "json";
+      return "json"
     case "md":
     case "markdown":
-      return "markdown";
+      return "markdown"
     case "yaml":
     case "yml":
-      return "yaml";
+      return "yaml"
     case "js":
     case "mjs":
     case "cjs":
-      return "javascript";
+      return "javascript"
     case "ts":
     case "mts":
     case "cts":
-      return "typescript";
+      return "typescript"
     case "py":
-      return "python";
+      return "python"
     case "sh":
     case "bash":
-      return "shell";
+      return "shell"
     case "html":
-      return "html";
+      return "html"
     case "css":
-      return "css";
+      return "css"
     case "xml":
-      return "xml";
+      return "xml"
     default:
-      return "plaintext";
+      return "plaintext"
   }
 }
 
 function fileIcon(filename: string) {
-  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
-  if (ext === "json") return <FileJson className="size-3.5 text-amber-500" />;
+  const ext = filename.split(".").pop()?.toLowerCase() ?? ""
+  if (ext === "json") return <FileJson className="size-3.5 text-amber-500" />
   if (ext === "md" || ext === "markdown")
-    return <FileText className="size-3.5 text-blue-500" />;
+    return <FileText className="size-3.5 text-blue-500" />
   if (["js", "ts", "mjs", "cjs", "py", "sh", "bash", "rb"].includes(ext))
-    return <FileCode className="size-3.5 text-emerald-500" />;
-  return <FileText className="size-3.5 text-muted-foreground" />;
+    return <FileCode className="size-3.5 text-emerald-500" />
+  return <FileText className="size-3.5 text-muted-foreground" />
 }
 
 interface FileTreeNode {
-  name: string;
-  fullPath: string;
-  children?: FileTreeNode[];
-  file?: SkillFile;
-  isSkillMd?: boolean;
+  name: string
+  fullPath: string
+  children?: FileTreeNode[]
+  file?: SkillFile
+  isSkillMd?: boolean
 }
 
-function buildFileTree(skillContent: string, files?: SkillFile[]): FileTreeNode {
-  const root: FileTreeNode = { name: "", fullPath: "", children: [] };
+function buildFileTree(
+  skillContent: string,
+  files?: SkillFile[],
+): FileTreeNode {
+  const root: FileTreeNode = { name: "", fullPath: "", children: [] }
 
   function ensureDir(parts: string[]): FileTreeNode {
-    let current = root;
+    let current = root
     for (const part of parts) {
-      if (!current.children) current.children = [];
-      let child = current.children.find((c) => c.name === part && c.children);
+      if (!current.children) current.children = []
+      let child = current.children.find((c) => c.name === part && c.children)
       if (!child) {
-        child = { name: part, fullPath: "", children: [] };
-        current.children.push(child);
+        child = { name: part, fullPath: "", children: [] }
+        current.children.push(child)
       }
-      current = child;
+      current = child
     }
-    return current;
+    return current
   }
 
   root.children!.push({
     name: "SKILL.md",
     fullPath: "SKILL.md",
     isSkillMd: true,
-  });
+  })
 
   if (files) {
     for (const file of files) {
-      const parts = file.relativePath.split("/");
-      const fileName = parts.pop()!;
-      const parent = parts.length > 0 ? ensureDir(parts) : root;
-      if (!parent.children) parent.children = [];
+      const parts = file.relativePath.split("/")
+      const fileName = parts.pop()!
+      const parent = parts.length > 0 ? ensureDir(parts) : root
+      if (!parent.children) parent.children = []
       parent.children.push({
         name: fileName,
         fullPath: file.relativePath,
         file,
-      });
+      })
     }
   }
 
-  return root;
+  return root
 }
 
 function FileTreeItem({
@@ -131,14 +134,14 @@ function FileTreeItem({
   onEdit,
   onDelete,
 }: {
-  node: FileTreeNode;
-  depth: number;
-  onEdit: (node: FileTreeNode) => void;
-  onDelete?: (node: FileTreeNode) => void;
+  node: FileTreeNode
+  depth: number
+  onEdit: (node: FileTreeNode) => void
+  onDelete?: (node: FileTreeNode) => void
 }) {
-  const isDir = !!node.children;
-  const isRoot = isDir && !node.name;
-  const [open, setOpen] = useState(true);
+  const isDir = !!node.children
+  const isRoot = isDir && !node.name
+  const [open, setOpen] = useState(true)
 
   if (isRoot) {
     return (
@@ -153,7 +156,7 @@ function FileTreeItem({
           />
         ))}
       </>
-    );
+    )
   }
 
   if (isDir) {
@@ -179,7 +182,7 @@ function FileTreeItem({
             />
           ))}
       </div>
-    );
+    )
   }
 
   return (
@@ -199,8 +202,8 @@ function FileTreeItem({
         <button
           type="button"
           onClick={(e) => {
-            e.stopPropagation();
-            onDelete(node);
+            e.stopPropagation()
+            onDelete(node)
           }}
           className="hidden shrink-0 rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
           title="Remove file"
@@ -209,7 +212,7 @@ function FileTreeItem({
         </button>
       )}
     </div>
-  );
+  )
 }
 
 export function SkillDetailView({
@@ -217,85 +220,92 @@ export function SkillDetailView({
   pluginId,
   onBack,
 }: {
-  skill: Skill;
-  pluginId: string;
-  onBack: () => void;
+  skill: Skill
+  pluginId: string
+  onBack: () => void
 }) {
-  const updateSkillInPlugin = useWizardStore((s) => s.updateSkillInPlugin);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const updateSkillInPlugin = useWizardStore((s) => s.updateSkillInPlugin)
+  const [editorOpen, setEditorOpen] = useState(false)
   const [editingFile, setEditingFile] = useState<{
-    title: string;
-    language: EditorLanguage;
-    value: string;
-    isSkillMd: boolean;
-    relativePath?: string;
-    validate?: (v: string) => string | null;
-  } | null>(null);
+    title: string
+    language: EditorLanguage
+    value: string
+    isSkillMd: boolean
+    relativePath?: string
+    validate?: (v: string) => string | null
+  } | null>(null)
 
-  const [newFileName, setNewFileName] = useState("");
-  const [showNewFile, setShowNewFile] = useState(false);
+  const [newFileName, setNewFileName] = useState("")
+  const [showNewFile, setShowNewFile] = useState(false)
 
   const { frontmatter, body } = useMemo(
     () => parseSkillFrontmatter(skill.content),
-    [skill.content]
-  );
-  const displayName = frontmatter.name || skill.name;
-  const displayDesc = frontmatter.description || skill.description;
+    [skill.content],
+  )
+  const displayName = frontmatter.name || skill.name
+  const displayDesc = frontmatter.description || skill.description
 
-  const [name, setName] = useState(displayName);
-  const [description, setDescription] = useState(displayDesc);
+  const [name, setName] = useState(displayName)
+  const [description, setDescription] = useState(displayDesc)
 
-  const dirName = useMemo(() => getSkillDirName(skill), [skill]);
-  const namesDiffer = dirName && dirName !== (displayName?.trim() ?? "");
+  const dirName = useMemo(() => getSkillDirName(skill), [skill])
+  const namesDiffer = dirName && dirName !== (displayName?.trim() ?? "")
 
-  const issues = useMemo(() => validateSkill(skill), [skill]);
-  const nameIssue = issues.find((i) => i.path === "skill.name");
-  const descIssue = issues.find((i) => i.path === "skill.description");
+  const issues = useMemo(() => validateSkill(skill), [skill])
+  const nameIssue = issues.find((i) => i.path === "skill.name")
+  const descIssue = issues.find((i) => i.path === "skill.description")
 
   const handleSave = () => {
-    const newName = name.trim() || skill.name;
-    const newDesc = description.trim();
+    const newName = name.trim() || skill.name
+    const newDesc = description.trim()
 
     const updatedContent = skill.content.startsWith("---")
       ? updateSkillFrontmatter(skill.content, {
           name: newName,
           description: newDesc,
         })
-      : skill.content;
+      : skill.content
 
     updateSkillInPlugin(pluginId, skill.id, {
       name: newName,
       description: newDesc,
       content: updatedContent,
-    });
-  };
+    })
+  }
 
   const handleEditorSave = useCallback(
     (newContent: string) => {
-      if (!editingFile) return;
+      if (!editingFile) return
 
       if (editingFile.isSkillMd) {
-        const parsed = parseSkillFrontmatter(newContent);
-        const newName = parsed.frontmatter.name || skill.name;
-        const newDesc = parsed.frontmatter.description || "";
+        const parsed = parseSkillFrontmatter(newContent)
+        const newName = parsed.frontmatter.name || skill.name
+        const newDesc = parsed.frontmatter.description || ""
         updateSkillInPlugin(pluginId, skill.id, {
           name: newName,
           description: newDesc,
           content: newContent,
-        });
-        setName(newName);
-        setDescription(newDesc);
+        })
+        setName(newName)
+        setDescription(newDesc)
       } else if (editingFile.relativePath) {
         const updatedFiles = (skill.files || []).map((f) =>
           f.relativePath === editingFile.relativePath
             ? { ...f, content: newContent }
-            : f
-        );
-        updateSkillInPlugin(pluginId, skill.id, { files: updatedFiles });
+            : f,
+        )
+        updateSkillInPlugin(pluginId, skill.id, { files: updatedFiles })
       }
     },
-    [editingFile, pluginId, skill.id, skill.name, skill.files, updateSkillInPlugin]
-  );
+    [
+      editingFile,
+      pluginId,
+      skill.id,
+      skill.name,
+      skill.files,
+      updateSkillInPlugin,
+    ],
+  )
 
   const handleFileEdit = useCallback(
     (node: FileTreeNode) => {
@@ -305,9 +315,9 @@ export function SkillDetailView({
           language: "markdown",
           value: skill.content,
           isSkillMd: true,
-        });
+        })
       } else if (node.file) {
-        const lang = extToLanguage(node.name);
+        const lang = extToLanguage(node.name)
         setEditingFile({
           title: `Edit ${node.fullPath}`,
           language: lang,
@@ -318,51 +328,54 @@ export function SkillDetailView({
             lang === "json"
               ? (v: string) => {
                   try {
-                    JSON.parse(v);
-                    return null;
+                    JSON.parse(v)
+                    return null
                   } catch (e) {
-                    return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+                    return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`
                   }
                 }
               : undefined,
-        });
+        })
       }
-      setEditorOpen(true);
+      setEditorOpen(true)
     },
-    [skill.content]
-  );
+    [skill.content],
+  )
 
   const handleFileDelete = useCallback(
     (node: FileTreeNode) => {
-      if (node.isSkillMd || !node.file) return;
+      if (node.isSkillMd || !node.file) return
       const updatedFiles = (skill.files || []).filter(
-        (f) => f.relativePath !== node.file!.relativePath
-      );
+        (f) => f.relativePath !== node.file!.relativePath,
+      )
       updateSkillInPlugin(pluginId, skill.id, {
         files: updatedFiles.length > 0 ? updatedFiles : undefined,
-      });
+      })
     },
-    [pluginId, skill.id, skill.files, updateSkillInPlugin]
-  );
+    [pluginId, skill.id, skill.files, updateSkillInPlugin],
+  )
 
   const handleAddFile = useCallback(() => {
-    const trimmed = newFileName.trim();
-    if (!trimmed) return;
-    if (trimmed === "SKILL.md") return;
-    if (skill.files?.some((f) => f.relativePath === trimmed)) return;
+    const trimmed = newFileName.trim()
+    if (!trimmed) return
+    if (trimmed === "SKILL.md") return
+    if (skill.files?.some((f) => f.relativePath === trimmed)) return
 
-    const lang = extToLanguage(trimmed);
-    let defaultContent = "";
-    if (lang === "json") defaultContent = "{\n  \n}\n";
-    else if (lang === "yaml") defaultContent = "# \n";
-    else if (lang === "markdown") defaultContent = "# \n";
+    const lang = extToLanguage(trimmed)
+    let defaultContent = ""
+    if (lang === "json") defaultContent = "{\n  \n}\n"
+    else if (lang === "yaml") defaultContent = "# \n"
+    else if (lang === "markdown") defaultContent = "# \n"
 
-    const newFile: SkillFile = { relativePath: trimmed, content: defaultContent };
-    const updatedFiles = [...(skill.files || []), newFile];
-    updateSkillInPlugin(pluginId, skill.id, { files: updatedFiles });
+    const newFile: SkillFile = {
+      relativePath: trimmed,
+      content: defaultContent,
+    }
+    const updatedFiles = [...(skill.files || []), newFile]
+    updateSkillInPlugin(pluginId, skill.id, { files: updatedFiles })
 
-    setNewFileName("");
-    setShowNewFile(false);
+    setNewFileName("")
+    setShowNewFile(false)
 
     setEditingFile({
       title: `Edit ${trimmed}`,
@@ -374,25 +387,25 @@ export function SkillDetailView({
         lang === "json"
           ? (v: string) => {
               try {
-                JSON.parse(v);
-                return null;
+                JSON.parse(v)
+                return null
               } catch (e) {
-                return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`;
+                return `Invalid JSON: ${e instanceof Error ? e.message : "Parse error"}`
               }
             }
           : undefined,
-    });
-    setEditorOpen(true);
-  }, [newFileName, skill.files, pluginId, skill.id, updateSkillInPlugin]);
+    })
+    setEditorOpen(true)
+  }, [newFileName, skill.files, pluginId, skill.id, updateSkillInPlugin])
 
   const fileTree = useMemo(
     () => buildFileTree(skill.content, skill.files),
-    [skill.content, skill.files]
-  );
+    [skill.content, skill.files],
+  )
 
-  const totalFiles = 1 + (skill.files?.length ?? 0);
+  const totalFiles = 1 + (skill.files?.length ?? 0)
 
-  const isDirty = name !== displayName || description !== displayDesc;
+  const isDirty = name !== displayName || description !== displayDesc
 
   return (
     <div className="flex flex-col gap-3">
@@ -459,7 +472,7 @@ export function SkillDetailView({
             <span />
           )}
           <span className="text-[9px] tabular-nums text-muted-foreground">
-            {(name?.length ?? 0)}/{SKILL_NAME_MAX}
+            {name?.length ?? 0}/{SKILL_NAME_MAX}
           </span>
         </div>
       </div>
@@ -489,7 +502,7 @@ export function SkillDetailView({
             <span />
           )}
           <span className="text-[9px] tabular-nums text-muted-foreground">
-            {(description?.length ?? 0)}/{SKILL_DESC_MAX}
+            {description?.length ?? 0}/{SKILL_DESC_MAX}
           </span>
         </div>
       </div>
@@ -525,10 +538,10 @@ export function SkillDetailView({
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddFile();
+                if (e.key === "Enter") handleAddFile()
                 if (e.key === "Escape") {
-                  setShowNewFile(false);
-                  setNewFileName("");
+                  setShowNewFile(false)
+                  setNewFileName("")
                 }
               }}
               placeholder="path/to/file.json"
@@ -542,8 +555,8 @@ export function SkillDetailView({
               variant="ghost"
               size="icon-xs"
               onClick={() => {
-                setShowNewFile(false);
-                setNewFileName("");
+                setShowNewFile(false)
+                setNewFileName("")
               }}
             >
               <Trash2 className="size-3" />
@@ -588,8 +601,8 @@ export function SkillDetailView({
         <CodeEditorDialog
           open={editorOpen}
           onOpenChange={(open) => {
-            setEditorOpen(open);
-            if (!open) setEditingFile(null);
+            setEditorOpen(open)
+            if (!open) setEditingFile(null)
           }}
           title={editingFile.title}
           subtitle={
@@ -604,5 +617,5 @@ export function SkillDetailView({
         />
       )}
     </div>
-  );
+  )
 }

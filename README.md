@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
+
 <h1 align="center">Plugin Marketplace Wizard</h1>
 
 <p align="center">
@@ -69,20 +70,20 @@ my-marketplace/
 
 ## Features
 
-| | |
-|---|---|
-| **Visual Canvas** | Drag-and-drop interface built on ReactFlow for assembling and organizing plugins |
-| **Local Discovery** | Scans Cursor, Claude, VS Code, Windsurf, Zed, Cline, Roo, and other IDE configs for MCP servers and skills |
+|                         |                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Visual Canvas**       | Drag-and-drop interface built on ReactFlow for assembling and organizing plugins                                                                  |
+| **Local Discovery**     | Scans Cursor, Claude, VS Code, Windsurf, Zed, Cline, Roo, and other IDE configs for MCP servers and skills                                        |
 | **Official Registries** | Search the [MCP Registry](https://registry.modelcontextprotocol.io) and [Skills.sh](https://skills.sh) for community-published servers and skills |
-| **Custom Registries** | Connect any registry that implements the MCP Server Registry API |
-| **Real-time Auto-save** | Persists changes directly to your marketplace directory as you edit |
-| **Inline Validation** | Visual indicators for configuration issues on the canvas |
-| **CI Validation** | Run `pmw test` in your pipeline to catch errors before deploy |
-| **Category Grouping** | Plugins with the same category are automatically grouped into labeled regions |
-| **Plugin Search** | Press `Cmd+K` to find and focus any plugin on the canvas |
-| **Skill File Import** | Drop `.zip` or `.skill` files onto plugin cards or the canvas |
-| **Hot Reload** | Watches for external file changes and syncs automatically |
-| **Undo / Redo** | Full history with `Cmd+Z` / `Cmd+Shift+Z` |
+| **Custom Registries**   | Connect any registry that implements the MCP Server Registry API                                                                                  |
+| **Real-time Auto-save** | Persists changes directly to your marketplace directory as you edit                                                                               |
+| **Inline Validation**   | Visual indicators for configuration issues on the canvas                                                                                          |
+| **CI Validation**       | Run `pmw test` in your pipeline to catch errors before deploy                                                                                     |
+| **Category Grouping**   | Plugins with the same category are automatically grouped into labeled regions                                                                     |
+| **Plugin Search**       | Press `Cmd+K` to find and focus any plugin on the canvas                                                                                          |
+| **Skill File Import**   | Drop `.zip` or `.skill` files onto plugin cards or the canvas                                                                                     |
+| **Hot Reload**          | Watches for external file changes and syncs automatically                                                                                         |
+| **Undo / Redo**         | Full history with `Cmd+Z` / `Cmd+Shift+Z`                                                                                                         |
 
 ## CLI Reference
 
@@ -165,28 +166,28 @@ import type {
   MarketplaceManifest,
   MarketplaceSettings,
   ValidationIssue,
-} from "plugin-marketplace-wizard";
+} from "plugin-marketplace-wizard"
 
 import {
   validatePluginData,
   validateMarketplaceManifest,
   validateMcpServer,
   validateSkill,
-} from "plugin-marketplace-wizard";
+} from "plugin-marketplace-wizard"
 ```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | [Next.js 16](https://nextjs.org/) with Turbopack |
-| UI | [React 19](https://react.dev/) |
-| Canvas | [@xyflow/react](https://reactflow.dev/) |
-| State | [Zustand](https://zustand.docs.pmnd.rs/) |
-| Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
-| Components | [shadcn/ui](https://ui.shadcn.com/) |
-| Icons | [Lucide React](https://lucide.dev/) |
-| Notifications | [Sonner](https://sonner.emilkowal.ski/) |
+| Layer         | Technology                                       |
+| ------------- | ------------------------------------------------ |
+| Framework     | [Next.js 16](https://nextjs.org/) with Turbopack |
+| UI            | [React 19](https://react.dev/)                   |
+| Canvas        | [@xyflow/react](https://reactflow.dev/)          |
+| State         | [Zustand](https://zustand.docs.pmnd.rs/)         |
+| Styling       | [Tailwind CSS 4](https://tailwindcss.com/)       |
+| Components    | [shadcn/ui](https://ui.shadcn.com/)              |
+| Icons         | [Lucide React](https://lucide.dev/)              |
+| Notifications | [Sonner](https://sonner.emilkowal.ski/)          |
 
 ## Contributing
 

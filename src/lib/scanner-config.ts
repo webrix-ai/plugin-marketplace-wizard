@@ -28,16 +28,16 @@ export const SKIP_DIRS = new Set([
   ".rustup",
   ".local",
   ".docker",
-]);
+])
 
 interface McpPathDef {
-  app: string;
-  relativePath: string;
+  app: string
+  relativePath: string
 }
 
 interface SkillDirDef {
-  app: string;
-  relativePath: string;
+  app: string
+  relativePath: string
 }
 
 export const GLOBAL_MCP_PATHS: McpPathDef[] = [
@@ -73,23 +73,23 @@ export const GLOBAL_MCP_PATHS: McpPathDef[] = [
   { app: "windsurf", relativePath: ".codeium/windsurf/mcp_config.json" },
   { app: "zed", relativePath: ".config/zed/settings.json" },
   { app: "gemini", relativePath: ".gemini/settings.json" },
-];
+]
 
 interface AgentDirDef {
-  app: string;
-  relativePath: string;
+  app: string
+  relativePath: string
 }
 
 export const GLOBAL_AGENT_DIRS: AgentDirDef[] = [
   { app: "claude", relativePath: ".claude/agents" },
   { app: "cursor", relativePath: ".cursor/agents" },
   { app: "codex", relativePath: ".codex/agents" },
-];
+]
 
 export const LOCAL_AGENT_PATTERNS = [
   { app: "claude", pattern: ".claude/agents" },
   { app: "cursor", pattern: ".cursor/agents" },
-];
+]
 
 export const GLOBAL_SKILL_DIRS: SkillDirDef[] = [
   { app: "cursor", relativePath: ".cursor/skills" },
@@ -99,7 +99,7 @@ export const GLOBAL_SKILL_DIRS: SkillDirDef[] = [
   { app: "cline", relativePath: ".cline/skills" },
   { app: "windsurf", relativePath: ".codeium/windsurf/skills" },
   { app: "global", relativePath: ".agents/skills" },
-];
+]
 
 export const LOCAL_MCP_PATTERNS = [
   { app: "cursor", pattern: ".cursor/mcp.json" },
@@ -109,14 +109,14 @@ export const LOCAL_MCP_PATTERNS = [
   { app: "zed", pattern: ".zed/settings.json" },
   { app: "gemini", pattern: ".gemini/settings.json" },
   { app: "junie", pattern: ".junie/mcp/mcp.json" },
-];
+]
 
 export const LOCAL_SKILL_PATTERNS = [
   { app: "cursor", pattern: ".cursor/skills" },
   { app: "claude", pattern: ".claude/skills" },
   { app: "codex", pattern: ".codex/skills" },
   { app: "cline", pattern: ".cline/skills" },
-];
+]
 
 export const PROJECT_SUBDIRS = [
   "",
@@ -128,4 +128,4 @@ export const PROJECT_SUBDIRS = [
   "prjs",
   "projects",
   "work",
-];
+]

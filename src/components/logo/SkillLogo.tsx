@@ -6,7 +6,11 @@ interface SkillLogoProps {
   className?: string
 }
 
-export function SkillLogo({ size = 24, color = "white", className }: SkillLogoProps) {
+export function SkillLogo({
+  size = 24,
+  color = "white",
+  className,
+}: SkillLogoProps) {
   return (
     <svg
       width={size}

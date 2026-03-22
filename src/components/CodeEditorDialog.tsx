@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -8,13 +8,13 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
-import Editor, { type OnMount } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { AlertCircle } from "lucide-react"
+import Editor, { type OnMount } from "@monaco-editor/react"
+import type { editor } from "monaco-editor"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 export type EditorLanguage =
   | "json"
@@ -27,17 +27,17 @@ export type EditorLanguage =
   | "html"
   | "css"
   | "xml"
-  | "plaintext";
+  | "plaintext"
 
 interface CodeEditorDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  subtitle?: string;
-  language: EditorLanguage;
-  value: string;
-  onSave: (value: string) => void;
-  validate?: (value: string) => string | null;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  subtitle?: string
+  language: EditorLanguage
+  value: string
+  onSave: (value: string) => void
+  validate?: (value: string) => string | null
 }
 
 export function CodeEditorDialog({
@@ -50,57 +50,57 @@ export function CodeEditorDialog({
   onSave,
   validate,
 }: CodeEditorDialogProps) {
-  const [draft, setDraft] = useState(value);
-  const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"editor" | "preview">("editor");
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const isMarkdown = language === "markdown";
+  const [draft, setDraft] = useState(value)
+  const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<"editor" | "preview">("editor")
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const isMarkdown = language === "markdown"
 
-  const [prevOpen, setPrevOpen] = useState(open);
-  const [prevValue, setPrevValue] = useState(value);
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevValue, setPrevValue] = useState(value)
   if (prevOpen !== open || prevValue !== value) {
-    setPrevOpen(open);
-    setPrevValue(value);
+    setPrevOpen(open)
+    setPrevValue(value)
     if (open) {
-      setDraft(value);
-      setError(null);
+      setDraft(value)
+      setError(null)
     }
   }
 
   const handleEditorMount: OnMount = useCallback((editor) => {
-    editorRef.current = editor;
-    setTimeout(() => editor.focus(), 100);
-  }, []);
+    editorRef.current = editor
+    setTimeout(() => editor.focus(), 100)
+  }, [])
 
   const handleSave = useCallback(() => {
     if (validate) {
-      const err = validate(draft);
+      const err = validate(draft)
       if (err) {
-        setError(err);
-        return;
+        setError(err)
+        return
       }
     }
-    onSave(draft);
-    onOpenChange(false);
-  }, [draft, validate, onSave, onOpenChange]);
+    onSave(draft)
+    onOpenChange(false)
+  }, [draft, validate, onSave, onOpenChange])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault();
-        handleSave();
+        e.preventDefault()
+        handleSave()
       }
     },
-    [handleSave]
-  );
+    [handleSave],
+  )
 
   useEffect(() => {
-    if (!open) return;
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, handleKeyDown]);
+    if (!open) return
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [open, handleKeyDown])
 
-  const isDirty = draft !== value;
+  const isDirty = draft !== value
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,7 +146,9 @@ export function CodeEditorDialog({
             {draft.trim() ? (
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft}</ReactMarkdown>
             ) : (
-              <p className="text-xs italic text-muted-foreground">Nothing to preview</p>
+              <p className="text-xs italic text-muted-foreground">
+                Nothing to preview
+              </p>
             )}
           </div>
         ) : (
@@ -157,8 +159,8 @@ export function CodeEditorDialog({
               theme="vs-dark"
               value={draft}
               onChange={(v) => {
-                setDraft(v ?? "");
-                setError(null);
+                setDraft(v ?? "")
+                setError(null)
               }}
               onMount={handleEditorMount}
               options={{
@@ -166,7 +168,10 @@ export function CodeEditorDialog({
                 fontSize: 13,
                 lineNumbers: "on",
                 scrollBeyondLastLine: false,
-                wordWrap: language === "markdown" || language === "plaintext" ? "on" : "off",
+                wordWrap:
+                  language === "markdown" || language === "plaintext"
+                    ? "on"
+                    : "off",
                 tabSize: 2,
                 automaticLayout: true,
                 padding: { top: 12 },
@@ -189,7 +194,11 @@ export function CodeEditorDialog({
             <p className="text-xs text-muted-foreground">
               {isDirty ? "Unsaved changes" : "No changes"}
               <span className="ml-3 text-[10px] opacity-60">
-                {typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘S" : "Ctrl+S"} to save
+                {typeof navigator !== "undefined" &&
+                /Mac|iPhone|iPad/.test(navigator.platform)
+                  ? "⌘S"
+                  : "Ctrl+S"}{" "}
+                to save
               </span>
             </p>
             <div className="flex gap-2">
@@ -208,5 +217,5 @@ export function CodeEditorDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

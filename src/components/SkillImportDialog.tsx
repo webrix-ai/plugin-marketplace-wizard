@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { AlertTriangle } from "lucide-react";
-import { useWizardStore } from "@/lib/store";
+import { AlertTriangle } from "lucide-react"
+import { useWizardStore } from "@/lib/store"
 import {
   Dialog,
   DialogContent,
@@ -9,12 +9,12 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export function SkillImportErrorDialog() {
-  const error = useWizardStore((s) => s.skillImportError);
-  const setError = useWizardStore((s) => s.setSkillImportError);
+  const error = useWizardStore((s) => s.skillImportError)
+  const setError = useWizardStore((s) => s.setSkillImportError)
 
   return (
     <Dialog open={!!error} onOpenChange={(open) => !open && setError(null)}>
@@ -36,5 +36,5 @@ export function SkillImportErrorDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

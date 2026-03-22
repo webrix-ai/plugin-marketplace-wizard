@@ -1,48 +1,48 @@
-"use client";
+"use client"
 
-import { useState, useCallback } from "react";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useState, useCallback } from "react"
+import { X } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 export function TagInput({
   tags,
   onChange,
   suggestions,
 }: {
-  tags: string[];
-  onChange: (tags: string[]) => void;
-  suggestions: string[];
+  tags: string[]
+  onChange: (tags: string[]) => void
+  suggestions: string[]
 }) {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState("")
 
   const addTag = useCallback(
     (tag: string) => {
-      const trimmed = tag.trim().toLowerCase();
+      const trimmed = tag.trim().toLowerCase()
       if (trimmed && !tags.includes(trimmed)) {
-        onChange([...tags, trimmed]);
+        onChange([...tags, trimmed])
       }
-      setInputValue("");
+      setInputValue("")
     },
-    [tags, onChange]
-  );
+    [tags, onChange],
+  )
 
   const removeTag = useCallback(
     (tag: string) => {
-      onChange(tags.filter((t) => t !== tag));
+      onChange(tags.filter((t) => t !== tag))
     },
-    [tags, onChange]
-  );
+    [tags, onChange],
+  )
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault();
-      addTag(inputValue);
+      e.preventDefault()
+      addTag(inputValue)
     } else if (e.key === "Backspace" && !inputValue && tags.length > 0) {
-      removeTag(tags[tags.length - 1]);
+      removeTag(tags[tags.length - 1])
     }
-  };
+  }
 
-  const unusedSuggestions = suggestions.filter((s) => !tags.includes(s));
+  const unusedSuggestions = suggestions.filter((s) => !tags.includes(s))
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -87,5 +87,5 @@ export function TagInput({
         </div>
       )}
     </div>
-  );
+  )
 }

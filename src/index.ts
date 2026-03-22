@@ -21,7 +21,7 @@ export type {
   CustomGitHubSkill,
   CustomSkillRepo,
   PluginScalarUpdate,
-} from "./lib/types";
+} from "./lib/types"
 
 // Marketplace schema types
 export type {
@@ -32,10 +32,10 @@ export type {
   MarketplacePluginEntry,
   MarketplaceManifest,
   MarketplaceSettings,
-} from "./lib/marketplace-schema";
+} from "./lib/marketplace-schema"
 
 // Validation types and utilities
-export type { ValidationIssue } from "./lib/validate-marketplace";
+export type { ValidationIssue } from "./lib/validate-marketplace"
 export {
   validateMarketplaceName,
   validateOwner,
@@ -49,4 +49,4 @@ export {
   isValidKebabCaseId,
   getSkillDirName,
   RESERVED_MARKETPLACE_NAMES,
-} from "./lib/validate-marketplace";
+} from "./lib/validate-marketplace"

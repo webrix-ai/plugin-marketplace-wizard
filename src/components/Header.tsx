@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState } from "react"
+import Image from "next/image"
 import {
   Save,
   RefreshCw,
@@ -12,20 +12,20 @@ import {
   Redo2,
   FolderOpen,
   Github,
-} from "lucide-react";
-import { useWizardStore } from "@/lib/store";
-import { MarketplaceSettingsDialog } from "./MarketplaceSettingsDialog";
-import { PublishDialog } from "./PublishDialog";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+} from "lucide-react"
+import { useWizardStore } from "@/lib/store"
+import { MarketplaceSettingsDialog } from "./MarketplaceSettingsDialog"
+import { PublishDialog } from "./PublishDialog"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@/components/ui/tooltip";
-import AppLogo from "./logo/AppLogo";
-import WebrixLogo from "./logo/WebrixLogo";
+} from "@/components/ui/tooltip"
+import AppLogo from "./logo/AppLogo"
+import WebrixLogo from "./logo/WebrixLogo"
 
 export function Header() {
   const {
@@ -43,21 +43,28 @@ export function Header() {
     redo,
     _undoStack,
     _redoStack,
-  } = useWizardStore();
-  const [marketplaceDialogOpen, setMarketplaceDialogOpen] = useState(false);
-  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  } = useWizardStore()
+  const [marketplaceDialogOpen, setMarketplaceDialogOpen] = useState(false)
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
 
   const dirDisplay = marketplaceDir
     ? marketplaceDir.split("/").slice(-2).join("/")
-    : "";
+    : ""
 
   return (
     <header className="flex h-12 shrink-0 items-center border-b bg-card px-3">
       <div className="flex items-center gap-2.5">
         <AppLogo className="h-7 w-7" color="currentColor" />
         <div className="flex items-end gap-2">
-          <h1 className="text-sm font-semibold leading-none">Plugin Marketplace Wizard</h1>
-          <a href="https://webrix.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors leading-none">
+          <h1 className="text-sm font-semibold leading-none">
+            Plugin Marketplace Wizard
+          </h1>
+          <a
+            href="https://webrix.ai/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors leading-none"
+          >
             <span className="text-[9px]">by</span>
             <WebrixLogo className="h-[10px] w-auto" />
           </a>
@@ -163,11 +170,7 @@ export function Header() {
               />
             }
           >
-            {isScanning ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <RefreshCw />
-            )}
+            {isScanning ? <Loader2 className="animate-spin" /> : <RefreshCw />}
           </TooltipTrigger>
           <TooltipContent>Refresh plugins</TooltipContent>
         </Tooltip>
@@ -202,11 +205,7 @@ export function Header() {
               />
             }
           >
-            {isExporting ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Save />
-            )}
+            {isExporting ? <Loader2 className="animate-spin" /> : <Save />}
           </TooltipTrigger>
           <TooltipContent>Save all plugins</TooltipContent>
         </Tooltip>
@@ -220,7 +219,9 @@ export function Header() {
                 render={
                   <div className="flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground">
                     <FolderOpen className="size-3" />
-                    <span className="text-[10px] max-w-40 truncate">{dirDisplay}</span>
+                    <span className="text-[10px] max-w-40 truncate">
+                      {dirDisplay}
+                    </span>
                   </div>
                 }
               />
@@ -251,5 +252,5 @@ export function Header() {
         onClose={() => setPublishDialogOpen(false)}
       />
     </header>
-  );
+  )
 }
