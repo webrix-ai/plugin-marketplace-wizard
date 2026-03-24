@@ -118,6 +118,7 @@ export interface DragPayload {
 export interface ExportTargets {
   cursor: boolean
   claude: boolean
+  github: boolean
 }
 
 export interface ExportRequest {

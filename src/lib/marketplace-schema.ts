@@ -50,7 +50,7 @@ export interface MarketplacePluginEntry {
   strict?: boolean
 }
 
-/** Full marketplace manifest (`.claude-plugin/marketplace.json`, `.cursor-plugin/marketplace.json`) */
+/** Full marketplace manifest (`.claude-plugin/marketplace.json`, `.cursor-plugin/marketplace.json`, `.github/plugin/marketplace.json`) */
 export interface MarketplaceManifest {
   name: string
   owner: MarketplaceOwner

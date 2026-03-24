@@ -223,7 +223,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   isPluginsLoading: false,
   isExporting: false,
   autoSave: true,
-  exportTargets: { cursor: true, claude: true },
+  exportTargets: { cursor: true, claude: true, github: true },
   lastExport: null,
 
   _undoStack: [],
@@ -624,7 +624,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const res = await fetch("/api/export-targets")
       if (!res.ok) return
       const data = await res.json()
-      set({ exportTargets: { cursor: !!data.cursor, claude: !!data.claude } })
+      set({ exportTargets: { cursor: !!data.cursor, claude: !!data.claude, github: !!data.github } })
     } catch {
       /* ignore */
     }

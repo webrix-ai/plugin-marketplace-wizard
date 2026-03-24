@@ -9,6 +9,7 @@ function tryReadManifest(outputDir: string): MarketplaceManifest | null {
   const candidates = [
     path.join(outputDir, ".claude-plugin", "marketplace.json"),
     path.join(outputDir, ".cursor-plugin", "marketplace.json"),
+    path.join(outputDir, ".github", "plugin", "marketplace.json"),
   ]
   for (const p of candidates) {
     try {

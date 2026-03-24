@@ -7,7 +7,8 @@ export async function GET() {
   const dir = getMarketplaceDir()
   const cursor = fs.existsSync(path.join(dir, ".cursor-plugin"))
   const claude = fs.existsSync(path.join(dir, ".claude-plugin"))
-  return NextResponse.json({ cursor, claude })
+  const github = fs.existsSync(path.join(dir, ".github", "plugin"))
+  return NextResponse.json({ cursor, claude, github })
 }
 
 function rmRecursive(dirPath: string) {
@@ -23,6 +24,24 @@ export async function DELETE(request: Request) {
     const deleted: string[] = []
 
     for (const target of targets) {
+      if (target === "github") {
+        const rootFolder = path.join(dir, ".github", "plugin");
+        rmRecursive(rootFolder);
+        deleted.push(rootFolder);
+
+        const pluginsDir = path.join(dir, "plugins");
+        if (fs.existsSync(pluginsDir)) {
+          for (const slug of fs.readdirSync(pluginsDir)) {
+            const pluginTarget = path.join(pluginsDir, slug, "plugin.json");
+            if (fs.existsSync(pluginTarget)) {
+              fs.rmSync(pluginTarget, { force: true });
+              deleted.push(pluginTarget);
+            }
+          }
+        }
+        continue;
+      }
+
       const folderName =
         target === "cursor" ? ".cursor-plugin" : ".claude-plugin"
 

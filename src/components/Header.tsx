@@ -120,6 +120,22 @@ export function Header() {
                 <TooltipContent>Exporting to Claude</TooltipContent>
               </Tooltip>
             )}
+            {exportTargets.github && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Image
+                      src="/github.svg"
+                      alt="GitHub Copilot"
+                      width={14}
+                      height={14}
+                      className="shrink-0 dark:invert"
+                    />
+                  }
+                />
+                <TooltipContent>Exporting to GitHub Copilot</TooltipContent>
+              </Tooltip>
+            )}
           </span>
         </Button>
       </div>

@@ -54,6 +54,26 @@ function buildClaudePluginManifest(plugin: PluginData) {
   return manifest
 }
 
+function buildGithubPluginManifest(plugin: PluginData) {
+  const manifest: Record<string, unknown> = {
+    name: plugin.slug,
+    description: plugin.description,
+    version: plugin.version,
+  };
+  if (plugin.author?.name) {
+    manifest.author = {
+      name: plugin.author.name,
+      ...(plugin.author.email ? { email: plugin.author.email } : {}),
+    };
+  }
+  if (plugin.license) manifest.license = plugin.license;
+  if (plugin.keywords?.length) manifest.keywords = plugin.keywords;
+  if (plugin.skills.length > 0) manifest.skills = "skills/";
+  if ((plugin.agents ?? []).length > 0) manifest.agents = "agents/";
+  if (plugin.mcps.length > 0) manifest.mcpServers = ".mcp.json";
+  return manifest;
+}
+
 function buildMcpJson(plugin: PluginData) {
   const mcpServers: Record<string, Record<string, unknown>> = {}
 
@@ -113,6 +133,13 @@ function writePlugin(
     const claudePath = path.join(pluginDir, ".claude-plugin", "plugin.json")
     writeJson(claudePath, claudeManifest)
     files.push(claudePath)
+  }
+
+  if (targets.github) {
+    const githubManifest = buildGithubPluginManifest(plugin);
+    const githubPath = path.join(pluginDir, "plugin.json");
+    writeJson(githubPath, githubManifest);
+    files.push(githubPath);
   }
 
   if (plugin.mcps.length > 0) {
@@ -214,10 +241,10 @@ function removeStaleAgentFiles(agentsDir: string, currentFiles: Set<string>) {
 
 function buildMarketplacePluginEntry(
   plugin: PluginData,
-  sourceStyle: "cursor" | "claude",
+  sourceStyle: "cursor" | "claude" | "github",
 ): Record<string, unknown> {
   const defaultSource =
-    sourceStyle === "claude" ? `./plugins/${plugin.slug}` : plugin.slug
+    sourceStyle === "cursor" ? plugin.slug : `./plugins/${plugin.slug}`
   const source =
     plugin.sourceOverride !== undefined ? plugin.sourceOverride : defaultSource
 
@@ -285,6 +312,24 @@ function writeMarketplaceManifests(
     files.push(claudePath)
   }
 
+  if (targets.github) {
+    const githubMarketplace = {
+      name: settings.name,
+      owner,
+      ...(Object.keys(meta).length ? { metadata: meta } : {}),
+      plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "github")),
+    }
+
+    const githubPath = path.join(
+      outputDir,
+      ".github",
+      "plugin",
+      "marketplace.json",
+    )
+    writeJson(githubPath, githubMarketplace)
+    files.push(githubPath)
+  }
+
   return files
 }
 
@@ -319,7 +364,7 @@ export async function exportPlugins(
   const dir = request.outputDir ?? process.cwd()
   const settings =
     marketplaceSettings ?? createDefaultMarketplaceSettings(orgName, undefined)
-  const targets: ExportTargets = exportTargets ?? { cursor: true, claude: true }
+  const targets: ExportTargets = exportTargets ?? { cursor: true, claude: true, github: true }
 
   try {
     ensureDir(dir)

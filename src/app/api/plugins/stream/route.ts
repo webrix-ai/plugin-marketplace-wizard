@@ -7,10 +7,15 @@ import { getMarketplaceDir } from "@/lib/get-marketplace-dir"
 import { WATCHER_DEBOUNCE_MS } from "@/lib/constants"
 
 function tryReadManifest(outputDir: string): MarketplaceManifest | null {
-  for (const sub of [".claude-plugin", ".cursor-plugin"]) {
+  const candidates = [
+    path.join(".claude-plugin", "marketplace.json"),
+    path.join(".cursor-plugin", "marketplace.json"),
+    path.join(".github", "plugin", "marketplace.json"),
+  ];
+  for (const rel of candidates) {
     try {
       const raw = fs.readFileSync(
-        path.join(outputDir, sub, "marketplace.json"),
+        path.join(outputDir, rel),
         "utf-8",
       )
       const data = JSON.parse(stripJsonComments(raw)) as MarketplaceManifest

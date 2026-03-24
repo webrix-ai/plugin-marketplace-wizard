@@ -25,22 +25,24 @@ export async function DELETE(request: Request) {
 
     fs.rmSync(pluginDir, { recursive: true, force: true })
 
-    const manifestPath = path.join(
-      outputDir,
-      ".cursor-plugin",
-      "marketplace.json",
-    )
-    if (fs.existsSync(manifestPath)) {
-      try {
-        const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"))
-        if (Array.isArray(manifest.plugins)) {
-          manifest.plugins = manifest.plugins.filter(
-            (p: { name?: string }) => p.name !== slug,
-          )
-          fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
+    const manifestPaths = [
+      path.join(outputDir, ".cursor-plugin", "marketplace.json"),
+      path.join(outputDir, ".claude-plugin", "marketplace.json"),
+      path.join(outputDir, ".github", "plugin", "marketplace.json"),
+    ]
+    for (const manifestPath of manifestPaths) {
+      if (fs.existsSync(manifestPath)) {
+        try {
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"))
+          if (Array.isArray(manifest.plugins)) {
+            manifest.plugins = manifest.plugins.filter(
+              (p: { name?: string }) => p.name !== slug,
+            )
+            fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
+          }
+        } catch {
+          // manifest cleanup is best-effort
         }
-      } catch {
-        // manifest cleanup is best-effort
       }
     }
 

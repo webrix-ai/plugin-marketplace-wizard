@@ -42,6 +42,7 @@ interface Props {
 const TARGET_LABELS: Record<string, string> = {
   cursor: "Cursor",
   claude: "Claude",
+  github: "GitHub Copilot",
 }
 
 interface SavePayload {
@@ -76,6 +77,7 @@ function MarketplaceSettingsFormBody({
   const [localTargets, setLocalTargets] = useState<ExportTargets>({
     cursor: storeTargets.cursor,
     claude: storeTargets.claude,
+    github: storeTargets.github,
   })
 
   const issues = validateMarketplaceSettings({
@@ -84,14 +86,14 @@ function MarketplaceSettingsFormBody({
     metadata: { description, version },
   })
 
-  const noneSelected = !localTargets.cursor && !localTargets.claude
+  const noneSelected = !localTargets.cursor && !localTargets.claude && !localTargets.github
 
   const toggleTarget = (key: keyof ExportTargets) => {
     setLocalTargets((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   const save = () => {
-    const removedTargets = (["cursor", "claude"] as const).filter(
+    const removedTargets = (["cursor", "claude", "github"] as const).filter(
       (t) => storeTargets[t] && !localTargets[t],
     )
 
@@ -192,7 +194,7 @@ function MarketplaceSettingsFormBody({
 
         <div className="flex flex-col gap-2.5">
           <Label className="text-xs">Export to</Label>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div
               role="button"
               tabIndex={0}
@@ -203,7 +205,7 @@ function MarketplaceSettingsFormBody({
                   toggleTarget("cursor")
                 }
               }}
-              className={`flex flex-1 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors select-none ${
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
                 localTargets.cursor
                   ? "border-primary/40 bg-primary/5"
                   : "border-border bg-transparent opacity-60"
@@ -217,11 +219,11 @@ function MarketplaceSettingsFormBody({
               <Image
                 src="/cursor.svg"
                 alt="Cursor"
-                width={18}
-                height={18}
+                width={16}
+                height={16}
                 className="shrink-0 dark:invert"
               />
-              <span className="text-sm font-medium">Cursor</span>
+              <span className="text-xs font-medium">Cursor</span>
             </div>
             <div
               role="button"
@@ -233,7 +235,7 @@ function MarketplaceSettingsFormBody({
                   toggleTarget("claude")
                 }
               }}
-              className={`flex flex-1 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors select-none ${
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
                 localTargets.claude
                   ? "border-primary/40 bg-primary/5"
                   : "border-border bg-transparent opacity-60"
@@ -247,11 +249,41 @@ function MarketplaceSettingsFormBody({
               <Image
                 src="/claude.svg"
                 alt="Claude"
-                width={18}
-                height={18}
+                width={16}
+                height={16}
                 className="shrink-0"
               />
-              <span className="text-sm font-medium">Claude</span>
+              <span className="text-xs font-medium">Claude</span>
+            </div>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleTarget("github")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  toggleTarget("github")
+                }
+              }}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
+                localTargets.github
+                  ? "border-primary/40 bg-primary/5"
+                  : "border-border bg-transparent opacity-60"
+              }`}
+            >
+              <Checkbox
+                checked={localTargets.github}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                onCheckedChange={() => toggleTarget("github")}
+              />
+              <Image
+                src="/github.svg"
+                alt="GitHub Copilot"
+                width={16}
+                height={16}
+                className="shrink-0 dark:invert"
+              />
+              <span className="text-xs font-medium">GitHub</span>
             </div>
           </div>
           {noneSelected ? (
@@ -354,7 +386,7 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
     .map((t) => TARGET_LABELS[t])
     .join(" and ")
   const confirmFolders = pendingPayload?.removedTargets
-    .map((t) => `.${t}-plugin`)
+    .map((t) => (t === "github" ? ".github/plugin" : `.${t}-plugin`))
     .join(" and ")
 
   return (
@@ -367,7 +399,7 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
       >
         <DialogContent className="sm:max-w-lg">
           <MarketplaceSettingsFormBody
-            key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}|${exportTargets.cursor}|${exportTargets.claude}`}
+            key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}|${exportTargets.cursor}|${exportTargets.claude}|${exportTargets.github}`}
             initial={marketplaceSettings}
             onSave={handleSave}
             onClose={onClose}

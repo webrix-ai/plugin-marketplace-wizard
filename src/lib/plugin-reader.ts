@@ -140,6 +140,15 @@ export function readPluginDir(
       name = (claudeManifest.name as string) || slug
       description = (claudeManifest.description as string) || ""
       version = (claudeManifest.version as string) || "1.0.0"
+    } else {
+      const githubManifest = safeReadJson(
+        path.join(pluginDir, "plugin.json"),
+      )
+      if (githubManifest) {
+        name = (githubManifest.name as string) || slug
+        description = (githubManifest.description as string) || ""
+        version = (githubManifest.version as string) || "1.0.0"
+      }
     }
   }
 
