@@ -11,6 +11,7 @@ import type {
   Skill,
   AgentData,
   PluginData,
+  PluginHook,
   ExportResult,
   ExportTargets,
   RegistryMcpServer,
@@ -20,6 +21,8 @@ import type {
   CustomSkillRepo,
   CustomGitHubSkill,
   PluginScalarUpdate,
+  ClaudeHookItem,
+  CursorHookItem,
 } from "./types"
 import { createDefaultMarketplaceSettings } from "./default-marketplace-settings"
 import {
@@ -46,9 +49,9 @@ interface WizardState {
   categories: string[]
   selectedPluginId: string | null
   selectedItemId: string | null
-  selectedItemType: "mcp" | "skill" | "agent" | null
+  selectedItemType: "mcp" | "skill" | "agent" | "hook" | null
   searchQuery: string
-  sidebarTab: "mcps" | "skills" | "agents"
+  sidebarTab: "mcps" | "skills" | "agents" | "hooks"
   sidebarSource: "local" | "registry" | "custom"
   sidebarCollapsed: boolean
   isScanning: boolean
@@ -92,10 +95,10 @@ interface WizardState {
   setSelectedPluginId: (id: string | null) => void
   setSelectedItemInPlugin: (
     itemId: string | null,
-    itemType: "mcp" | "skill" | "agent" | null,
+    itemType: "mcp" | "skill" | "agent" | "hook" | null,
   ) => void
   setSearchQuery: (query: string) => void
-  setSidebarTab: (tab: "mcps" | "skills" | "agents") => void
+  setSidebarTab: (tab: "mcps" | "skills" | "agents" | "hooks") => void
   setSidebarSource: (source: "local" | "registry" | "custom") => void
   setSidebarCollapsed: (collapsed: boolean) => void
   setRegistryQuery: (q: string) => void
@@ -153,12 +156,41 @@ interface WizardState {
     updates: Partial<AgentData>,
   ) => void
 
+  addHookToPlugin: (pluginId: string, hook: PluginHook) => void
+  removeHookFromPlugin: (pluginId: string, hookId: string) => void
+  updateHookInPlugin: (
+    pluginId: string,
+    hookId: string,
+    updates: Partial<PluginHook>,
+  ) => void
+
   importSkillFileToPlugin: (pluginId: string, file: File) => Promise<void>
   skillImportError: string | null
   setSkillImportError: (error: string | null) => void
 
   exportPlugins: () => Promise<void>
   silentExport: () => Promise<void>
+
+  claudeHooks: ClaudeHookItem[]
+  cursorHooks: CursorHookItem[]
+  hooksLoading: boolean
+  claudeHooksEnabled: boolean
+  cursorHooksEnabled: boolean
+  hooksQuery: string
+  setHooksQuery: (q: string) => void
+  scanHooks: () => Promise<void>
+  addClaudeHook: (item: Omit<ClaudeHookItem, "id">) => Promise<void>
+  updateClaudeHook: (
+    item: ClaudeHookItem,
+    updates: Partial<ClaudeHookItem>,
+  ) => Promise<void>
+  deleteClaudeHook: (item: ClaudeHookItem) => Promise<void>
+  addCursorHook: (item: Omit<CursorHookItem, "id">) => Promise<void>
+  updateCursorHook: (
+    item: CursorHookItem,
+    updates: Partial<CursorHookItem>,
+  ) => Promise<void>
+  deleteCursorHook: (item: CursorHookItem) => Promise<void>
 }
 
 function pushHistory(
@@ -214,6 +246,88 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   customRegistryQuery: "",
 
   customSkillRepos: [],
+
+  claudeHooks: [],
+  cursorHooks: [],
+  hooksLoading: false,
+  claudeHooksEnabled: false,
+  cursorHooksEnabled: false,
+  hooksQuery: "",
+
+  setHooksQuery: (q) => set({ hooksQuery: q }),
+
+  scanHooks: async () => {
+    set({ hooksLoading: true });
+    try {
+      const res = await fetch("/api/hooks");
+      if (!res.ok) return;
+      const data = await res.json();
+      set({
+        claudeHooks: data.claudeHooks ?? [],
+        cursorHooks: data.cursorHooks ?? [],
+        claudeHooksEnabled: data.claudeEnabled ?? false,
+        cursorHooksEnabled: data.cursorEnabled ?? false,
+      });
+    } catch {
+      /* ignore */
+    } finally {
+      set({ hooksLoading: false });
+    }
+  },
+
+  addClaudeHook: async (item) => {
+    await fetch("/api/hooks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: "claude", item }),
+    });
+    await get().scanHooks();
+  },
+
+  updateClaudeHook: async (item, updates) => {
+    await fetch("/api/hooks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: "claude", item, updates }),
+    });
+    await get().scanHooks();
+  },
+
+  deleteClaudeHook: async (item) => {
+    await fetch("/api/hooks", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: "claude", item }),
+    });
+    await get().scanHooks();
+  },
+
+  addCursorHook: async (item) => {
+    await fetch("/api/hooks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: "cursor", item }),
+    });
+    await get().scanHooks();
+  },
+
+  updateCursorHook: async (item, updates) => {
+    await fetch("/api/hooks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: "cursor", item, updates }),
+    });
+    await get().scanHooks();
+  },
+
+  deleteCursorHook: async (item) => {
+    await fetch("/api/hooks", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform: "cursor", item }),
+    });
+    await get().scanHooks();
+  },
 
   refreshGitDefaults: async () => {
     try {
@@ -1043,6 +1157,43 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       }),
       ...pushHistory(state),
     })
+  },
+
+  addHookToPlugin: (pluginId, hook) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        if ((p.hooks ?? []).some((h) => h.id === hook.id)) return p;
+        return { ...p, hooks: [...(p.hooks ?? []), hook] };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
+  removeHookFromPlugin: (pluginId, hookId) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return { ...p, hooks: (p.hooks ?? []).filter((h) => h.id !== hookId) };
+      }),
+      ...pushHistory(state),
+    });
+  },
+
+  updateHookInPlugin: (pluginId, hookId, updates) => {
+    const state = get();
+    set({
+      plugins: state.plugins.map((p) => {
+        if (p.id !== pluginId) return p;
+        return {
+          ...p,
+          hooks: (p.hooks ?? []).map((h) => (h.id === hookId ? { ...h, ...updates } : h)),
+        };
+      }),
+      ...pushHistory(state),
+    });
   },
 
   setSkillImportError: (error) => set({ skillImportError: error }),

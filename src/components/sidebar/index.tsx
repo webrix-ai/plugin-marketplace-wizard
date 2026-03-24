@@ -11,6 +11,7 @@ import {
   Bot,
   PanelLeftClose,
   PanelLeftOpen,
+  Webhook,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useWizardStore } from "@/lib/store"
@@ -28,6 +29,7 @@ import {
 import { LocalContent } from "./LocalContent"
 import { RegistryContent } from "./OfficialContent"
 import { CustomContent } from "./CustomContent"
+import { HooksContent } from "./HooksContent"
 import { CreatePluginDialog } from "@/components/CreatePluginDialog"
 
 function IconRail({
@@ -36,9 +38,9 @@ function IconRail({
   onTabChange,
   onToggleCollapse,
 }: {
-  tab: "mcps" | "skills" | "agents"
+  tab: "mcps" | "skills" | "agents" | "hooks"
   collapsed: boolean
-  onTabChange: (t: "mcps" | "skills" | "agents") => void
+  onTabChange: (t: "mcps" | "skills" | "agents" | "hooks") => void
   onToggleCollapse: () => void
 }) {
   const { resolvedTheme, setTheme } = useTheme()
@@ -84,6 +86,18 @@ function IconRail({
           >
             <Bot className="size-4" />
             <span className="text-[9px] font-medium leading-none">Agents</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange("hooks")}
+            className={`flex w-[35px] flex-col items-center gap-0.5 rounded-lg py-1 transition-all cursor-pointer ${
+              tab === "hooks"
+                ? "bg-orange-500/15 text-orange-400"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Webhook className="size-4" />
+            <span className="text-[9px] font-medium leading-none">Hooks</span>
           </button>
         </div>
 
@@ -185,7 +199,7 @@ export function Sidebar() {
   const [selectedItem, setSelectedItem] = useState<DetailItem | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const handleTabChange = (tab: "mcps" | "skills" | "agents") => {
+  const handleTabChange = (tab: "mcps" | "skills" | "agents" | "hooks") => {
     if (sidebarCollapsed) {
       setSidebarCollapsed(false)
     }
@@ -204,7 +218,7 @@ export function Sidebar() {
 
         {!sidebarCollapsed && (
           <div className="flex w-64 flex-col">
-            {sidebarTab !== "agents" && (
+            {sidebarTab !== "agents" && sidebarTab !== "hooks" && (
               <div className="border-b p-3">
                 <SourceTabs
                   source={sidebarSource}
@@ -213,36 +227,42 @@ export function Sidebar() {
               </div>
             )}
 
-            {(sidebarTab === "agents" || sidebarSource === "local") && (
-              <LocalContent tab={sidebarTab} onSelectItem={setSelectedItem} />
+            {sidebarTab === "hooks" && <HooksContent />}
+
+            {sidebarTab !== "hooks" && (sidebarTab === "agents" || sidebarSource === "local") && (
+              <LocalContent tab={sidebarTab as "mcps" | "skills" | "agents"} onSelectItem={setSelectedItem} />
             )}
-            {sidebarTab !== "agents" && sidebarSource === "registry" && (
+            {sidebarTab !== "hooks" && sidebarTab !== "agents" && sidebarSource === "registry" && (
               <RegistryContent
                 tab={sidebarTab as "mcps" | "skills"}
                 onSelectItem={setSelectedItem}
               />
             )}
-            {sidebarTab !== "agents" && sidebarSource === "custom" && (
+            {sidebarTab !== "hooks" && sidebarTab !== "agents" && sidebarSource === "custom" && (
               <CustomContent
                 tab={sidebarTab as "mcps" | "skills"}
                 onSelectItem={setSelectedItem}
               />
             )}
 
-            <Separator />
-            <div className="px-3 py-2.5">
-              <Button
-                onClick={() => setDialogOpen(true)}
-                className="w-full rounded-full"
-                size="sm"
-              >
-                <Plus className="size-4" />
-                New Plugin
-              </Button>
-              <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-                Drag to add to plugins
-              </p>
-            </div>
+            {sidebarTab !== "hooks" && (
+              <>
+                <Separator />
+                <div className="px-3 py-2.5">
+                  <Button
+                    onClick={() => setDialogOpen(true)}
+                    className="w-full rounded-full"
+                    size="sm"
+                  >
+                    <Plus className="size-4" />
+                    New Plugin
+                  </Button>
+                  <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+                    Drag to add to plugins
+                  </p>
+                </div>
+              </>
+            )}
 
             {selectedItem && (
               <DetailPanel

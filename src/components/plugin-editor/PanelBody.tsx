@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Wrench,
   Code,
+  Webhook,
 } from "lucide-react"
 import { useWizardStore } from "@/lib/store"
 import { slugify } from "@/lib/utils"
@@ -45,6 +46,7 @@ import AgentLogo from "@/components/logo/AgentLogo"
 import { McpDetailView } from "./McpDetailView"
 import { SkillDetailView } from "./SkillDetailView"
 import { AgentDetailView } from "./AgentDetailView"
+import { HookDetailView } from "./HookDetailView"
 import { TagInput } from "./TagInput"
 import { CodeEditorDialog } from "@/components/CodeEditorDialog"
 
@@ -61,6 +63,7 @@ export function PanelBody({
   const removeSkillFromPlugin = useWizardStore((s) => s.removeSkillFromPlugin)
   const addAgentToPlugin = useWizardStore((s) => s.addAgentToPlugin)
   const removeAgentFromPlugin = useWizardStore((s) => s.removeAgentFromPlugin)
+  const removeHookFromPlugin = useWizardStore((s) => s.removeHookFromPlugin)
   const plugins = useWizardStore((s) => s.plugins)
   const categories = useWizardStore((s) => s.categories)
   const addCategory = useWizardStore((s) => s.addCategory)
@@ -211,6 +214,10 @@ export function PanelBody({
   const selectedAgent =
     selectedItemId && selectedItemType === "agent"
       ? (plugin.agents ?? []).find((a) => a.id === selectedItemId)
+      : null
+  const selectedHook =
+    selectedItemId && selectedItemType === "hook"
+      ? (plugin.hooks ?? []).find((h) => h.id === selectedItemId)
       : null
 
   function createBlankAgent() {
@@ -448,6 +455,34 @@ export function PanelBody({
         </div>
       </>
     )
+  }
+
+  if (selectedHook) {
+    return (
+      <>
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex size-6 items-center justify-center rounded-md bg-orange-500/10">
+              <Webhook className="size-3 text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-xs font-semibold">Hook</h2>
+              <p className="text-[9px] text-muted-foreground">{plugin.name}</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon-xs" onClick={onClose}>
+            <X />
+          </Button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <HookDetailView
+            hook={selectedHook}
+            pluginId={plugin.id}
+            onBack={() => setSelectedItemInPlugin(null, null)}
+          />
+        </div>
+      </>
+    );
   }
 
   return (
@@ -889,6 +924,49 @@ export function PanelBody({
                   No agents yet. Click &quot;New&quot; to create one.
                 </p>
               )}
+            </div>
+          </div>
+
+          {/* Hooks */}
+          <div>
+            <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-orange-500/80">
+              <Webhook className="size-3" />
+              Hooks
+              <span className="ml-auto font-normal text-muted-foreground">
+                {(plugin.hooks ?? []).length}
+              </span>
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {(plugin.hooks ?? []).map((hook) => (
+                <div
+                  key={hook.id}
+                  className="group flex items-center rounded-lg transition hover:bg-orange-500/5"
+                >
+                  <button
+                    onClick={() => setSelectedItemInPlugin(hook.id, "hook")}
+                    className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                  >
+                    <div className="size-1.5 shrink-0 rounded-full bg-orange-500/60" />
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-[11px]">{hook.event}</span>
+                      <span className="block truncate font-mono text-[9px] text-muted-foreground">
+                        {hook.platform} · {hook.handlerType}
+                      </span>
+                    </div>
+                    <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
+                  </button>
+                  <button
+                    onClick={() => removeHookFromPlugin(plugin.id, hook.id)}
+                    className="mr-1 hidden shrink-0 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive group-hover:block"
+                    title="Remove hook"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+              <p className="mt-0.5 text-[9px] text-muted-foreground">
+                Drag hooks from the sidebar to add.
+              </p>
             </div>
           </div>
         </div>

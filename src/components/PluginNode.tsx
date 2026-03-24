@@ -19,7 +19,8 @@ import {
   validateAgent,
   getSkillDirName,
 } from "@/lib/validate-marketplace"
-import type { PluginData, DragPayload, RegistrySkillEntry } from "@/lib/types"
+import type { PluginData, DragPayload, RegistrySkillEntry, PluginHook } from "@/lib/types"
+import { Webhook } from "lucide-react"
 
 const SKILL_FILE_EXTENSIONS = [".zip", ".skill"]
 function isSkillFile(name: string) {
@@ -39,6 +40,8 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
     removeSkillFromPlugin,
     addAgentToPlugin,
     removeAgentFromPlugin,
+    addHookToPlugin,
+    removeHookFromPlugin,
     setSelectedPluginId,
     selectedPluginId,
     setSelectedItemInPlugin,
@@ -113,6 +116,8 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
             id,
             payload.item as NonNullable<PluginData["agents"]>[0],
           )
+        } else if (payload.type === "hook") {
+          addHookToPlugin(id, payload.item as PluginHook)
         } else {
           const skill = payload.item as PluginData["skills"][0]
           addSkillToPlugin(id, skill)
@@ -139,6 +144,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
       addMcpToPlugin,
       addSkillToPlugin,
       addAgentToPlugin,
+      addHookToPlugin,
       fetchRegistrySkillContent,
       updateSkillInPlugin,
       importSkillFileToPlugin,
@@ -154,7 +160,7 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
   }, [id, isSelected, setSelectedPluginId])
 
   const totalItems =
-    data.mcps.length + data.skills.length + (data.agents?.length ?? 0)
+    data.mcps.length + data.skills.length + (data.agents?.length ?? 0) + (data.hooks?.length ?? 0)
 
   return (
     <div
@@ -409,6 +415,54 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                       </div>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {(data.hooks?.length ?? 0) > 0 && (
+              <div>
+                <p className="mb-1 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-orange-500/80">
+                  <Webhook className="size-3" />
+                  Hooks
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {data.hooks!.map((hook) => (
+                    <div
+                      key={hook.id}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!isSelected) setSelectedPluginId(id)
+                        setSelectedItemInPlugin(hook.id, "hook")
+                      }}
+                      className={cn(
+                        "nodrag group/item flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-accent",
+                        isSelected &&
+                          selectedItemId === hook.id &&
+                          "bg-orange-500/10 ring-1 ring-orange-500/30",
+                      )}
+                    >
+                      <div className="size-1.5 rounded-full bg-orange-500/60" />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px]">
+                          {hook.event}
+                        </span>
+                        <span className="block truncate font-mono text-[9px] text-muted-foreground">
+                          {hook.platform} · {hook.handlerType}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeHookFromPlugin(id, hook.id)
+                        }}
+                        className="size-4 opacity-0 hover:text-destructive group-hover/item:opacity-100"
+                      >
+                        <X className="size-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
