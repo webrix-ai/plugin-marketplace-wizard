@@ -10,6 +10,7 @@ import {
   Wrench,
   Code,
   Webhook,
+  Download,
 } from "lucide-react"
 import { useWizardStore } from "@/lib/store"
 import { slugify } from "@/lib/utils"
@@ -49,6 +50,10 @@ import { AgentDetailView } from "./AgentDetailView"
 import { HookDetailView } from "./HookDetailView"
 import { TagInput } from "./TagInput"
 import { CodeEditorDialog } from "@/components/CodeEditorDialog"
+import {
+  DownloadPluginDialog,
+  downloadPlugin,
+} from "@/components/DownloadPluginDialog"
 
 export function PanelBody({
   plugin,
@@ -84,6 +89,8 @@ export function PanelBody({
   const [showNewCat, setShowNewCat] = useState(false)
   const [pluginEditorOpen, setPluginEditorOpen] = useState(false)
   const [mcpJsonImportOpen, setMcpJsonImportOpen] = useState(false)
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false)
+  const exportTargets = useWizardStore((s) => s.exportTargets)
 
   const slug = slugify(name)
 
@@ -498,6 +505,19 @@ export function PanelBody({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="xs"
+            className="h-6 gap-1 text-[10px]"
+            onClick={() => {
+              const result = downloadPlugin(slug, name, exportTargets)
+              if (result) setDownloadDialogOpen(true)
+            }}
+            title="Download as zip"
+          >
+            <Download className="size-3" />
+            Zip
+          </Button>
           <Button
             variant="outline"
             size="xs"
@@ -1009,6 +1029,13 @@ export function PanelBody({
         value={mcpJsonExample}
         onSave={handleMcpJsonImportSave}
         validate={validateMcpJsonImport}
+      />
+
+      <DownloadPluginDialog
+        open={downloadDialogOpen}
+        onClose={() => setDownloadDialogOpen(false)}
+        pluginSlug={slug}
+        pluginName={name}
       />
     </>
   )

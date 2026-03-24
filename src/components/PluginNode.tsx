@@ -2,13 +2,14 @@
 
 import { useState, useCallback, useMemo, memo } from "react"
 import type { NodeProps, Node } from "@xyflow/react"
-import { X, Trash2, GripVertical, Loader2, AlertCircle } from "lucide-react"
+import { X, Trash2, GripVertical, Loader2, AlertCircle, Download } from "lucide-react"
 import { useWizardStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { NodeStatusIndicator } from "@/components/node-status-indicator"
+import { DownloadPluginDialog, downloadPlugin } from "@/components/DownloadPluginDialog"
 import McpLogo from "./logo/McpLogo"
 import SkillLogo from "./logo/SkillLogo"
 import AgentLogo from "./logo/AgentLogo"
@@ -48,9 +49,11 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
     selectedItemId,
     fetchRegistrySkillContent,
     importSkillFileToPlugin,
+    exportTargets,
   } = useWizardStore()
 
   const [isOver, setIsOver] = useState(false)
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false)
 
   const isSelected = selectedPluginId === id
 
@@ -159,6 +162,17 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
     }
   }, [id, isSelected, setSelectedPluginId])
 
+  const handleDownload = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      const result = downloadPlugin(data.slug, data.name, exportTargets)
+      if (result) {
+        setDownloadDialogOpen(true)
+      }
+    },
+    [data.slug, data.name, exportTargets],
+  )
+
   const totalItems =
     data.mcps.length + data.skills.length + (data.agents?.length ?? 0) + (data.hooks?.length ?? 0)
 
@@ -207,6 +221,15 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
                 </span>
               )}
 
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={handleDownload}
+                className="nodrag size-5 opacity-0 hover:text-primary [div:hover>&]:opacity-100"
+                title="Download as zip"
+              >
+                <Download className="size-3" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -508,6 +531,13 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
           </CardFooter>
         </Card>
       </NodeStatusIndicator>
+
+      <DownloadPluginDialog
+        open={downloadDialogOpen}
+        onClose={() => setDownloadDialogOpen(false)}
+        pluginSlug={data.slug}
+        pluginName={data.name}
+      />
     </div>
   )
 }
