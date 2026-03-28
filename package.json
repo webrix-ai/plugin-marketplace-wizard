@@ -27,6 +27,7 @@
     "visual-editor",
     "cursor",
     "claude",
+    "codex",
     "webrix"
   ],
   "types": "./src/index.ts",

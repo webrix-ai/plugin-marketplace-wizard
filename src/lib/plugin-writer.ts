@@ -74,6 +74,27 @@ function buildGithubPluginManifest(plugin: PluginData) {
   return manifest
 }
 
+function buildCodexPluginManifest(plugin: PluginData) {
+  const manifest: Record<string, unknown> = {
+    name: plugin.slug,
+    version: plugin.version,
+    description: plugin.description,
+  }
+  if (plugin.author?.name) {
+    manifest.author = {
+      name: plugin.author.name,
+      ...(plugin.author.email ? { email: plugin.author.email } : {}),
+    }
+  }
+  if (plugin.homepage) manifest.homepage = plugin.homepage
+  if (plugin.repository) manifest.repository = plugin.repository
+  if (plugin.license) manifest.license = plugin.license
+  if (plugin.keywords?.length) manifest.keywords = plugin.keywords
+  if (plugin.skills.length > 0) manifest.skills = "./skills/"
+  if (plugin.mcps.length > 0) manifest.mcpServers = "./.mcp.json"
+  return manifest
+}
+
 function buildMcpJson(plugin: PluginData) {
   const mcpServers: Record<string, Record<string, unknown>> = {}
 
@@ -140,6 +161,13 @@ function writePlugin(
     const githubPath = path.join(pluginDir, "plugin.json")
     writeJson(githubPath, githubManifest)
     files.push(githubPath)
+  }
+
+  if (targets.codex) {
+    const codexManifest = buildCodexPluginManifest(plugin)
+    const codexPath = path.join(pluginDir, ".codex-plugin", "plugin.json")
+    writeJson(codexPath, codexManifest)
+    files.push(codexPath)
   }
 
   if (plugin.mcps.length > 0) {
@@ -241,8 +269,28 @@ function removeStaleAgentFiles(agentsDir: string, currentFiles: Set<string>) {
 
 function buildMarketplacePluginEntry(
   plugin: PluginData,
-  sourceStyle: "cursor" | "claude" | "github",
+  sourceStyle: "cursor" | "claude" | "github" | "codex",
 ): Record<string, unknown> {
+  if (sourceStyle === "codex") {
+    const defaultSource = {
+      source: "local",
+      path: `./plugins/${plugin.slug}`,
+    }
+    const source =
+      plugin.sourceOverride !== undefined ? plugin.sourceOverride : defaultSource
+
+    const entry: Record<string, unknown> = {
+      name: plugin.slug,
+      source,
+      policy: {
+        installation: "AVAILABLE",
+        authentication: "ON_INSTALL",
+      },
+    }
+    if (plugin.category) entry.category = plugin.category
+    return entry
+  }
+
   const defaultSource =
     sourceStyle === "cursor" ? plugin.slug : `./plugins/${plugin.slug}`
   const source =
@@ -330,6 +378,26 @@ function writeMarketplaceManifests(
     files.push(githubPath)
   }
 
+  if (targets.codex) {
+    const codexMarketplace: Record<string, unknown> = {
+      name: settings.name,
+      interface: {
+        displayName:
+          settings.metadata.description || settings.owner.name || settings.name,
+      },
+      plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "codex")),
+    }
+
+    const codexPath = path.join(
+      outputDir,
+      ".agents",
+      "plugins",
+      "marketplace.json",
+    )
+    writeJson(codexPath, codexMarketplace)
+    files.push(codexPath)
+  }
+
   return files
 }
 
@@ -381,6 +449,14 @@ function collectPluginFiles(
     const manifest = buildGithubPluginManifest(plugin)
     tree.set(
       path.join(base, "plugin.json"),
+      JSON.stringify(manifest, null, 2) + "\n",
+    )
+  }
+
+  if (targets.codex) {
+    const manifest = buildCodexPluginManifest(plugin)
+    tree.set(
+      path.join(base, ".codex-plugin", "plugin.json"),
       JSON.stringify(manifest, null, 2) + "\n",
     )
   }
@@ -476,6 +552,21 @@ function collectMarketplaceManifestFiles(
     )
   }
 
+  if (targets.codex) {
+    const codexManifest: Record<string, unknown> = {
+      name: settings.name,
+      interface: {
+        displayName:
+          settings.metadata.description || settings.owner.name || settings.name,
+      },
+      plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "codex")),
+    }
+    tree.set(
+      path.join(".agents", "plugins", "marketplace.json"),
+      JSON.stringify(codexManifest, null, 2) + "\n",
+    )
+  }
+
   return tree
 }
 
@@ -492,6 +583,7 @@ export function buildFileTree(request: ExportRequest): FileTree {
     cursor: true,
     claude: true,
     github: true,
+    codex: true,
   }
 
   const tree: FileTree = new Map()
@@ -525,6 +617,7 @@ export async function exportPlugins(
     cursor: true,
     claude: true,
     github: true,
+    codex: true,
   }
 
   try {

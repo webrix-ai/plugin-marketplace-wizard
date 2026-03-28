@@ -136,6 +136,22 @@ export function Header() {
                 <TooltipContent>Exporting to GitHub Copilot</TooltipContent>
               </Tooltip>
             )}
+            {exportTargets.codex && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Image
+                      src="/codex.svg"
+                      alt="Codex"
+                      width={14}
+                      height={14}
+                      className="shrink-0 dark:invert"
+                    />
+                  }
+                />
+                <TooltipContent>Exporting to Codex</TooltipContent>
+              </Tooltip>
+            )}
           </span>
         </Button>
       </div>

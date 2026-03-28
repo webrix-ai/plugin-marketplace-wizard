@@ -285,6 +285,55 @@ function buildPlatforms(repoUrl: string): Platform[] {
         },
       ],
     },
+    {
+      id: "codex",
+      name: "Codex",
+      icon: "/codex.svg",
+      iconClass: "dark:invert",
+      docsUrl: "https://developers.openai.com/codex/plugins/build",
+      steps: [
+        {
+          title: "Add marketplace to your repo",
+          content: (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                Ensure{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
+                  .agents/plugins/marketplace.json
+                </code>{" "}
+                is at your repository root. Push your marketplace repository to GitHub:
+              </p>
+              <CodeBlock>{`https://github.com/${repoShort}`}</CodeBlock>
+            </div>
+          ),
+        },
+        {
+          title: "Restart Codex",
+          content: (
+            <p className="text-xs text-muted-foreground">
+              Restart Codex so it picks up the{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
+                .agents/plugins/marketplace.json
+              </code>{" "}
+              file. Open the plugin directory, choose your marketplace, and browse available plugins.
+            </p>
+          ),
+        },
+        {
+          title: "Install plugins",
+          content: (
+            <p className="text-xs text-muted-foreground">
+              Browse and install plugins from your marketplace in the Codex plugin directory.
+              Plugins are installed to{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
+                ~/.codex/plugins/cache/
+              </code>
+              .
+            </p>
+          ),
+        },
+      ],
+    },
   ]
 }
 

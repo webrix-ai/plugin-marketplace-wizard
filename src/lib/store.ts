@@ -224,7 +224,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   isPluginsLoading: false,
   isExporting: false,
   autoSave: true,
-  exportTargets: { cursor: true, claude: true, github: true },
+  exportTargets: { cursor: true, claude: true, github: true, codex: true },
   lastExport: null,
 
   _undoStack: [],
@@ -630,6 +630,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           cursor: !!data.cursor,
           claude: !!data.claude,
           github: !!data.github,
+          codex: !!data.codex,
         },
       })
     } catch {

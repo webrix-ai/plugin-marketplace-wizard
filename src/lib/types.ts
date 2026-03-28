@@ -119,6 +119,7 @@ export interface ExportTargets {
   cursor: boolean
   claude: boolean
   github: boolean
+  codex: boolean
 }
 
 export interface ExportRequest {

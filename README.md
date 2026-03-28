@@ -6,7 +6,7 @@
 [![npm](https://img.shields.io/npm/v/plugin-marketplace-wizard)](https://www.npmjs.com/package/plugin-marketplace-wizard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages for Cursor, Claude Code, and GitHub Copilot. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
+A CLI tool with a visual editor for creating, managing, and exporting agent plugin marketplace packages for Cursor, Claude Code, GitHub Copilot, and Codex. Discover MCP servers and skills from your local environment, browse official registries, and assemble plugins using an interactive drag-and-drop canvas.
 
 <h1 align="center">Plugin Marketplace Wizard</h1>
 
@@ -23,8 +23,9 @@ A CLI tool with a visual editor for creating, managing, and exporting agent plug
 <p align="center">
   Generates valid marketplace packages for
   <a href="https://cursor.com/docs/plugins"><img src="https://icons.webrix.workers.dev/ai-hosts/cursor.svg" alt="Cursor" height="16" style="vertical-align:middle" /> Cursor</a>,
-  <a href="https://code.claude.com/docs/en/discover-plugins"><img src="https://icons.webrix.workers.dev/ai-hosts/claude-web.svg" alt="Claude Code" height="16" style="vertical-align:middle" /> Claude Code</a>, and
-  <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace"><img src="https://icons.webrix.workers.dev/connectors/github.svg" alt="GitHub Copilot" height="16" style="vertical-align:middle" /> GitHub Copilot</a>
+  <a href="https://code.claude.com/docs/en/discover-plugins"><img src="https://icons.webrix.workers.dev/ai-hosts/claude-web.svg" alt="Claude Code" height="16" style="vertical-align:middle" /> Claude Code</a>,
+  <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace"><img src="https://icons.webrix.workers.dev/connectors/github.svg" alt="GitHub Copilot" height="16" style="vertical-align:middle" /> GitHub Copilot</a>, and
+  <a href="https://developers.openai.com/codex/plugins/build"><img src="https://icons.webrix.workers.dev/ai-hosts/openai.svg" alt="Codex" height="16" style="vertical-align:middle" /> Codex</a>
 </p>
 
 ---
@@ -62,10 +63,14 @@ my-marketplace/
 ├── .github/
 │   └── plugin/
 │       └── marketplace.json
+├── .agents/
+│   └── plugins/
+│       └── marketplace.json
 └── plugins/
     └── <plugin-slug>/
         ├── .cursor-plugin/plugin.json
         ├── .claude-plugin/plugin.json
+        ├── .codex-plugin/plugin.json
         ├── plugin.json                  ← GitHub Copilot
         ├── .mcp.json
         ├── skills/
@@ -141,7 +146,7 @@ pmw test
 
 ### `pmw init [dir]`
 
-Scaffold a new marketplace. Creates `.cursor-plugin/`, `.claude-plugin/`, `.github/plugin/`, and `plugins/` directories with initial manifests.
+Scaffold a new marketplace. Creates `.cursor-plugin/`, `.claude-plugin/`, `.agents/plugins/`, and `plugins/` directories with initial manifests.
 
 ```bash
 pmw init
@@ -160,6 +165,7 @@ Once your marketplace is ready, follow the guide for your target platform:
 - [Adding your marketplace to Claude Code (CLI)](docs/add-marketplace-to-claude-code.md)
 - [Adding your marketplace to Claude (Organization)](docs/add-marketplace-to-claude.md)
 - [Adding your marketplace to GitHub Copilot CLI](docs/add-marketplace-to-github-copilot.md)
+- [Adding your marketplace to Codex](docs/add-marketplace-to-codex.md)
 
 ## TypeScript API
 

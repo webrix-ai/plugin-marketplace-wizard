@@ -43,6 +43,7 @@ const TARGET_LABELS: Record<string, string> = {
   cursor: "Cursor",
   claude: "Claude",
   github: "GitHub Copilot",
+  codex: "Codex",
 }
 
 interface SavePayload {
@@ -78,6 +79,7 @@ function MarketplaceSettingsFormBody({
     cursor: storeTargets.cursor,
     claude: storeTargets.claude,
     github: storeTargets.github,
+    codex: storeTargets.codex,
   })
 
   const issues = validateMarketplaceSettings({
@@ -87,14 +89,14 @@ function MarketplaceSettingsFormBody({
   })
 
   const noneSelected =
-    !localTargets.cursor && !localTargets.claude && !localTargets.github
+    !localTargets.cursor && !localTargets.claude && !localTargets.github && !localTargets.codex
 
   const toggleTarget = (key: keyof ExportTargets) => {
     setLocalTargets((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   const save = () => {
-    const removedTargets = (["cursor", "claude", "github"] as const).filter(
+    const removedTargets = (["cursor", "claude", "github", "codex"] as const).filter(
       (t) => storeTargets[t] && !localTargets[t],
     )
 
@@ -194,98 +196,38 @@ function MarketplaceSettingsFormBody({
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <Label className="text-xs">Export to</Label>
-          <div className="grid grid-cols-3 gap-3">
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => toggleTarget("cursor")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  toggleTarget("cursor")
-                }
-              }}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
-                localTargets.cursor
-                  ? "border-primary/40 bg-primary/5"
-                  : "border-border bg-transparent opacity-60"
-              }`}
-            >
-              <Checkbox
-                checked={localTargets.cursor}
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onCheckedChange={() => toggleTarget("cursor")}
-              />
-              <Image
-                src="/cursor.svg"
-                alt="Cursor"
-                width={16}
-                height={16}
-                className="shrink-0 dark:invert"
-              />
-              <span className="text-xs font-medium">Cursor</span>
-            </div>
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => toggleTarget("claude")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  toggleTarget("claude")
-                }
-              }}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
-                localTargets.claude
-                  ? "border-primary/40 bg-primary/5"
-                  : "border-border bg-transparent opacity-60"
-              }`}
-            >
-              <Checkbox
-                checked={localTargets.claude}
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onCheckedChange={() => toggleTarget("claude")}
-              />
-              <Image
-                src="/claude.svg"
-                alt="Claude"
-                width={16}
-                height={16}
-                className="shrink-0"
-              />
-              <span className="text-xs font-medium">Claude</span>
-            </div>
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => toggleTarget("github")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  toggleTarget("github")
-                }
-              }}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
-                localTargets.github
-                  ? "border-primary/40 bg-primary/5"
-                  : "border-border bg-transparent opacity-60"
-              }`}
-            >
-              <Checkbox
-                checked={localTargets.github}
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onCheckedChange={() => toggleTarget("github")}
-              />
-              <Image
-                src="/github.svg"
-                alt="GitHub Copilot"
-                width={16}
-                height={16}
-                className="shrink-0 dark:invert"
-              />
-              <span className="text-xs font-medium">GitHub</span>
-            </div>
+          <Label className="text-xs">Supported AI Agents</Label>
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                { key: "cursor", label: "Cursor", icon: "/cursor.svg", iconClass: "dark:invert" },
+                { key: "claude", label: "Claude", icon: "/claude.svg", iconClass: "" },
+                { key: "github", label: "GitHub", icon: "/github.svg", iconClass: "dark:invert" },
+                { key: "codex", label: "Codex", icon: "/codex.svg", iconClass: "dark:invert" },
+              ] as const
+            ).map(({ key, label, icon, iconClass }) => (
+              <label
+                key={key}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2.5 transition-colors select-none ${
+                  localTargets[key]
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-border bg-transparent opacity-60"
+                }`}
+              >
+                <Checkbox
+                  checked={localTargets[key]}
+                  onCheckedChange={() => toggleTarget(key)}
+                />
+                <Image
+                  src={icon}
+                  alt={label}
+                  width={16}
+                  height={16}
+                  className={`shrink-0 ${iconClass}`}
+                />
+                <span className="text-xs font-medium">{label}</span>
+              </label>
+            ))}
           </div>
           {noneSelected ? (
             <p className="text-[11px] text-destructive">
@@ -387,7 +329,13 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
     .map((t) => TARGET_LABELS[t])
     .join(" and ")
   const confirmFolders = pendingPayload?.removedTargets
-    .map((t) => (t === "github" ? ".github/plugin" : `.${t}-plugin`))
+    .map((t) =>
+      t === "github"
+        ? ".github/plugin"
+        : t === "codex"
+          ? ".agents/plugins"
+          : `.${t}-plugin`,
+    )
     .join(" and ")
 
   return (
@@ -400,7 +348,7 @@ export function MarketplaceSettingsDialog({ open, onClose }: Props) {
       >
         <DialogContent className="sm:max-w-lg">
           <MarketplaceSettingsFormBody
-            key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}|${exportTargets.cursor}|${exportTargets.claude}|${exportTargets.github}`}
+            key={`${marketplaceSettings.name}|${marketplaceSettings.owner.name}|${exportTargets.cursor}|${exportTargets.claude}|${exportTargets.github}|${exportTargets.codex}`}
             initial={marketplaceSettings}
             onSave={handleSave}
             onClose={onClose}

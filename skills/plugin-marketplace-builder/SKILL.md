@@ -1,11 +1,11 @@
 ---
 name: plugin-marketplace-builder
-description: Build, validate, and deploy agent plugin marketplaces for Claude Code, Cursor, and GitHub Copilot. Use when creating plugins, scaffolding a marketplace, writing plugin manifests, configuring MCP servers within plugins, writing skills or agents for plugins, validating marketplace structure, deploying to a target platform, exploring what plugins to build, or understanding how plugin marketplaces work across platforms. Also triggers for "create a marketplace", "create a plugin", "add a plugin", "validate my marketplace", "deploy to cursor/claude/github", "what plugins should I create", "plugin manifest", "marketplace.json", or "plugin structure".
+description: Build, validate, and deploy agent plugin marketplaces for Claude Code, Cursor, GitHub Copilot, and Codex. Use when creating plugins, scaffolding a marketplace, writing plugin manifests, configuring MCP servers within plugins, writing skills or agents for plugins, validating marketplace structure, deploying to a target platform, exploring what plugins to build, or understanding how plugin marketplaces work across platforms. Also triggers for "create a marketplace", "create a plugin", "add a plugin", "validate my marketplace", "deploy to cursor/claude/github/codex", "what plugins should I create", "plugin manifest", "marketplace.json", or "plugin structure".
 ---
 
 # Plugin Marketplace Builder
 
-Build agent plugin marketplaces that ship to **Claude Code**, **Cursor**, and **GitHub Copilot**.
+Build agent plugin marketplaces that ship to **Claude Code**, **Cursor**, **GitHub Copilot**, and **Codex**.
 
 A plugin marketplace is a directory of plugins distributed as a git repository (or zip). Each platform reads a root `marketplace.json` manifest that lists available plugins. Each plugin bundles components: **MCP servers**, **skills**, **agents**, and optionally **hooks**.
 
@@ -16,10 +16,12 @@ my-marketplace/
 ├── .claude-plugin/marketplace.json       # Claude Code catalog
 ├── .cursor-plugin/marketplace.json       # Cursor catalog
 ├── .github/plugin/marketplace.json       # GitHub Copilot catalog
+├── .agents/plugins/marketplace.json      # Codex catalog
 └── plugins/
     └── <plugin-slug>/                    # one directory per plugin
         ├── .claude-plugin/plugin.json
         ├── .cursor-plugin/plugin.json
+        ├── .codex-plugin/plugin.json
         ├── plugin.json                   # GitHub Copilot (root-level)
         ├── .mcp.json                     # MCP server definitions
         ├── skills/<name>/SKILL.md        # one dir per skill
@@ -57,6 +59,7 @@ All three platforms share the same schema (location differs):
 - Claude Code: `"./plugins/<slug>"` (relative path)
 - Cursor: `"<slug>"` (bare slug)
 - GitHub Copilot: `"./plugins/<slug>"` (relative path)
+- Codex: `{ "source": "local", "path": "./plugins/<slug>" }` (structured object)
 
 ## Plugin Manifests (per-platform differences)
 
@@ -96,7 +99,19 @@ All three platforms share the same schema (location differs):
 }
 ```
 
-GitHub Copilot requires explicit component path references; the other two discover components implicitly.
+**Codex** (`.codex-plugin/plugin.json`):
+
+```json
+{
+  "name": "slug",
+  "description": "...",
+  "version": "1.0.0",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
+```
+
+GitHub Copilot and Codex require explicit component path references; Claude Code and Cursor discover components implicitly.
 
 ## Plugin Components
 
@@ -164,6 +179,7 @@ Read the platform-specific reference for deployment instructions:
 - **Claude Code**: See [references/claude-code.md](references/claude-code.md) — CLI `/plugin marketplace add`, organization web console, team `.claude/settings.json` config
 - **Cursor**: See [references/cursor.md](references/cursor.md) — Teams/Enterprise dashboard import, distribution policies
 - **GitHub Copilot**: See [references/github-copilot.md](references/github-copilot.md) — CLI `copilot plugin marketplace add`, manifest differences
+- **Codex**: See [references/codex.md](references/codex.md) — repo/personal marketplace setup, `$plugin-creator` skill, `.agents/plugins/marketplace.json`
 
 ## Additional References
 

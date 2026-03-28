@@ -98,11 +98,13 @@ function runInit(targetDir) {
 
   const cursorDir = join(dir, ".cursor-plugin")
   const claudeDir = join(dir, ".claude-plugin")
+  const codexDir = join(dir, ".agents", "plugins")
   const pluginsDir = join(dir, "plugins")
   const cursorManifest = join(cursorDir, "marketplace.json")
   const claudeManifest = join(claudeDir, "marketplace.json")
+  const codexManifest = join(codexDir, "marketplace.json")
 
-  if (existsSync(cursorManifest) || existsSync(claudeManifest)) {
+  if (existsSync(cursorManifest) || existsSync(claudeManifest) || existsSync(codexManifest)) {
     console.log(
       `${YELLOW}  ⚠ Marketplace already initialized in this directory${RESET}`,
     )
@@ -146,16 +148,32 @@ function runInit(targetDir) {
 
   mkdirSync(cursorDir, { recursive: true })
   mkdirSync(claudeDir, { recursive: true })
+  mkdirSync(codexDir, { recursive: true })
   mkdirSync(pluginsDir, { recursive: true })
 
   writeFileSync(cursorManifest, JSON.stringify(manifest, null, 2) + "\n")
   writeFileSync(claudeManifest, JSON.stringify(manifest, null, 2) + "\n")
+
+  const codexMarketplaceData = {
+    name: slugName,
+    interface: {
+      displayName: `Plugin marketplace for ${ownerName}`,
+    },
+    plugins: [],
+  }
+  writeFileSync(
+    codexManifest,
+    JSON.stringify(codexMarketplaceData, null, 2) + "\n",
+  )
 
   console.log(
     `${GREEN}  ✓${RESET} Created ${DIM}.cursor-plugin/marketplace.json${RESET}`,
   )
   console.log(
     `${GREEN}  ✓${RESET} Created ${DIM}.claude-plugin/marketplace.json${RESET}`,
+  )
+  console.log(
+    `${GREEN}  ✓${RESET} Created ${DIM}.agents/plugins/marketplace.json${RESET}`,
   )
   console.log(`${GREEN}  ✓${RESET} Created ${DIM}plugins/${RESET} directory`)
   console.log()
@@ -197,8 +215,11 @@ function getValidators() {
       const hasClaude = existsSync(
         join(dir, ".claude-plugin", "marketplace.json"),
       )
+      const hasCodex = existsSync(
+        join(dir, ".agents", "plugins", "marketplace.json"),
+      )
 
-      if (!hasCursor && !hasClaude) {
+      if (!hasCursor && !hasClaude && !hasCodex) {
         issues.push({
           severity: "error",
           path: dir,
@@ -220,6 +241,12 @@ function getValidators() {
           path: ".claude-plugin/marketplace.json",
           message: "Missing Claude marketplace manifest",
         })
+      if (!hasCodex)
+        issues.push({
+          severity: "warning",
+          path: ".agents/plugins/marketplace.json",
+          message: "Missing Codex marketplace manifest",
+        })
       if (!existsSync(join(dir, "plugins")))
         issues.push({
           severity: "warning",
@@ -232,6 +259,39 @@ function getValidators() {
 
     createValidator("marketplace manifest", (dir) => {
       const issues = []
+
+      const codexManifestPath = join(
+        dir,
+        ".agents",
+        "plugins",
+        "marketplace.json",
+      )
+      if (existsSync(codexManifestPath)) {
+        try {
+          const manifest = JSON.parse(readFileSync(codexManifestPath, "utf-8"))
+          if (!manifest.name) {
+            issues.push({
+              severity: "error",
+              path: ".agents/plugins/marketplace.json",
+              message: "Missing required field: name",
+            })
+          }
+          if (!Array.isArray(manifest.plugins)) {
+            issues.push({
+              severity: "warning",
+              path: ".agents/plugins/marketplace.json",
+              message: "Missing or invalid plugins array",
+            })
+          }
+        } catch (e) {
+          issues.push({
+            severity: "error",
+            path: ".agents/plugins/marketplace.json",
+            message: `Invalid JSON: ${e.message}`,
+          })
+        }
+      }
+
       for (const sub of [".cursor-plugin", ".claude-plugin"]) {
         const manifestPath = join(dir, sub, "marketplace.json")
         if (!existsSync(manifestPath)) continue
@@ -317,13 +377,16 @@ function getValidators() {
         const hasClaudePlugin = existsSync(
           join(pluginDir, ".claude-plugin", "plugin.json"),
         )
+        const hasCodexPlugin = existsSync(
+          join(pluginDir, ".codex-plugin", "plugin.json"),
+        )
 
-        if (!hasCursorPlugin && !hasClaudePlugin) {
+        if (!hasCursorPlugin && !hasClaudePlugin && !hasCodexPlugin) {
           issues.push({
             severity: "warning",
             path: `plugins/${entry.name}`,
             message:
-              "Missing both .cursor-plugin/plugin.json and .claude-plugin/plugin.json",
+              "Missing .cursor-plugin/plugin.json, .claude-plugin/plugin.json, and .codex-plugin/plugin.json",
           })
         }
 
@@ -391,7 +454,7 @@ function getValidators() {
         if (!entry.isDirectory() || entry.name.startsWith(".")) continue
         const pluginDir = join(pluginsDir, entry.name)
 
-        for (const sub of [".cursor-plugin", ".claude-plugin"]) {
+        for (const sub of [".cursor-plugin", ".claude-plugin", ".codex-plugin"]) {
           const manifestPath = join(pluginDir, sub, "plugin.json")
           if (!existsSync(manifestPath)) continue
 

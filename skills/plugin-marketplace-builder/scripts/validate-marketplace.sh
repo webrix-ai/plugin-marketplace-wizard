@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Validate a plugin marketplace directory structure.
-# Works with any marketplace targeting Claude Code, Cursor, or GitHub Copilot.
+# Works with any marketplace targeting Claude Code, Cursor, GitHub Copilot, or Codex.
 # Usage: bash validate-marketplace.sh <marketplace-dir> [--verbose]
 
 RESET="\033[0m"
@@ -98,20 +98,24 @@ echo -e "${BOLD}Marketplace structure${RESET}"
 HAS_CURSOR=false
 HAS_CLAUDE=false
 HAS_GITHUB=false
+HAS_CODEX=false
 
 [[ -f "$MARKETPLACE_DIR/.cursor-plugin/marketplace.json" ]] && HAS_CURSOR=true
 [[ -f "$MARKETPLACE_DIR/.claude-plugin/marketplace.json" ]] && HAS_CLAUDE=true
 [[ -f "$MARKETPLACE_DIR/.github/plugin/marketplace.json" ]] && HAS_GITHUB=true
+[[ -f "$MARKETPLACE_DIR/.agents/plugins/marketplace.json" ]] && HAS_CODEX=true
 
-if ! $HAS_CURSOR && ! $HAS_CLAUDE && ! $HAS_GITHUB; then
-  log_error "No marketplace manifest found" "Create .claude-plugin/, .cursor-plugin/, or .github/plugin/ with marketplace.json"
+if ! $HAS_CURSOR && ! $HAS_CLAUDE && ! $HAS_GITHUB && ! $HAS_CODEX; then
+  log_error "No marketplace manifest found" "Create .claude-plugin/, .cursor-plugin/, .github/plugin/, or .agents/plugins/ with marketplace.json"
 else
   $HAS_CURSOR && log_ok ".cursor-plugin/marketplace.json exists"
   $HAS_CLAUDE && log_ok ".claude-plugin/marketplace.json exists"
   $HAS_GITHUB && log_ok ".github/plugin/marketplace.json exists"
+  $HAS_CODEX && log_ok ".agents/plugins/marketplace.json exists"
   ! $HAS_CURSOR && log_warn "Missing Cursor manifest" ".cursor-plugin/marketplace.json"
   ! $HAS_CLAUDE && log_warn "Missing Claude manifest" ".claude-plugin/marketplace.json"
   ! $HAS_GITHUB && log_warn "Missing GitHub Copilot manifest" ".github/plugin/marketplace.json"
+  ! $HAS_CODEX && log_warn "Missing Codex manifest" ".agents/plugins/marketplace.json"
 fi
 
 if [[ ! -d "$MARKETPLACE_DIR/plugins" ]]; then
@@ -176,6 +180,7 @@ validate_manifest() {
 validate_manifest "$MARKETPLACE_DIR/.cursor-plugin/marketplace.json" ".cursor-plugin/marketplace.json"
 validate_manifest "$MARKETPLACE_DIR/.claude-plugin/marketplace.json" ".claude-plugin/marketplace.json"
 validate_manifest "$MARKETPLACE_DIR/.github/plugin/marketplace.json" ".github/plugin/marketplace.json"
+validate_manifest "$MARKETPLACE_DIR/.agents/plugins/marketplace.json" ".agents/plugins/marketplace.json"
 
 echo ""
 
@@ -199,20 +204,23 @@ if [[ -d "$PLUGINS_DIR" ]]; then
     local_has_cursor=false
     local_has_claude=false
     local_has_github=false
+    local_has_codex=false
     [[ -f "$plugin_dir/.cursor-plugin/plugin.json" ]] && local_has_cursor=true
     [[ -f "$plugin_dir/.claude-plugin/plugin.json" ]] && local_has_claude=true
     [[ -f "$plugin_dir/plugin.json" ]] && local_has_github=true
+    [[ -f "$plugin_dir/.codex-plugin/plugin.json" ]] && local_has_codex=true
 
-    if ! $local_has_cursor && ! $local_has_claude && ! $local_has_github; then
+    if ! $local_has_cursor && ! $local_has_claude && ! $local_has_github && ! $local_has_codex; then
       log_warn "No plugin manifest found" "plugins/$plugin_name"
     else
       $local_has_cursor && log_ok ".cursor-plugin/plugin.json (plugins/$plugin_name)"
       $local_has_claude && log_ok ".claude-plugin/plugin.json (plugins/$plugin_name)"
       $local_has_github && log_ok "plugin.json (plugins/$plugin_name)"
+      $local_has_codex && log_ok ".codex-plugin/plugin.json (plugins/$plugin_name)"
     fi
 
     # Validate plugin manifests are valid JSON with required name
-    for manifest in "$plugin_dir/.cursor-plugin/plugin.json" "$plugin_dir/.claude-plugin/plugin.json" "$plugin_dir/plugin.json"; do
+    for manifest in "$plugin_dir/.cursor-plugin/plugin.json" "$plugin_dir/.claude-plugin/plugin.json" "$plugin_dir/plugin.json" "$plugin_dir/.codex-plugin/plugin.json"; do
       [[ -f "$manifest" ]] || continue
       rel_path="${manifest#$MARKETPLACE_DIR/}"
       if ! is_valid_json "$manifest"; then

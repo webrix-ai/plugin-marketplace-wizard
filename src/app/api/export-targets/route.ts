@@ -8,7 +8,8 @@ export async function GET() {
   const cursor = fs.existsSync(path.join(dir, ".cursor-plugin"))
   const claude = fs.existsSync(path.join(dir, ".claude-plugin"))
   const github = fs.existsSync(path.join(dir, ".github", "plugin"))
-  return NextResponse.json({ cursor, claude, github })
+  const codex = fs.existsSync(path.join(dir, ".agents", "plugins"))
+  return NextResponse.json({ cursor, claude, github, codex })
 }
 
 function rmRecursive(dirPath: string) {
@@ -37,6 +38,22 @@ export async function DELETE(request: Request) {
               fs.rmSync(pluginTarget, { force: true })
               deleted.push(pluginTarget)
             }
+          }
+        }
+        continue
+      }
+
+      if (target === "codex") {
+        const rootFolder = path.join(dir, ".agents", "plugins")
+        rmRecursive(rootFolder)
+        deleted.push(rootFolder)
+
+        const pluginsDir = path.join(dir, "plugins")
+        if (fs.existsSync(pluginsDir)) {
+          for (const slug of fs.readdirSync(pluginsDir)) {
+            const pluginTarget = path.join(pluginsDir, slug, ".codex-plugin")
+            rmRecursive(pluginTarget)
+            deleted.push(pluginTarget)
           }
         }
         continue
