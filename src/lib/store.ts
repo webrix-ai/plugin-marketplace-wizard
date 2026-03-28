@@ -170,6 +170,7 @@ interface WizardState {
 
   exportPlugins: () => Promise<void>
   silentExport: () => Promise<void>
+  downloadZip: (pluginId: string) => Promise<void>
 
   claudeHooks: ClaudeHookItem[]
   cursorHooks: CursorHookItem[]
@@ -1338,6 +1339,55 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       set({ _lastExportAt: Date.now() })
     } catch {
       // silent
+    }
+  },
+
+  downloadZip: async (pluginId: string) => {
+    const { plugins, marketplaceSettings, exportTargets } = get()
+    const plugin = plugins.find((p) => p.id === pluginId)
+    if (!plugin) {
+      sonnerToast.error("Plugin not found")
+      return
+    }
+
+    set({ isExporting: true })
+    try {
+      const res = await fetch("/api/export-zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plugins: [plugin],
+          marketplaceSettings,
+          exportTargets,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "ZIP export failed")
+      }
+
+      const blob = await res.blob()
+      const disposition = res.headers.get("Content-Disposition")
+      const match = disposition?.match(/filename="(.+)"/)
+      const filename = match?.[1] ?? `${plugin.slug}.zip`
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+
+      set({ isExporting: false })
+      sonnerToast.success(`Downloaded ${plugin.name} as ZIP`)
+    } catch (error) {
+      set({ isExporting: false })
+      sonnerToast.error(
+        error instanceof Error ? error.message : "ZIP export failed",
+      )
     }
   },
 }))

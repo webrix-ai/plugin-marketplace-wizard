@@ -10,6 +10,7 @@ import {
   Wrench,
   Code,
   Webhook,
+  FileArchive,
 } from "lucide-react"
 import { useWizardStore } from "@/lib/store"
 import { slugify } from "@/lib/utils"
@@ -82,6 +83,7 @@ export function PanelBody({
   const [category, setCategory] = useState(plugin.category || "")
   const [newCatInput, setNewCatInput] = useState("")
   const [showNewCat, setShowNewCat] = useState(false)
+  const downloadZip = useWizardStore((s) => s.downloadZip)
   const [pluginEditorOpen, setPluginEditorOpen] = useState(false)
   const [mcpJsonImportOpen, setMcpJsonImportOpen] = useState(false)
 
@@ -498,6 +500,16 @@ export function PanelBody({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="xs"
+            className="h-6 gap-1 text-[10px]"
+            onClick={() => downloadZip(plugin.id)}
+            title="Download plugin as ZIP"
+          >
+            <FileArchive className="size-3" />
+            ZIP
+          </Button>
           <Button
             variant="outline"
             size="xs"

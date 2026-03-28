@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "Webrix": {
-      "type": "streamable-http",
-      "url": "https://run.my-mcp-s.com/mcp"
-    }
-  }
-}

@@ -352,6 +352,163 @@ function removeStalePluginDirs(outputDir: string, currentSlugs: Set<string>) {
   }
 }
 
+export type FileTree = Map<string, string>
+
+function collectPluginFiles(
+  plugin: PluginData,
+  targets: ExportTargets,
+): FileTree {
+  const tree: FileTree = new Map()
+  const base = path.join("plugins", plugin.slug)
+
+  if (targets.cursor) {
+    const manifest = buildCursorPluginManifest(plugin)
+    tree.set(
+      path.join(base, ".cursor-plugin", "plugin.json"),
+      JSON.stringify(manifest, null, 2) + "\n",
+    )
+  }
+
+  if (targets.claude) {
+    const manifest = buildClaudePluginManifest(plugin)
+    tree.set(
+      path.join(base, ".claude-plugin", "plugin.json"),
+      JSON.stringify(manifest, null, 2) + "\n",
+    )
+  }
+
+  if (targets.github) {
+    const manifest = buildGithubPluginManifest(plugin)
+    tree.set(
+      path.join(base, "plugin.json"),
+      JSON.stringify(manifest, null, 2) + "\n",
+    )
+  }
+
+  if (plugin.mcps.length > 0) {
+    tree.set(
+      path.join(base, ".mcp.json"),
+      JSON.stringify(buildMcpJson(plugin), null, 2) + "\n",
+    )
+  }
+
+  for (const skill of plugin.skills) {
+    const skillDirName =
+      extractSkillDirName(skill) ||
+      skill.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") ||
+      skill.id
+    tree.set(
+      path.join(base, "skills", skillDirName, "SKILL.md"),
+      buildSkillMd(skill),
+    )
+    if (skill.files?.length) {
+      for (const sf of skill.files) {
+        tree.set(path.join(base, "skills", skillDirName, sf.relativePath), sf.content)
+      }
+    }
+  }
+
+  for (const agent of plugin.agents ?? []) {
+    const fileName =
+      agent.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") + ".md" || `${agent.id}.md`
+    tree.set(path.join(base, "agents", fileName), agent.content)
+  }
+
+  return tree
+}
+
+function collectMarketplaceManifestFiles(
+  plugins: PluginData[],
+  settings: MarketplaceSettings,
+  targets: ExportTargets,
+): FileTree {
+  const tree: FileTree = new Map()
+  const owner: Record<string, unknown> = { name: settings.owner.name }
+  if (settings.owner.email) owner.email = settings.owner.email
+
+  const meta: Record<string, unknown> = {}
+  if (settings.metadata.description)
+    meta.description = settings.metadata.description
+  if (settings.metadata.version) meta.version = settings.metadata.version
+
+  const baseManifest = {
+    name: settings.name,
+    owner,
+    ...(Object.keys(meta).length ? { metadata: meta } : {}),
+  }
+
+  if (targets.cursor) {
+    tree.set(
+      path.join(".cursor-plugin", "marketplace.json"),
+      JSON.stringify(
+        { ...baseManifest, plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "cursor")) },
+        null,
+        2,
+      ) + "\n",
+    )
+  }
+
+  if (targets.claude) {
+    tree.set(
+      path.join(".claude-plugin", "marketplace.json"),
+      JSON.stringify(
+        { ...baseManifest, plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "claude")) },
+        null,
+        2,
+      ) + "\n",
+    )
+  }
+
+  if (targets.github) {
+    tree.set(
+      path.join(".github", "plugin", "marketplace.json"),
+      JSON.stringify(
+        { ...baseManifest, plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "github")) },
+        null,
+        2,
+      ) + "\n",
+    )
+  }
+
+  return tree
+}
+
+export function buildFileTree(request: ExportRequest): FileTree {
+  const {
+    plugins,
+    orgName = "my-org",
+    marketplaceSettings,
+    exportTargets,
+  } = request
+  const settings =
+    marketplaceSettings ?? createDefaultMarketplaceSettings(orgName, undefined)
+  const targets: ExportTargets = exportTargets ?? {
+    cursor: true,
+    claude: true,
+    github: true,
+  }
+
+  const tree: FileTree = new Map()
+
+  for (const plugin of plugins) {
+    for (const [k, v] of collectPluginFiles(plugin, targets)) {
+      tree.set(k, v)
+    }
+  }
+
+  for (const [k, v] of collectMarketplaceManifestFiles(plugins, settings, targets)) {
+    tree.set(k, v)
+  }
+
+  return tree
+}
+
 export async function exportPlugins(
   request: ExportRequest,
 ): Promise<ExportResult> {

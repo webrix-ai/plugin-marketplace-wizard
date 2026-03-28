@@ -179,8 +179,13 @@ export function validateMcpServer(
   if (!mcp.config) {
     issues.push({ path: `${pfx}.config`, message: "MCP config is missing" })
   } else {
-    const isStdio = !t || t === "stdio"
-    const isRemote = t === "sse" || t === "streamable-http"
+    const hasUrl = !!mcp.config.url?.trim()
+    const isStdio = t === "stdio" || (!t && !hasUrl)
+    const isRemote =
+      t === "sse" ||
+      t === "streamable-http" ||
+      t === "http" ||
+      (!t && hasUrl)
 
     if (isStdio && !mcp.config.command?.trim()) {
       issues.push({
@@ -188,16 +193,16 @@ export function validateMcpServer(
         message: "stdio MCP server requires a command",
       })
     }
-    if (isRemote && !mcp.config.url?.trim()) {
+    if (isRemote && !hasUrl) {
       issues.push({
         path: `${pfx}.config.url`,
-        message: `${t} MCP server requires a url`,
+        message: `${t || "http"} MCP server requires a url`,
       })
     }
     if (
       isRemote &&
-      mcp.config.url?.trim() &&
-      !/^https?:\/\/.+/.test(mcp.config.url.trim())
+      hasUrl &&
+      !/^https?:\/\/.+/.test(mcp.config.url!.trim())
     ) {
       issues.push({
         path: `${pfx}.config.url`,

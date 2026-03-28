@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   AlertCircle,
   GitBranch,
+  Rocket,
 } from "lucide-react"
 import {
   Dialog,
@@ -17,6 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { DeploymentWizard } from "./DeploymentWizard"
 
 interface Props {
   open: boolean
@@ -30,6 +32,7 @@ type GitStatus =
   | { status: "ready"; remoteUrl: string }
 
 type PublishPhase = "idle" | "pushing" | "success" | "error"
+type DialogView = "publish" | "deploy"
 
 interface PublishResult {
   message?: string
@@ -43,12 +46,14 @@ export function PublishDialog({ open, onClose }: Props) {
   const [gitStatus, setGitStatus] = useState<GitStatus>({ status: "loading" })
   const [phase, setPhase] = useState<PublishPhase>("idle")
   const [result, setResult] = useState<PublishResult | null>(null)
+  const [view, setView] = useState<DialogView>("publish")
 
   useEffect(() => {
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase("idle")
     setResult(null)
+    setView("publish")
     setGitStatus({ status: "loading" })
 
     fetch("/api/publish")
@@ -84,22 +89,38 @@ export function PublishDialog({ open, onClose }: Props) {
     if (!isOpen && phase !== "pushing") onClose()
   }
 
+  const remoteUrl =
+    gitStatus.status === "ready" ? gitStatus.remoteUrl : ""
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        {gitStatus.status === "loading" && <LoadingState />}
-        {(gitStatus.status === "no-git" ||
-          gitStatus.status === "no-remote") && (
-          <NoRepoState onClose={onClose} />
-        )}
-        {gitStatus.status === "ready" && (
-          <ReadyState
-            remoteUrl={gitStatus.remoteUrl}
-            phase={phase}
-            result={result}
-            onPublish={handlePublish}
+      <DialogContent
+        className={view === "deploy" ? "sm:max-w-lg" : "sm:max-w-md"}
+      >
+        {view === "deploy" ? (
+          <DeploymentWizard
+            remoteUrl={remoteUrl}
             onClose={onClose}
+            onBack={() => setView("publish")}
           />
+        ) : (
+          <>
+            {gitStatus.status === "loading" && <LoadingState />}
+            {(gitStatus.status === "no-git" ||
+              gitStatus.status === "no-remote") && (
+              <NoRepoState onClose={onClose} />
+            )}
+            {gitStatus.status === "ready" && (
+              <ReadyState
+                remoteUrl={gitStatus.remoteUrl}
+                phase={phase}
+                result={result}
+                onPublish={handlePublish}
+                onClose={onClose}
+                onShowDeploy={() => setView("deploy")}
+              />
+            )}
+          </>
         )}
       </DialogContent>
     </Dialog>
@@ -181,12 +202,14 @@ function ReadyState({
   result,
   onPublish,
   onClose,
+  onShowDeploy,
 }: {
   remoteUrl: string
   phase: PublishPhase
   result: PublishResult | null
   onPublish: () => void
   onClose: () => void
+  onShowDeploy: () => void
 }) {
   return (
     <>
@@ -268,7 +291,18 @@ function ReadyState({
             Publishing…
           </Button>
         )}
-        {(phase === "success" || phase === "error") && (
+        {phase === "success" && (
+          <>
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button onClick={onShowDeploy} className="gap-1.5">
+              <Rocket className="size-3.5" />
+              Deploy
+            </Button>
+          </>
+        )}
+        {phase === "error" && (
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
