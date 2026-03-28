@@ -229,21 +229,29 @@ export function Sidebar() {
 
             {sidebarTab === "hooks" && <HooksContent />}
 
-            {sidebarTab !== "hooks" && (sidebarTab === "agents" || sidebarSource === "local") && (
-              <LocalContent tab={sidebarTab as "mcps" | "skills" | "agents"} onSelectItem={setSelectedItem} />
-            )}
-            {sidebarTab !== "hooks" && sidebarTab !== "agents" && sidebarSource === "registry" && (
-              <RegistryContent
-                tab={sidebarTab as "mcps" | "skills"}
-                onSelectItem={setSelectedItem}
-              />
-            )}
-            {sidebarTab !== "hooks" && sidebarTab !== "agents" && sidebarSource === "custom" && (
-              <CustomContent
-                tab={sidebarTab as "mcps" | "skills"}
-                onSelectItem={setSelectedItem}
-              />
-            )}
+            {sidebarTab !== "hooks" &&
+              (sidebarTab === "agents" || sidebarSource === "local") && (
+                <LocalContent
+                  tab={sidebarTab as "mcps" | "skills" | "agents"}
+                  onSelectItem={setSelectedItem}
+                />
+              )}
+            {sidebarTab !== "hooks" &&
+              sidebarTab !== "agents" &&
+              sidebarSource === "registry" && (
+                <RegistryContent
+                  tab={sidebarTab as "mcps" | "skills"}
+                  onSelectItem={setSelectedItem}
+                />
+              )}
+            {sidebarTab !== "hooks" &&
+              sidebarTab !== "agents" &&
+              sidebarSource === "custom" && (
+                <CustomContent
+                  tab={sidebarTab as "mcps" | "skills"}
+                  onSelectItem={setSelectedItem}
+                />
+              )}
 
             {sidebarTab !== "hooks" && (
               <>

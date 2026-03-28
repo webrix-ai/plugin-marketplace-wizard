@@ -141,9 +141,7 @@ export function readPluginDir(
       description = (claudeManifest.description as string) || ""
       version = (claudeManifest.version as string) || "1.0.0"
     } else {
-      const githubManifest = safeReadJson(
-        path.join(pluginDir, "plugin.json"),
-      )
+      const githubManifest = safeReadJson(path.join(pluginDir, "plugin.json"))
       if (githubManifest) {
         name = (githubManifest.name as string) || slug
         description = (githubManifest.description as string) || ""

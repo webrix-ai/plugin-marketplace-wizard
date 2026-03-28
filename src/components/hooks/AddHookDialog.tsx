@@ -1,33 +1,33 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useWizardStore } from "@/lib/store";
+import { useState } from "react"
+import { useWizardStore } from "@/lib/store"
 import type {
   ClaudeHookEvent,
   CursorHookEvent,
   ClaudeHookHandler,
   ClaudeHookItem,
   CursorHookItem,
-} from "@/lib/types";
+} from "@/lib/types"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
 
 const CLAUDE_EVENTS: ClaudeHookEvent[] = [
   "SessionStart",
@@ -52,7 +52,7 @@ const CLAUDE_EVENTS: ClaudeHookEvent[] = [
   "Elicitation",
   "ElicitationResult",
   "SessionEnd",
-];
+]
 
 const CURSOR_AGENT_EVENTS: CursorHookEvent[] = [
   "sessionStart",
@@ -73,99 +73,107 @@ const CURSOR_AGENT_EVENTS: CursorHookEvent[] = [
   "stop",
   "afterAgentResponse",
   "afterAgentThought",
-];
+]
 
 const CURSOR_TAB_EVENTS: CursorHookEvent[] = [
   "beforeTabFileRead",
   "afterTabFileEdit",
-];
+]
 
 const ALL_CURSOR_EVENTS: CursorHookEvent[] = [
   ...CURSOR_AGENT_EVENTS,
   ...CURSOR_TAB_EVENTS,
-];
+]
 
 export function AddHookDialog({
   open,
   onClose,
   platform: initialPlatform,
 }: {
-  open: boolean;
-  onClose: () => void;
-  platform?: "claude" | "cursor";
+  open: boolean
+  onClose: () => void
+  platform?: "claude" | "cursor"
 }) {
-  const { addClaudeHook, addCursorHook } = useWizardStore();
-  const [loading, setLoading] = useState(false);
+  const { addClaudeHook, addCursorHook } = useWizardStore()
+  const [loading, setLoading] = useState(false)
   const [platform, setPlatform] = useState<"claude" | "cursor">(
-    initialPlatform ?? "claude"
-  );
+    initialPlatform ?? "claude",
+  )
 
   // Claude state
-  const [claudeEvent, setClaudeEvent] = useState<ClaudeHookEvent>("PreToolUse");
+  const [claudeEvent, setClaudeEvent] = useState<ClaudeHookEvent>("PreToolUse")
   const [claudeHandlerType, setClaudeHandlerType] = useState<
     "command" | "http" | "prompt" | "agent"
-  >("command");
-  const [claudeCommand, setClaudeCommand] = useState("");
-  const [claudeUrl, setClaudeUrl] = useState("");
-  const [claudePrompt, setClaudePrompt] = useState("");
-  const [claudeMatcher, setClaudeMatcher] = useState("");
-  const [claudeTimeout, setClaudeTimeout] = useState("");
-  const [claudeScope, setClaudeScope] = useState<"global" | "local">("global");
-  const [claudeStatusMessage, setClaudeStatusMessage] = useState("");
-  const [claudeRunInBackground, setClaudeRunInBackground] = useState(false);
+  >("command")
+  const [claudeCommand, setClaudeCommand] = useState("")
+  const [claudeUrl, setClaudeUrl] = useState("")
+  const [claudePrompt, setClaudePrompt] = useState("")
+  const [claudeMatcher, setClaudeMatcher] = useState("")
+  const [claudeTimeout, setClaudeTimeout] = useState("")
+  const [claudeScope, setClaudeScope] = useState<"global" | "local">("global")
+  const [claudeStatusMessage, setClaudeStatusMessage] = useState("")
+  const [claudeRunInBackground, setClaudeRunInBackground] = useState(false)
 
   // Cursor state
-  const [cursorEvent, setCursorEvent] = useState<CursorHookEvent>("preToolUse");
-  const [cursorHandlerType, setCursorHandlerType] = useState<"command" | "prompt">("command");
-  const [cursorCommand, setCursorCommand] = useState("");
-  const [cursorPrompt, setCursorPrompt] = useState("");
-  const [cursorMatcher, setCursorMatcher] = useState("");
-  const [cursorTimeout, setCursorTimeout] = useState("");
-  const [cursorScope, setCursorScope] = useState<"global" | "local">("global");
-  const [cursorFailClosed, setCursorFailClosed] = useState(false);
+  const [cursorEvent, setCursorEvent] = useState<CursorHookEvent>("preToolUse")
+  const [cursorHandlerType, setCursorHandlerType] = useState<
+    "command" | "prompt"
+  >("command")
+  const [cursorCommand, setCursorCommand] = useState("")
+  const [cursorPrompt, setCursorPrompt] = useState("")
+  const [cursorMatcher, setCursorMatcher] = useState("")
+  const [cursorTimeout, setCursorTimeout] = useState("")
+  const [cursorScope, setCursorScope] = useState<"global" | "local">("global")
+  const [cursorFailClosed, setCursorFailClosed] = useState(false)
 
   function reset() {
-    setClaudeCommand("");
-    setClaudeUrl("");
-    setClaudePrompt("");
-    setClaudeMatcher("");
-    setClaudeTimeout("");
-    setClaudeStatusMessage("");
-    setClaudeRunInBackground(false);
-    setCursorCommand("");
-    setCursorPrompt("");
-    setCursorMatcher("");
-    setCursorTimeout("");
-    setCursorFailClosed(false);
+    setClaudeCommand("")
+    setClaudeUrl("")
+    setClaudePrompt("")
+    setClaudeMatcher("")
+    setClaudeTimeout("")
+    setClaudeStatusMessage("")
+    setClaudeRunInBackground(false)
+    setCursorCommand("")
+    setCursorPrompt("")
+    setCursorMatcher("")
+    setCursorTimeout("")
+    setCursorFailClosed(false)
   }
 
   async function handleSubmit() {
-    setLoading(true);
+    setLoading(true)
     try {
       if (platform === "claude") {
-        let handler: ClaudeHookHandler;
+        let handler: ClaudeHookHandler
         if (claudeHandlerType === "command") {
           handler = {
             type: "command",
             command: claudeCommand,
             ...(claudeTimeout ? { timeout: Number(claudeTimeout) } : {}),
             ...(claudeRunInBackground ? { run_in_background: true } : {}),
-            ...(claudeStatusMessage ? { statusMessage: claudeStatusMessage } : {}),
-          };
+            ...(claudeStatusMessage
+              ? { statusMessage: claudeStatusMessage }
+              : {}),
+          }
         } else if (claudeHandlerType === "http") {
           handler = {
             type: "http",
             url: claudeUrl,
             ...(claudeTimeout ? { timeout: Number(claudeTimeout) } : {}),
-            ...(claudeStatusMessage ? { statusMessage: claudeStatusMessage } : {}),
-          };
+            ...(claudeStatusMessage
+              ? { statusMessage: claudeStatusMessage }
+              : {}),
+          }
         } else {
           handler = {
             type: claudeHandlerType as "prompt" | "agent",
             prompt: claudePrompt,
             ...(claudeTimeout ? { timeout: Number(claudeTimeout) } : {}),
-            ...(claudeStatusMessage ? { statusMessage: claudeStatusMessage } : {}),
-          };
+            ...(claudeStatusMessage
+              ? { statusMessage: claudeStatusMessage }
+              : {}),
+          }
         }
 
         const item: Omit<ClaudeHookItem, "id"> = {
@@ -174,8 +182,8 @@ export function AddHookDialog({
           scope: claudeScope,
           sourceFilePath: "",
           ...(claudeMatcher ? { matcher: claudeMatcher } : {}),
-        };
-        await addClaudeHook(item);
+        }
+        await addClaudeHook(item)
       } else {
         const item: Omit<CursorHookItem, "id"> = {
           event: cursorEvent,
@@ -189,13 +197,13 @@ export function AddHookDialog({
           ...(cursorMatcher ? { matcher: cursorMatcher } : {}),
           ...(cursorTimeout ? { timeout: Number(cursorTimeout) } : {}),
           ...(cursorFailClosed ? { failClosed: true } : {}),
-        };
-        await addCursorHook(item);
+        }
+        await addCursorHook(item)
       }
-      reset();
-      onClose();
+      reset()
+      onClose()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -204,11 +212,11 @@ export function AddHookDialog({
       ? claudeHandlerType === "command"
         ? claudeCommand.trim().length > 0
         : claudeHandlerType === "http"
-        ? claudeUrl.trim().length > 0
-        : claudePrompt.trim().length > 0
+          ? claudeUrl.trim().length > 0
+          : claudePrompt.trim().length > 0
       : cursorHandlerType === "command"
-      ? cursorCommand.trim().length > 0
-      : cursorPrompt.trim().length > 0;
+        ? cursorCommand.trim().length > 0
+        : cursorPrompt.trim().length > 0
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -272,10 +280,18 @@ export function AddHookDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="command" className="text-xs">Command</SelectItem>
-                    <SelectItem value="http" className="text-xs">HTTP</SelectItem>
-                    <SelectItem value="prompt" className="text-xs">Prompt</SelectItem>
-                    <SelectItem value="agent" className="text-xs">Agent</SelectItem>
+                    <SelectItem value="command" className="text-xs">
+                      Command
+                    </SelectItem>
+                    <SelectItem value="http" className="text-xs">
+                      HTTP
+                    </SelectItem>
+                    <SelectItem value="prompt" className="text-xs">
+                      Prompt
+                    </SelectItem>
+                    <SelectItem value="agent" className="text-xs">
+                      Agent
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -303,7 +319,8 @@ export function AddHookDialog({
                 />
               </div>
             )}
-            {(claudeHandlerType === "prompt" || claudeHandlerType === "agent") && (
+            {(claudeHandlerType === "prompt" ||
+              claudeHandlerType === "agent") && (
               <div className="space-y-1.5">
                 <Label className="text-xs">Prompt</Label>
                 <Textarea
@@ -356,9 +373,7 @@ export function AddHookDialog({
                 <Label className="text-xs">Scope</Label>
                 <Select
                   value={claudeScope}
-                  onValueChange={(v) =>
-                    setClaudeScope(v as "global" | "local")
-                  }
+                  onValueChange={(v) => setClaudeScope(v as "global" | "local")}
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
@@ -380,9 +395,7 @@ export function AddHookDialog({
                 <Checkbox
                   id="background"
                   checked={claudeRunInBackground}
-                  onCheckedChange={(v) =>
-                    setClaudeRunInBackground(v === true)
-                  }
+                  onCheckedChange={(v) => setClaudeRunInBackground(v === true)}
                 />
                 <Label htmlFor="background" className="text-xs cursor-pointer">
                   Run in background
@@ -500,9 +513,7 @@ export function AddHookDialog({
                 <Label className="text-xs">Scope</Label>
                 <Select
                   value={cursorScope}
-                  onValueChange={(v) =>
-                    setCursorScope(v as "global" | "local")
-                  }
+                  onValueChange={(v) => setCursorScope(v as "global" | "local")}
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
@@ -525,10 +536,7 @@ export function AddHookDialog({
                 checked={cursorFailClosed}
                 onCheckedChange={(v) => setCursorFailClosed(v === true)}
               />
-              <Label
-                htmlFor="failClosed"
-                className="text-xs cursor-pointer"
-              >
+              <Label htmlFor="failClosed" className="text-xs cursor-pointer">
                 Fail closed (block on error)
               </Label>
             </div>
@@ -552,7 +560,7 @@ export function AddHookDialog({
               "text-white",
               platform === "claude"
                 ? "bg-orange-500 hover:bg-orange-600"
-                : "bg-blue-500 hover:bg-blue-600"
+                : "bg-blue-500 hover:bg-blue-600",
             )}
           >
             {loading ? "Adding…" : "Add Hook"}
@@ -560,5 +568,5 @@ export function AddHookDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

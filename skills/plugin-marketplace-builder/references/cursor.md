@@ -39,7 +39,10 @@ Location: `.cursor-plugin/marketplace.json`
 {
   "name": "my-marketplace",
   "owner": { "name": "Team Name", "email": "team@example.com" },
-  "metadata": { "description": "Plugin marketplace for my org", "version": "1.0.0" },
+  "metadata": {
+    "description": "Plugin marketplace for my org",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "my-plugin",

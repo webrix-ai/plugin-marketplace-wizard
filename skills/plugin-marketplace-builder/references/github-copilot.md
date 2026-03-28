@@ -37,7 +37,10 @@ Location: `.github/plugin/marketplace.json`
 {
   "name": "my-marketplace",
   "owner": { "name": "Team Name", "email": "team@example.com" },
-  "metadata": { "description": "Plugin marketplace for my org", "version": "1.0.0" },
+  "metadata": {
+    "description": "Plugin marketplace for my org",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "my-plugin",
@@ -75,13 +78,13 @@ Location: `plugin.json` **at the plugin root** (not in a hidden `.github/` folde
 
 ## Key Differences from Claude/Cursor
 
-| Aspect | Claude Code / Cursor | GitHub Copilot |
-|--------|---------------------|----------------|
-| Root manifest | `.claude-plugin/` or `.cursor-plugin/` | `.github/plugin/` |
-| Plugin manifest | Hidden folder (`.<target>-plugin/plugin.json`) | Root level (`plugin.json`) |
-| Component refs | Implicit auto-discovery | Explicit paths in `plugin.json` |
-| Marketplace source | Relative path or bare slug | Relative path |
-| Hooks | Supported | Not yet supported in marketplace plugins |
+| Aspect             | Claude Code / Cursor                           | GitHub Copilot                           |
+| ------------------ | ---------------------------------------------- | ---------------------------------------- |
+| Root manifest      | `.claude-plugin/` or `.cursor-plugin/`         | `.github/plugin/`                        |
+| Plugin manifest    | Hidden folder (`.<target>-plugin/plugin.json`) | Root level (`plugin.json`)               |
+| Component refs     | Implicit auto-discovery                        | Explicit paths in `plugin.json`          |
+| Marketplace source | Relative path or bare slug                     | Relative path                            |
+| Hooks              | Supported                                      | Not yet supported in marketplace plugins |
 
 ## Component Layout
 

@@ -11,13 +11,10 @@ function tryReadManifest(outputDir: string): MarketplaceManifest | null {
     path.join(".claude-plugin", "marketplace.json"),
     path.join(".cursor-plugin", "marketplace.json"),
     path.join(".github", "plugin", "marketplace.json"),
-  ];
+  ]
   for (const rel of candidates) {
     try {
-      const raw = fs.readFileSync(
-        path.join(outputDir, rel),
-        "utf-8",
-      )
+      const raw = fs.readFileSync(path.join(outputDir, rel), "utf-8")
       const data = JSON.parse(stripJsonComments(raw)) as MarketplaceManifest
       if (data?.name && data.owner && Array.isArray(data.plugins)) return data
     } catch {

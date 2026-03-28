@@ -249,58 +249,58 @@ export type ClaudeHookEvent =
   | "PostCompact"
   | "Elicitation"
   | "ElicitationResult"
-  | "SessionEnd";
+  | "SessionEnd"
 
 export interface ClaudeCommandHandler {
-  type: "command";
-  command: string;
-  timeout?: number;
-  run_in_background?: boolean;
-  statusMessage?: string;
-  once?: boolean;
+  type: "command"
+  command: string
+  timeout?: number
+  run_in_background?: boolean
+  statusMessage?: string
+  once?: boolean
 }
 
 export interface ClaudeHttpHandler {
-  type: "http";
-  url: string;
-  headers?: Record<string, string>;
-  allowedEnvVars?: string[];
-  timeout?: number;
-  statusMessage?: string;
-  once?: boolean;
+  type: "http"
+  url: string
+  headers?: Record<string, string>
+  allowedEnvVars?: string[]
+  timeout?: number
+  statusMessage?: string
+  once?: boolean
 }
 
 export interface ClaudePromptHandler {
-  type: "prompt";
-  prompt: string;
-  model?: string;
-  timeout?: number;
-  statusMessage?: string;
-  once?: boolean;
+  type: "prompt"
+  prompt: string
+  model?: string
+  timeout?: number
+  statusMessage?: string
+  once?: boolean
 }
 
 export interface ClaudeAgentHandler {
-  type: "agent";
-  prompt: string;
-  model?: string;
-  timeout?: number;
-  statusMessage?: string;
-  once?: boolean;
+  type: "agent"
+  prompt: string
+  model?: string
+  timeout?: number
+  statusMessage?: string
+  once?: boolean
 }
 
 export type ClaudeHookHandler =
   | ClaudeCommandHandler
   | ClaudeHttpHandler
   | ClaudePromptHandler
-  | ClaudeAgentHandler;
+  | ClaudeAgentHandler
 
 export interface ClaudeHookItem {
-  id: string;
-  event: ClaudeHookEvent;
-  matcher?: string;
-  handler: ClaudeHookHandler;
-  sourceFilePath: string;
-  scope: "global" | "local";
+  id: string
+  event: ClaudeHookEvent
+  matcher?: string
+  handler: ClaudeHookHandler
+  sourceFilePath: string
+  scope: "global" | "local"
 }
 
 export type CursorHookEvent =
@@ -323,53 +323,53 @@ export type CursorHookEvent =
   | "afterAgentResponse"
   | "afterAgentThought"
   | "beforeTabFileRead"
-  | "afterTabFileEdit";
+  | "afterTabFileEdit"
 
 export interface CursorHookItem {
-  id: string;
-  event: CursorHookEvent;
-  category: "agent" | "tab";
-  type: "command" | "prompt";
-  command?: string;
-  prompt?: string;
-  model?: string;
-  matcher?: string;
-  timeout?: number;
-  loop_limit?: number;
-  failClosed?: boolean;
-  sourceFilePath: string;
-  scope: "global" | "local";
+  id: string
+  event: CursorHookEvent
+  category: "agent" | "tab"
+  type: "command" | "prompt"
+  command?: string
+  prompt?: string
+  model?: string
+  matcher?: string
+  timeout?: number
+  loop_limit?: number
+  failClosed?: boolean
+  sourceFilePath: string
+  scope: "global" | "local"
 }
 
 export interface HookScanResult {
-  claudeHooks: ClaudeHookItem[];
-  cursorHooks: CursorHookItem[];
-  scannedAt: string;
-  claudeEnabled: boolean;
-  cursorEnabled: boolean;
+  claudeHooks: ClaudeHookItem[]
+  cursorHooks: CursorHookItem[]
+  scannedAt: string
+  claudeEnabled: boolean
+  cursorEnabled: boolean
 }
 
 // PluginHook — a hook that lives inside a PluginData (draggable, like MCP/Skill/Agent)
 export interface PluginHook {
-  id: string;
-  platform: "claude" | "cursor";
-  event: string;
-  handlerType: "command" | "http" | "prompt" | "agent";
-  command?: string;
-  url?: string;
-  prompt?: string;
-  model?: string;
-  matcher?: string;
-  timeout?: number;
-  statusMessage?: string;
-  runInBackground?: boolean;
-  headers?: Record<string, string>;
-  allowedEnvVars?: string[];
-  cursorCategory?: "agent" | "tab";
-  loopLimit?: number;
-  failClosed?: boolean;
-  sourceFilePath?: string;
-  scope?: "global" | "local";
+  id: string
+  platform: "claude" | "cursor"
+  event: string
+  handlerType: "command" | "http" | "prompt" | "agent"
+  command?: string
+  url?: string
+  prompt?: string
+  model?: string
+  matcher?: string
+  timeout?: number
+  statusMessage?: string
+  runInBackground?: boolean
+  headers?: Record<string, string>
+  allowedEnvVars?: string[]
+  cursorCategory?: "agent" | "tab"
+  loopLimit?: number
+  failClosed?: boolean
+  sourceFilePath?: string
+  scope?: "global" | "local"
 }
 
 export type PluginScalarUpdate = Partial<

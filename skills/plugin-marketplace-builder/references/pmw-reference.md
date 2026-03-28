@@ -59,12 +59,14 @@ Creates `.cursor-plugin/marketplace.json`, `.claude-plugin/marketplace.json`, an
 The editor is a single-page React app at `localhost:3000`.
 
 ### Layout
+
 - **Sidebar** (left): MCP Servers, Skills, Agents, Hooks tabs. Sources: Local, Registry, Custom.
 - **Canvas** (center): drag-and-drop React Flow canvas with plugin nodes
 - **Editor Panel** (right): detail editing for selected plugin
 - **Header**: marketplace settings, export controls
 
 ### Key Interactions
+
 - Create plugin: right-click canvas or header button
 - Add component: drag from sidebar onto plugin card
 - Search plugins: `Cmd+K`
@@ -72,9 +74,11 @@ The editor is a single-page React app at `localhost:3000`.
 - Import skill: drop `.zip` or `.skill` file
 
 ### Auto-save
+
 Changes persist to disk ~1.5s after each edit. Hot reload watches for external file changes.
 
 ### Inline Validation
+
 Plugin nodes show green/yellow/red indicators for validation status.
 
 ## Component Discovery
@@ -82,13 +86,16 @@ Plugin nodes show green/yellow/red indicators for validation status.
 PMW discovers components from multiple sources:
 
 ### Local Scan
+
 Scans IDE configs for existing MCP servers and skills: Cursor, Claude Code, VS Code, Windsurf, Zed, Cline, Roo.
 
 ### Official Registries
+
 - [MCP Registry](https://registry.modelcontextprotocol.io) — community MCP servers
 - [Skills.sh](https://skills.sh) — community skills
 
 ### Custom Sources
+
 - MCP Server Registry API endpoints
 - GitHub repositories for skills
 
@@ -98,8 +105,13 @@ Import types and validators programmatically:
 
 ```typescript
 import type {
-  PluginData, McpServer, Skill, AgentData,
-  MarketplaceManifest, MarketplaceSettings, ValidationIssue,
+  PluginData,
+  McpServer,
+  Skill,
+  AgentData,
+  MarketplaceManifest,
+  MarketplaceSettings,
+  ValidationIssue,
 } from "plugin-marketplace-wizard"
 
 import {
@@ -118,7 +130,7 @@ import {
 
 ```typescript
 const issues = validatePluginData(myPlugin)
-const errors = issues.filter(i => i.severity !== "warning")
+const errors = issues.filter((i) => i.severity !== "warning")
 ```
 
 ## Output Layout

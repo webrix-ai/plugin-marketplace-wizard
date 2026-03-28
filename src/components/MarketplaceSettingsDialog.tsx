@@ -86,7 +86,8 @@ function MarketplaceSettingsFormBody({
     metadata: { description, version },
   })
 
-  const noneSelected = !localTargets.cursor && !localTargets.claude && !localTargets.github
+  const noneSelected =
+    !localTargets.cursor && !localTargets.claude && !localTargets.github
 
   const toggleTarget = (key: keyof ExportTargets) => {
     setLocalTargets((prev) => ({ ...prev, [key]: !prev[key] }))

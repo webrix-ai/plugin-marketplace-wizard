@@ -45,7 +45,10 @@ Location: `.claude-plugin/marketplace.json`
 {
   "name": "my-marketplace",
   "owner": { "name": "Team Name", "email": "team@example.com" },
-  "metadata": { "description": "Plugin marketplace for my org", "version": "1.0.0" },
+  "metadata": {
+    "description": "Plugin marketplace for my org",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "my-plugin",
@@ -143,14 +146,18 @@ Use `${CLAUDE_PLUGIN_ROOT}` for portable intra-plugin path references.
 
 ```json
 {
-  "PreToolUse": [{
-    "matcher": "Write|Edit",
-    "hooks": [{
-      "type": "command",
-      "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate.sh",
-      "timeout": 30
-    }]
-  }]
+  "PreToolUse": [
+    {
+      "matcher": "Write|Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate.sh",
+          "timeout": 30
+        }
+      ]
+    }
+  ]
 }
 ```
 

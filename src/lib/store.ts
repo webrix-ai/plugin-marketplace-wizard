@@ -257,21 +257,21 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setHooksQuery: (q) => set({ hooksQuery: q }),
 
   scanHooks: async () => {
-    set({ hooksLoading: true });
+    set({ hooksLoading: true })
     try {
-      const res = await fetch("/api/hooks");
-      if (!res.ok) return;
-      const data = await res.json();
+      const res = await fetch("/api/hooks")
+      if (!res.ok) return
+      const data = await res.json()
       set({
         claudeHooks: data.claudeHooks ?? [],
         cursorHooks: data.cursorHooks ?? [],
         claudeHooksEnabled: data.claudeEnabled ?? false,
         cursorHooksEnabled: data.cursorEnabled ?? false,
-      });
+      })
     } catch {
       /* ignore */
     } finally {
-      set({ hooksLoading: false });
+      set({ hooksLoading: false })
     }
   },
 
@@ -280,8 +280,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform: "claude", item }),
-    });
-    await get().scanHooks();
+    })
+    await get().scanHooks()
   },
 
   updateClaudeHook: async (item, updates) => {
@@ -289,8 +289,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform: "claude", item, updates }),
-    });
-    await get().scanHooks();
+    })
+    await get().scanHooks()
   },
 
   deleteClaudeHook: async (item) => {
@@ -298,8 +298,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform: "claude", item }),
-    });
-    await get().scanHooks();
+    })
+    await get().scanHooks()
   },
 
   addCursorHook: async (item) => {
@@ -307,8 +307,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform: "cursor", item }),
-    });
-    await get().scanHooks();
+    })
+    await get().scanHooks()
   },
 
   updateCursorHook: async (item, updates) => {
@@ -316,8 +316,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform: "cursor", item, updates }),
-    });
-    await get().scanHooks();
+    })
+    await get().scanHooks()
   },
 
   deleteCursorHook: async (item) => {
@@ -325,8 +325,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform: "cursor", item }),
-    });
-    await get().scanHooks();
+    })
+    await get().scanHooks()
   },
 
   refreshGitDefaults: async () => {
@@ -624,7 +624,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const res = await fetch("/api/export-targets")
       if (!res.ok) return
       const data = await res.json()
-      set({ exportTargets: { cursor: !!data.cursor, claude: !!data.claude, github: !!data.github } })
+      set({
+        exportTargets: {
+          cursor: !!data.cursor,
+          claude: !!data.claude,
+          github: !!data.github,
+        },
+      })
     } catch {
       /* ignore */
     }
@@ -1160,40 +1166,42 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   addHookToPlugin: (pluginId, hook) => {
-    const state = get();
+    const state = get()
     set({
       plugins: state.plugins.map((p) => {
-        if (p.id !== pluginId) return p;
-        if ((p.hooks ?? []).some((h) => h.id === hook.id)) return p;
-        return { ...p, hooks: [...(p.hooks ?? []), hook] };
+        if (p.id !== pluginId) return p
+        if ((p.hooks ?? []).some((h) => h.id === hook.id)) return p
+        return { ...p, hooks: [...(p.hooks ?? []), hook] }
       }),
       ...pushHistory(state),
-    });
+    })
   },
 
   removeHookFromPlugin: (pluginId, hookId) => {
-    const state = get();
+    const state = get()
     set({
       plugins: state.plugins.map((p) => {
-        if (p.id !== pluginId) return p;
-        return { ...p, hooks: (p.hooks ?? []).filter((h) => h.id !== hookId) };
+        if (p.id !== pluginId) return p
+        return { ...p, hooks: (p.hooks ?? []).filter((h) => h.id !== hookId) }
       }),
       ...pushHistory(state),
-    });
+    })
   },
 
   updateHookInPlugin: (pluginId, hookId, updates) => {
-    const state = get();
+    const state = get()
     set({
       plugins: state.plugins.map((p) => {
-        if (p.id !== pluginId) return p;
+        if (p.id !== pluginId) return p
         return {
           ...p,
-          hooks: (p.hooks ?? []).map((h) => (h.id === hookId ? { ...h, ...updates } : h)),
-        };
+          hooks: (p.hooks ?? []).map((h) =>
+            h.id === hookId ? { ...h, ...updates } : h,
+          ),
+        }
       }),
       ...pushHistory(state),
-    });
+    })
   },
 
   setSkillImportError: (error) => set({ skillImportError: error }),

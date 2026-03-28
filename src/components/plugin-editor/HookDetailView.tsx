@@ -1,96 +1,98 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useWizardStore } from "@/lib/store";
-import type { PluginHook } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react"
+import { useWizardStore } from "@/lib/store"
+import type { PluginHook } from "@/lib/types"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Trash2 } from "lucide-react";
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Trash2 } from "lucide-react"
 
 export function HookDetailView({
   hook,
   pluginId,
   onBack,
 }: {
-  hook: PluginHook;
-  pluginId: string;
-  onBack: () => void;
+  hook: PluginHook
+  pluginId: string
+  onBack: () => void
 }) {
-  const { updateHookInPlugin, removeHookFromPlugin } = useWizardStore();
+  const { updateHookInPlugin, removeHookFromPlugin } = useWizardStore()
 
-  const isClaude = hook.platform === "claude";
-  const isCursor = hook.platform === "cursor";
+  const isClaude = hook.platform === "claude"
+  const isCursor = hook.platform === "cursor"
 
-  const [handlerType, setHandlerType] = useState(hook.handlerType);
-  const [command, setCommand] = useState(hook.command ?? "");
-  const [url, setUrl] = useState(hook.url ?? "");
-  const [prompt, setPrompt] = useState(hook.prompt ?? "");
-  const [model, setModel] = useState(hook.model ?? "");
-  const [matcher, setMatcher] = useState(hook.matcher ?? "");
-  const [timeout, setTimeout] = useState(hook.timeout?.toString() ?? "");
-  const [statusMessage, setStatusMessage] = useState(hook.statusMessage ?? "");
-  const [runInBackground, setRunInBackground] = useState(hook.runInBackground ?? false);
-  const [failClosed, setFailClosed] = useState(hook.failClosed ?? false);
-  const [loopLimit, setLoopLimit] = useState(hook.loopLimit?.toString() ?? "");
+  const [handlerType, setHandlerType] = useState(hook.handlerType)
+  const [command, setCommand] = useState(hook.command ?? "")
+  const [url, setUrl] = useState(hook.url ?? "")
+  const [prompt, setPrompt] = useState(hook.prompt ?? "")
+  const [model, setModel] = useState(hook.model ?? "")
+  const [matcher, setMatcher] = useState(hook.matcher ?? "")
+  const [timeout, setTimeout] = useState(hook.timeout?.toString() ?? "")
+  const [statusMessage, setStatusMessage] = useState(hook.statusMessage ?? "")
+  const [runInBackground, setRunInBackground] = useState(
+    hook.runInBackground ?? false,
+  )
+  const [failClosed, setFailClosed] = useState(hook.failClosed ?? false)
+  const [loopLimit, setLoopLimit] = useState(hook.loopLimit?.toString() ?? "")
 
-  const claudeHandlerTypes = ["command", "http", "prompt", "agent"] as const;
-  const cursorHandlerTypes = ["command", "prompt"] as const;
+  const claudeHandlerTypes = ["command", "http", "prompt", "agent"] as const
+  const cursorHandlerTypes = ["command", "prompt"] as const
 
   function save() {
     const updates: Partial<PluginHook> = {
       handlerType,
       matcher: matcher.trim() || undefined,
       timeout: timeout ? Number(timeout) : undefined,
-    };
+    }
 
     if (handlerType === "command") {
-      updates.command = command.trim();
-      updates.url = undefined;
-      updates.prompt = undefined;
+      updates.command = command.trim()
+      updates.url = undefined
+      updates.prompt = undefined
       if (isClaude) {
-        updates.runInBackground = runInBackground || undefined;
-        updates.statusMessage = statusMessage.trim() || undefined;
+        updates.runInBackground = runInBackground || undefined
+        updates.statusMessage = statusMessage.trim() || undefined
       }
       if (isCursor) {
-        updates.failClosed = failClosed || undefined;
-        updates.loopLimit = loopLimit ? Number(loopLimit) : undefined;
+        updates.failClosed = failClosed || undefined
+        updates.loopLimit = loopLimit ? Number(loopLimit) : undefined
       }
     } else if (handlerType === "http") {
-      updates.url = url.trim();
-      updates.command = undefined;
-      updates.prompt = undefined;
-      updates.statusMessage = statusMessage.trim() || undefined;
+      updates.url = url.trim()
+      updates.command = undefined
+      updates.prompt = undefined
+      updates.statusMessage = statusMessage.trim() || undefined
     } else {
-      updates.prompt = prompt.trim();
-      updates.model = model.trim() || undefined;
-      updates.command = undefined;
-      updates.url = undefined;
-      if (isClaude) updates.statusMessage = statusMessage.trim() || undefined;
+      updates.prompt = prompt.trim()
+      updates.model = model.trim() || undefined
+      updates.command = undefined
+      updates.url = undefined
+      if (isClaude) updates.statusMessage = statusMessage.trim() || undefined
       if (isCursor) {
-        updates.failClosed = failClosed || undefined;
-        updates.loopLimit = loopLimit ? Number(loopLimit) : undefined;
+        updates.failClosed = failClosed || undefined
+        updates.loopLimit = loopLimit ? Number(loopLimit) : undefined
       }
     }
 
-    updateHookInPlugin(pluginId, hook.id, updates);
-    onBack();
+    updateHookInPlugin(pluginId, hook.id, updates)
+    onBack()
   }
 
   function handleRemove() {
-    removeHookFromPlugin(pluginId, hook.id);
-    onBack();
+    removeHookFromPlugin(pluginId, hook.id)
+    onBack()
   }
 
   return (
@@ -116,7 +118,10 @@ export function HookDetailView({
               {hook.platform === "claude" ? "Claude Code" : "Cursor"}
             </Badge>
             {isCursor && hook.cursorCategory && (
-              <Badge variant="outline" className="h-3.5 border-blue-500/20 px-1 text-[9px] text-muted-foreground">
+              <Badge
+                variant="outline"
+                className="h-3.5 border-blue-500/20 px-1 text-[9px] text-muted-foreground"
+              >
                 {hook.cursorCategory}
               </Badge>
             )}
@@ -128,7 +133,9 @@ export function HookDetailView({
 
       {/* Handler Type */}
       <div className="flex flex-col gap-1.5">
-        <Label className="text-[10px] uppercase tracking-wider">Handler Type</Label>
+        <Label className="text-[10px] uppercase tracking-wider">
+          Handler Type
+        </Label>
         <Select
           value={handlerType}
           onValueChange={(v) => setHandlerType(v as PluginHook["handlerType"])}
@@ -149,7 +156,9 @@ export function HookDetailView({
       {/* Handler-specific fields */}
       {handlerType === "command" && (
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[10px] uppercase tracking-wider">Command</Label>
+          <Label className="text-[10px] uppercase tracking-wider">
+            Command
+          </Label>
           <Input
             value={command}
             onChange={(e) => setCommand(e.target.value)}
@@ -186,7 +195,10 @@ export function HookDetailView({
       {(handlerType === "prompt" || handlerType === "agent") && (
         <div className="flex flex-col gap-1.5">
           <Label className="text-[10px] uppercase tracking-wider">
-            Model <span className="font-normal normal-case text-muted-foreground">(optional)</span>
+            Model{" "}
+            <span className="font-normal normal-case text-muted-foreground">
+              (optional)
+            </span>
           </Label>
           <Input
             value={model}
@@ -200,7 +212,10 @@ export function HookDetailView({
       {/* Common fields */}
       <div className="flex flex-col gap-1.5">
         <Label className="text-[10px] uppercase tracking-wider">
-          Matcher <span className="font-normal normal-case text-muted-foreground">(optional regex)</span>
+          Matcher{" "}
+          <span className="font-normal normal-case text-muted-foreground">
+            (optional regex)
+          </span>
         </Label>
         <Input
           value={matcher}
@@ -213,7 +228,10 @@ export function HookDetailView({
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1.5">
           <Label className="text-[10px] uppercase tracking-wider">
-            Timeout <span className="font-normal normal-case text-muted-foreground">(sec)</span>
+            Timeout{" "}
+            <span className="font-normal normal-case text-muted-foreground">
+              (sec)
+            </span>
           </Label>
           <Input
             type="number"
@@ -226,7 +244,9 @@ export function HookDetailView({
 
         {isCursor && handlerType === "command" && (
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[10px] uppercase tracking-wider">Loop Limit</Label>
+            <Label className="text-[10px] uppercase tracking-wider">
+              Loop Limit
+            </Label>
             <Input
               type="number"
               value={loopLimit}
@@ -241,7 +261,10 @@ export function HookDetailView({
       {isClaude && (
         <div className="flex flex-col gap-1.5">
           <Label className="text-[10px] uppercase tracking-wider">
-            Status Message <span className="font-normal normal-case text-muted-foreground">(optional)</span>
+            Status Message{" "}
+            <span className="font-normal normal-case text-muted-foreground">
+              (optional)
+            </span>
           </Label>
           <Input
             value={statusMessage}
@@ -296,12 +319,7 @@ export function HookDetailView({
         <Button size="sm" className="flex-1" onClick={save}>
           Save
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={onBack}
-        >
+        <Button variant="outline" size="sm" className="flex-1" onClick={onBack}>
           Cancel
         </Button>
       </div>
@@ -316,5 +334,5 @@ export function HookDetailView({
         Remove from plugin
       </Button>
     </div>
-  );
+  )
 }

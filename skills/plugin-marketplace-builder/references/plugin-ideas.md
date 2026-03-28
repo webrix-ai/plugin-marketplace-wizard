@@ -37,65 +37,75 @@ Follow semver. Major for breaking changes, minor for new components, patch for c
 
 ## Plugin Categories
 
-| Category | Description | Examples |
-|----------|-------------|---------|
-| `productivity` | Development workflow | Code review, docs, task management |
-| `testing` | Quality assurance | API testing, E2E, load testing |
-| `infrastructure` | Deployment & ops | CI/CD, Docker, Kubernetes |
-| `data` | Data access & processing | Database tools, analytics, ETL |
-| `security` | Security & compliance | Vulnerability scanning, secrets |
-| `frontend` | UI/UX development | Component libraries, a11y |
-| `backend` | Server-side development | API design, microservices |
-| `ai-ml` | Machine learning & AI | Model training, RAG |
-| `communication` | Team collaboration | Slack, email, notifications |
-| `monitoring` | Observability | Logging, metrics, alerting |
+| Category         | Description              | Examples                           |
+| ---------------- | ------------------------ | ---------------------------------- |
+| `productivity`   | Development workflow     | Code review, docs, task management |
+| `testing`        | Quality assurance        | API testing, E2E, load testing     |
+| `infrastructure` | Deployment & ops         | CI/CD, Docker, Kubernetes          |
+| `data`           | Data access & processing | Database tools, analytics, ETL     |
+| `security`       | Security & compliance    | Vulnerability scanning, secrets    |
+| `frontend`       | UI/UX development        | Component libraries, a11y          |
+| `backend`        | Server-side development  | API design, microservices          |
+| `ai-ml`          | Machine learning & AI    | Model training, RAG                |
+| `communication`  | Team collaboration       | Slack, email, notifications        |
+| `monitoring`     | Observability            | Logging, metrics, alerting         |
 
 ## Starter Plugin Ideas
 
 ### Code Quality
+
 - Skills: code-review-guidelines, refactoring-patterns
 - MCP: ESLint server, Prettier server
 - Hooks: PreToolUse guard on Write to check style
 
 ### API Development
+
 - Skills: rest-api-design, openapi-spec-writing
 - MCP: Swagger/OpenAPI validator, HTTP testing server
 - Agents: api-reviewer
 
 ### Database
+
 - Skills: sql-optimization, migration-best-practices
 - MCP: PostgreSQL MCP, MongoDB MCP, Redis MCP
 - Agents: query-optimizer
 
 ### Frontend
+
 - Skills: component-architecture, accessibility-guidelines
 - MCP: Figma MCP, Storybook MCP
 - Hooks: afterFileEdit to validate JSX/TSX
 
 ### DevOps
+
 - Skills: dockerfile-best-practices, kubernetes-patterns
 - MCP: Docker MCP, GitHub Actions MCP
 - Agents: infra-reviewer
 
 ### Security
+
 - Skills: owasp-top-10, secrets-management
 - MCP: Snyk MCP, GitHub Security MCP
 - Hooks: PreToolUse to prevent committing secrets
 
 ### Documentation
+
 - Skills: technical-writing, api-documentation
 - MCP: Notion MCP, Confluence MCP
 - Agents: docs-writer
 
 ### Team Onboarding
+
 - Skills: codebase-overview, contribution-guidelines
 - Agents: onboarding-buddy
 
 ### Monitoring
+
 - Skills: observability-patterns, alerting-rules
 - MCP: Datadog MCP, Grafana MCP, PagerDuty MCP
 
 ### Web Design
+
 - Skills: web-design-guidelines, accessibility-audit
 - MCP: Lighthouse MCP, Axe MCP
 
@@ -142,14 +152,14 @@ fintech-marketplace/plugins/
 
 ### Popular MCP Servers
 
-| Server | Transport | Use Case |
-|--------|-----------|----------|
-| `@modelcontextprotocol/server-filesystem` | stdio | File operations |
-| `@modelcontextprotocol/server-github` | stdio | GitHub API |
-| `@modelcontextprotocol/server-postgres` | stdio | PostgreSQL |
-| `@modelcontextprotocol/server-slack` | stdio | Slack messaging |
-| `@modelcontextprotocol/server-memory` | stdio | Persistent memory |
-| `@modelcontextprotocol/server-fetch` | stdio | HTTP requests |
+| Server                                    | Transport | Use Case          |
+| ----------------------------------------- | --------- | ----------------- |
+| `@modelcontextprotocol/server-filesystem` | stdio     | File operations   |
+| `@modelcontextprotocol/server-github`     | stdio     | GitHub API        |
+| `@modelcontextprotocol/server-postgres`   | stdio     | PostgreSQL        |
+| `@modelcontextprotocol/server-slack`      | stdio     | Slack messaging   |
+| `@modelcontextprotocol/server-memory`     | stdio     | Persistent memory |
+| `@modelcontextprotocol/server-fetch`      | stdio     | HTTP requests     |
 
 ## Finding Skills
 
@@ -160,7 +170,9 @@ fintech-marketplace/plugins/
 ## Common Plugin Patterns
 
 ### The "Essentials" Bundle
+
 Multiple related components for a role:
+
 ```
 frontend-essentials/
 ├── skills/component-design/SKILL.md
@@ -170,7 +182,9 @@ frontend-essentials/
 ```
 
 ### The "Guard" Plugin
+
 Hooks that enforce standards, minimal or no other components:
+
 ```
 code-standards/
 ├── hooks/hooks.json     # PreToolUse guards
@@ -178,7 +192,9 @@ code-standards/
 ```
 
 ### The "Knowledge" Plugin
+
 Pure skills, no MCP servers — domain expertise for the agent:
+
 ```
 company-standards/
 └── skills/
@@ -188,14 +204,18 @@ company-standards/
 ```
 
 ### The "Integration" Plugin
+
 Pure MCP servers connecting external services:
+
 ```
 project-management/
 └── .mcp.json    # Jira + Confluence + Slack MCPs
 ```
 
 ### The "Specialist" Plugin
+
 An agent with supporting skills and MCP access:
+
 ```
 code-reviewer/
 ├── agents/code-reviewer.md

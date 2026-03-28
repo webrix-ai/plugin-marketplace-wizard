@@ -25,21 +25,21 @@ export async function DELETE(request: Request) {
 
     for (const target of targets) {
       if (target === "github") {
-        const rootFolder = path.join(dir, ".github", "plugin");
-        rmRecursive(rootFolder);
-        deleted.push(rootFolder);
+        const rootFolder = path.join(dir, ".github", "plugin")
+        rmRecursive(rootFolder)
+        deleted.push(rootFolder)
 
-        const pluginsDir = path.join(dir, "plugins");
+        const pluginsDir = path.join(dir, "plugins")
         if (fs.existsSync(pluginsDir)) {
           for (const slug of fs.readdirSync(pluginsDir)) {
-            const pluginTarget = path.join(pluginsDir, slug, "plugin.json");
+            const pluginTarget = path.join(pluginsDir, slug, "plugin.json")
             if (fs.existsSync(pluginTarget)) {
-              fs.rmSync(pluginTarget, { force: true });
-              deleted.push(pluginTarget);
+              fs.rmSync(pluginTarget, { force: true })
+              deleted.push(pluginTarget)
             }
           }
         }
-        continue;
+        continue
       }
 
       const folderName =

@@ -482,7 +482,7 @@ export function PanelBody({
           />
         </div>
       </>
-    );
+    )
   }
 
   return (
@@ -948,7 +948,9 @@ export function PanelBody({
                   >
                     <div className="size-1.5 shrink-0 rounded-full bg-orange-500/60" />
                     <div className="min-w-0 flex-1">
-                      <span className="block truncate text-[11px]">{hook.event}</span>
+                      <span className="block truncate text-[11px]">
+                        {hook.event}
+                      </span>
                       <span className="block truncate font-mono text-[9px] text-muted-foreground">
                         {hook.platform} · {hook.handlerType}
                       </span>

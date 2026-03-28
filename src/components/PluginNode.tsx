@@ -19,7 +19,12 @@ import {
   validateAgent,
   getSkillDirName,
 } from "@/lib/validate-marketplace"
-import type { PluginData, DragPayload, RegistrySkillEntry, PluginHook } from "@/lib/types"
+import type {
+  PluginData,
+  DragPayload,
+  RegistrySkillEntry,
+  PluginHook,
+} from "@/lib/types"
 import { Webhook } from "lucide-react"
 
 const SKILL_FILE_EXTENSIONS = [".zip", ".skill"]
@@ -160,7 +165,10 @@ function PluginNodeComponent({ data, id }: NodeProps<PluginNodeType>) {
   }, [id, isSelected, setSelectedPluginId])
 
   const totalItems =
-    data.mcps.length + data.skills.length + (data.agents?.length ?? 0) + (data.hooks?.length ?? 0)
+    data.mcps.length +
+    data.skills.length +
+    (data.agents?.length ?? 0) +
+    (data.hooks?.length ?? 0)
 
   return (
     <div

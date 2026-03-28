@@ -53,6 +53,7 @@ All three platforms share the same schema (location differs):
 **Naming rules:** all names kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`), max 128 chars.
 
 **Source field by platform:**
+
 - Claude Code: `"./plugins/<slug>"` (relative path)
 - Cursor: `"<slug>"` (bare slug)
 - GitHub Copilot: `"./plugins/<slug>"` (relative path)
@@ -60,18 +61,39 @@ All three platforms share the same schema (location differs):
 ## Plugin Manifests (per-platform differences)
 
 **Claude Code** (`.claude-plugin/plugin.json`):
+
 ```json
-{ "name": "slug", "description": "...", "version": "1.0.0", "author": { "name": "..." } }
+{
+  "name": "slug",
+  "description": "...",
+  "version": "1.0.0",
+  "author": { "name": "..." }
+}
 ```
 
 **Cursor** (`.cursor-plugin/plugin.json`):
+
 ```json
-{ "name": "slug", "displayName": "Human Name", "version": "1.0.0", "description": "...", "author": { "name": "..." } }
+{
+  "name": "slug",
+  "displayName": "Human Name",
+  "version": "1.0.0",
+  "description": "...",
+  "author": { "name": "..." }
+}
 ```
 
 **GitHub Copilot** (`plugin.json` at plugin root — not in a hidden folder):
+
 ```json
-{ "name": "slug", "description": "...", "version": "1.0.0", "skills": "skills/", "agents": "agents/", "mcpServers": ".mcp.json" }
+{
+  "name": "slug",
+  "description": "...",
+  "version": "1.0.0",
+  "skills": "skills/",
+  "agents": "agents/",
+  "mcpServers": ".mcp.json"
+}
 ```
 
 GitHub Copilot requires explicit component path references; the other two discover components implicitly.
@@ -145,10 +167,10 @@ Read the platform-specific reference for deployment instructions:
 
 ## Additional References
 
-| File | Content |
-|------|---------|
-| [references/schemas.md](references/schemas.md) | Full manifest schemas, validation rules, all field definitions |
-| [references/plugin-ideas.md](references/plugin-ideas.md) | Plugin categories, starter ideas, marketplace organization patterns |
+| File                                                       | Content                                                                                       |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [references/schemas.md](references/schemas.md)             | Full manifest schemas, validation rules, all field definitions                                |
+| [references/plugin-ideas.md](references/plugin-ideas.md)   | Plugin categories, starter ideas, marketplace organization patterns                           |
 | [references/pmw-reference.md](references/pmw-reference.md) | Using Plugin Marketplace Wizard (visual editor + CLI tool) to accelerate marketplace creation |
 
 ## Pre-ship Checklist
