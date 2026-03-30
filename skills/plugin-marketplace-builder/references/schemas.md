@@ -102,19 +102,19 @@ Each item in the `plugins` array.
 
 ### Codex (`.codex-plugin/plugin.json`)
 
-| Field         | Type     | Required | Notes                                               |
-| ------------- | -------- | -------- | --------------------------------------------------- |
-| `name`        | string   | yes      | kebab-case identifier                               |
-| `version`     | string   | no       | semver recommended                                  |
-| `description` | string   | no       |                                                     |
-| `author`      | object   | no       | `{ name, email?, url? }`                            |
-| `homepage`    | string   | no       | URL                                                 |
-| `repository`  | string   | no       | URL                                                 |
-| `license`     | string   | no       | SPDX identifier                                     |
-| `keywords`    | string[] | no       | discovery tags                                      |
-| `skills`      | string   | no       | path to skills dir (e.g. `"./skills/"`)             |
-| `mcpServers`  | string   | no       | path to MCP config (e.g. `"./.mcp.json"`)           |
-| `apps`        | string   | no       | path to app config (e.g. `"./.app.json"`)           |
+| Field         | Type     | Required | Notes                                                  |
+| ------------- | -------- | -------- | ------------------------------------------------------ |
+| `name`        | string   | yes      | kebab-case identifier                                  |
+| `version`     | string   | no       | semver recommended                                     |
+| `description` | string   | no       |                                                        |
+| `author`      | object   | no       | `{ name, email?, url? }`                               |
+| `homepage`    | string   | no       | URL                                                    |
+| `repository`  | string   | no       | URL                                                    |
+| `license`     | string   | no       | SPDX identifier                                        |
+| `keywords`    | string[] | no       | discovery tags                                         |
+| `skills`      | string   | no       | path to skills dir (e.g. `"./skills/"`)                |
+| `mcpServers`  | string   | no       | path to MCP config (e.g. `"./.mcp.json"`)              |
+| `apps`        | string   | no       | path to app config (e.g. `"./.app.json"`)              |
 | `interface`   | object   | no       | install-surface metadata (displayName, category, etc.) |
 
 ## MCP Server Configuration

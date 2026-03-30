@@ -89,16 +89,19 @@ function MarketplaceSettingsFormBody({
   })
 
   const noneSelected =
-    !localTargets.cursor && !localTargets.claude && !localTargets.github && !localTargets.codex
+    !localTargets.cursor &&
+    !localTargets.claude &&
+    !localTargets.github &&
+    !localTargets.codex
 
   const toggleTarget = (key: keyof ExportTargets) => {
     setLocalTargets((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   const save = () => {
-    const removedTargets = (["cursor", "claude", "github", "codex"] as const).filter(
-      (t) => storeTargets[t] && !localTargets[t],
-    )
+    const removedTargets = (
+      ["cursor", "claude", "github", "codex"] as const
+    ).filter((t) => storeTargets[t] && !localTargets[t])
 
     onSave({
       settings: {
@@ -200,10 +203,30 @@ function MarketplaceSettingsFormBody({
           <div className="grid grid-cols-2 gap-3">
             {(
               [
-                { key: "cursor", label: "Cursor", icon: "/cursor.svg", iconClass: "dark:invert" },
-                { key: "claude", label: "Claude", icon: "/claude.svg", iconClass: "" },
-                { key: "github", label: "GitHub", icon: "/github.svg", iconClass: "dark:invert" },
-                { key: "codex", label: "Codex", icon: "/codex.svg", iconClass: "dark:invert" },
+                {
+                  key: "cursor",
+                  label: "Cursor",
+                  icon: "/cursor.svg",
+                  iconClass: "dark:invert",
+                },
+                {
+                  key: "claude",
+                  label: "Claude",
+                  icon: "/claude.svg",
+                  iconClass: "",
+                },
+                {
+                  key: "github",
+                  label: "GitHub",
+                  icon: "/github.svg",
+                  iconClass: "dark:invert",
+                },
+                {
+                  key: "codex",
+                  label: "Codex",
+                  icon: "/codex.svg",
+                  iconClass: "dark:invert",
+                },
               ] as const
             ).map(({ key, label, icon, iconClass }) => (
               <label

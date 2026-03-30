@@ -21,7 +21,12 @@ function tryReadManifest(outputDir: string): MarketplaceManifest | null {
     }
   }
 
-  const codexPath = path.join(outputDir, ".agents", "plugins", "marketplace.json")
+  const codexPath = path.join(
+    outputDir,
+    ".agents",
+    "plugins",
+    "marketplace.json",
+  )
   try {
     const raw = fs.readFileSync(codexPath, "utf-8")
     const data = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>
@@ -29,7 +34,9 @@ function tryReadManifest(outputDir: string): MarketplaceManifest | null {
       const iface = data.interface as Record<string, unknown> | undefined
       return {
         name: data.name as string,
-        owner: { name: (iface?.displayName as string) || (data.name as string) },
+        owner: {
+          name: (iface?.displayName as string) || (data.name as string),
+        },
         plugins: (data.plugins as MarketplaceManifest["plugins"]).map((p) => {
           const src = p.source as Record<string, unknown> | undefined
           return {

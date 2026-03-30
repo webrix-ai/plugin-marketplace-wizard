@@ -89,8 +89,7 @@ export function PublishDialog({ open, onClose }: Props) {
     if (!isOpen && phase !== "pushing") onClose()
   }
 
-  const remoteUrl =
-    gitStatus.status === "ready" ? gitStatus.remoteUrl : ""
+  const remoteUrl = gitStatus.status === "ready" ? gitStatus.remoteUrl : ""
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

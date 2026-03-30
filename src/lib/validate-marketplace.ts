@@ -182,10 +182,7 @@ export function validateMcpServer(
     const hasUrl = !!mcp.config.url?.trim()
     const isStdio = t === "stdio" || (!t && !hasUrl)
     const isRemote =
-      t === "sse" ||
-      t === "streamable-http" ||
-      t === "http" ||
-      (!t && hasUrl)
+      t === "sse" || t === "streamable-http" || t === "http" || (!t && hasUrl)
 
     if (isStdio && !mcp.config.command?.trim()) {
       issues.push({
@@ -199,11 +196,7 @@ export function validateMcpServer(
         message: `${t || "http"} MCP server requires a url`,
       })
     }
-    if (
-      isRemote &&
-      hasUrl &&
-      !/^https?:\/\/.+/.test(mcp.config.url!.trim())
-    ) {
+    if (isRemote && hasUrl && !/^https?:\/\/.+/.test(mcp.config.url!.trim())) {
       issues.push({
         path: `${pfx}.config.url`,
         message: "MCP url must start with http:// or https://",

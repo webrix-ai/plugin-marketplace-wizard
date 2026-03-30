@@ -277,7 +277,9 @@ function buildMarketplacePluginEntry(
       path: `./plugins/${plugin.slug}`,
     }
     const source =
-      plugin.sourceOverride !== undefined ? plugin.sourceOverride : defaultSource
+      plugin.sourceOverride !== undefined
+        ? plugin.sourceOverride
+        : defaultSource
 
     const entry: Record<string, unknown> = {
       name: plugin.slug,
@@ -482,7 +484,10 @@ function collectPluginFiles(
     )
     if (skill.files?.length) {
       for (const sf of skill.files) {
-        tree.set(path.join(base, "skills", skillDirName, sf.relativePath), sf.content)
+        tree.set(
+          path.join(base, "skills", skillDirName, sf.relativePath),
+          sf.content,
+        )
       }
     }
   }
@@ -523,7 +528,10 @@ function collectMarketplaceManifestFiles(
     tree.set(
       path.join(".cursor-plugin", "marketplace.json"),
       JSON.stringify(
-        { ...baseManifest, plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "cursor")) },
+        {
+          ...baseManifest,
+          plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "cursor")),
+        },
         null,
         2,
       ) + "\n",
@@ -534,7 +542,10 @@ function collectMarketplaceManifestFiles(
     tree.set(
       path.join(".claude-plugin", "marketplace.json"),
       JSON.stringify(
-        { ...baseManifest, plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "claude")) },
+        {
+          ...baseManifest,
+          plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "claude")),
+        },
         null,
         2,
       ) + "\n",
@@ -545,7 +556,10 @@ function collectMarketplaceManifestFiles(
     tree.set(
       path.join(".github", "plugin", "marketplace.json"),
       JSON.stringify(
-        { ...baseManifest, plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "github")) },
+        {
+          ...baseManifest,
+          plugins: plugins.map((p) => buildMarketplacePluginEntry(p, "github")),
+        },
         null,
         2,
       ) + "\n",
@@ -594,7 +608,11 @@ export function buildFileTree(request: ExportRequest): FileTree {
     }
   }
 
-  for (const [k, v] of collectMarketplaceManifestFiles(plugins, settings, targets)) {
+  for (const [k, v] of collectMarketplaceManifestFiles(
+    plugins,
+    settings,
+    targets,
+  )) {
     tree.set(k, v)
   }
 

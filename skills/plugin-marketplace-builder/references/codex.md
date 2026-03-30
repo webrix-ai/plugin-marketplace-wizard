@@ -95,9 +95,7 @@ Location: `.codex-plugin/plugin.json` (inside the plugin directory)
     "websiteURL": "https://example.com",
     "privacyPolicyURL": "https://example.com/privacy",
     "termsOfServiceURL": "https://example.com/terms",
-    "defaultPrompt": [
-      "Use My Plugin to summarize new CRM notes."
-    ],
+    "defaultPrompt": ["Use My Plugin to summarize new CRM notes."],
     "brandColor": "#10A37F",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/logo.png",
@@ -110,15 +108,15 @@ The manifest includes explicit component path references (`skills`, `mcpServers`
 
 ## Key Differences from Other Platforms
 
-| Aspect                 | Claude Code / Cursor                           | GitHub Copilot                  | Codex                                      |
-| ---------------------- | ---------------------------------------------- | ------------------------------- | ------------------------------------------ |
-| Root manifest location | `.claude-plugin/` or `.cursor-plugin/`         | `.github/plugin/`               | `.agents/plugins/`                         |
-| Plugin manifest        | Hidden folder (`.<target>-plugin/plugin.json`) | Root level (`plugin.json`)      | Hidden folder (`.codex-plugin/plugin.json`)|
-| Component refs         | Implicit auto-discovery                        | Explicit paths in `plugin.json` | Explicit paths in `plugin.json`            |
-| Marketplace source     | Relative path or bare slug                     | Relative path                   | Structured `{ source, path }` object       |
-| Install policy         | Not in manifest                                | Not in manifest                 | `policy` object per plugin entry           |
-| Display metadata       | `displayName` (Cursor only)                    | None                            | Rich `interface` block                     |
-| Hooks                  | Supported                                      | Not supported                   | Not yet in marketplace plugins             |
+| Aspect                 | Claude Code / Cursor                           | GitHub Copilot                  | Codex                                       |
+| ---------------------- | ---------------------------------------------- | ------------------------------- | ------------------------------------------- |
+| Root manifest location | `.claude-plugin/` or `.cursor-plugin/`         | `.github/plugin/`               | `.agents/plugins/`                          |
+| Plugin manifest        | Hidden folder (`.<target>-plugin/plugin.json`) | Root level (`plugin.json`)      | Hidden folder (`.codex-plugin/plugin.json`) |
+| Component refs         | Implicit auto-discovery                        | Explicit paths in `plugin.json` | Explicit paths in `plugin.json`             |
+| Marketplace source     | Relative path or bare slug                     | Relative path                   | Structured `{ source, path }` object        |
+| Install policy         | Not in manifest                                | Not in manifest                 | `policy` object per plugin entry            |
+| Display metadata       | `displayName` (Cursor only)                    | None                            | Rich `interface` block                      |
+| Hooks                  | Supported                                      | Not supported                   | Not yet in marketplace plugins              |
 
 ## Component Layout
 
@@ -173,6 +171,7 @@ Codex includes a built-in `$plugin-creator` skill that scaffolds the `.codex-plu
 ### Plugin Discovery
 
 Codex reads marketplace files from:
+
 - The curated marketplace (official Plugin Directory)
 - Repo marketplace at `$REPO_ROOT/.agents/plugins/marketplace.json`
 - Personal marketplace at `~/.agents/plugins/marketplace.json`

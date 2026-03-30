@@ -67,9 +67,8 @@ function CodeBlock({ children }: { children: string }) {
 
 function buildPlatforms(repoUrl: string): Platform[] {
   const repoShort =
-    repoUrl
-      .replace(/^https?:\/\/github\.com\//, "")
-      .replace(/\.git$/, "") || "your-org/my-marketplace"
+    repoUrl.replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "") ||
+    "your-org/my-marketplace"
 
   return [
     {
@@ -86,8 +85,12 @@ function buildPlatforms(repoUrl: string): Platform[] {
               Go to your Cursor organization{" "}
               <span className="font-medium text-foreground">Dashboard</span> →{" "}
               <span className="font-medium text-foreground">Settings</span> →{" "}
-              <span className="font-medium text-foreground">Plugins</span>.
-              Find the <span className="font-medium text-foreground">Team Marketplaces</span> section.
+              <span className="font-medium text-foreground">Plugins</span>. Find
+              the{" "}
+              <span className="font-medium text-foreground">
+                Team Marketplaces
+              </span>{" "}
+              section.
             </p>
           ),
         },
@@ -114,7 +117,8 @@ function buildPlatforms(repoUrl: string): Platform[] {
               <span className="font-medium text-foreground">Required</span>{" "}
               (auto-installed) or{" "}
               <span className="font-medium text-foreground">Optional</span>{" "}
-              (available in marketplace panel). Configure team access groups as needed.
+              (available in marketplace panel). Configure team access groups as
+              needed.
             </p>
           ),
         },
@@ -185,8 +189,7 @@ function buildPlatforms(repoUrl: string): Platform[] {
       id: "claude",
       name: "Claude",
       icon: "/claude.svg",
-      docsUrl:
-        "https://code.claude.com/docs/en/plugin-marketplaces",
+      docsUrl: "https://code.claude.com/docs/en/plugin-marketplaces",
       steps: [
         {
           title: "Open Organization Settings",
@@ -205,8 +208,7 @@ function buildPlatforms(repoUrl: string): Platform[] {
               <span className="font-medium text-foreground">
                 Organization settings
               </span>{" "}
-              →{" "}
-              <span className="font-medium text-foreground">Libraries</span> →{" "}
+              → <span className="font-medium text-foreground">Libraries</span> →{" "}
               <span className="font-medium text-foreground">Plugins</span>.
             </p>
           ),
@@ -232,8 +234,8 @@ function buildPlatforms(repoUrl: string): Platform[] {
           title: "Configure access",
           content: (
             <p className="text-xs text-muted-foreground">
-              Review the discovered plugins, configure team access settings, then
-              click{" "}
+              Review the discovered plugins, configure team access settings,
+              then click{" "}
               <span className="font-medium text-foreground">Save</span>. Click{" "}
               <span className="font-medium text-foreground">Update</span> at any
               time to pull the latest from your repository.
@@ -301,7 +303,8 @@ function buildPlatforms(repoUrl: string): Platform[] {
                 <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
                   .agents/plugins/marketplace.json
                 </code>{" "}
-                is at your repository root. Push your marketplace repository to GitHub:
+                is at your repository root. Push your marketplace repository to
+                GitHub:
               </p>
               <CodeBlock>{`https://github.com/${repoShort}`}</CodeBlock>
             </div>
@@ -315,7 +318,8 @@ function buildPlatforms(repoUrl: string): Platform[] {
               <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
                 .agents/plugins/marketplace.json
               </code>{" "}
-              file. Open the plugin directory, choose your marketplace, and browse available plugins.
+              file. Open the plugin directory, choose your marketplace, and
+              browse available plugins.
             </p>
           ),
         },
@@ -323,8 +327,8 @@ function buildPlatforms(repoUrl: string): Platform[] {
           title: "Install plugins",
           content: (
             <p className="text-xs text-muted-foreground">
-              Browse and install plugins from your marketplace in the Codex plugin directory.
-              Plugins are installed to{" "}
+              Browse and install plugins from your marketplace in the Codex
+              plugin directory. Plugins are installed to{" "}
               <code className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">
                 ~/.codex/plugins/cache/
               </code>
@@ -455,7 +459,12 @@ export function DeploymentWizard({
       </ScrollArea>
 
       <DialogFooter>
-        <Button variant="ghost" size="sm" onClick={onBack} className="mr-auto gap-1.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="mr-auto gap-1.5"
+        >
           <ArrowLeft className="size-3" />
           Back
         </Button>

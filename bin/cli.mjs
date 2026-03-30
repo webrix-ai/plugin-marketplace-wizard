@@ -104,7 +104,11 @@ function runInit(targetDir) {
   const claudeManifest = join(claudeDir, "marketplace.json")
   const codexManifest = join(codexDir, "marketplace.json")
 
-  if (existsSync(cursorManifest) || existsSync(claudeManifest) || existsSync(codexManifest)) {
+  if (
+    existsSync(cursorManifest) ||
+    existsSync(claudeManifest) ||
+    existsSync(codexManifest)
+  ) {
     console.log(
       `${YELLOW}  ⚠ Marketplace already initialized in this directory${RESET}`,
     )
@@ -454,7 +458,11 @@ function getValidators() {
         if (!entry.isDirectory() || entry.name.startsWith(".")) continue
         const pluginDir = join(pluginsDir, entry.name)
 
-        for (const sub of [".cursor-plugin", ".claude-plugin", ".codex-plugin"]) {
+        for (const sub of [
+          ".cursor-plugin",
+          ".claude-plugin",
+          ".codex-plugin",
+        ]) {
           const manifestPath = join(pluginDir, sub, "plugin.json")
           if (!existsSync(manifestPath)) continue
 
