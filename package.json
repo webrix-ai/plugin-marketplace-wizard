@@ -37,6 +37,7 @@
     }
   },
   "bin": {
+    "plugin-marketplace-wizard": "./bin/start.mjs",
     "pmw": "./bin/cli.mjs",
     "create-plugin-marketplace-wizard": "./bin/create.mjs"
   },
