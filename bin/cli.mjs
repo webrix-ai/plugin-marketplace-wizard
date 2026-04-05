@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn, execSync } from "child_process"
+import { spawn, spawnSync, execSync } from "child_process"
 import {
   existsSync,
   mkdirSync,
@@ -76,7 +76,7 @@ function showBanner() {
   console.log()
   console.log(`${BOLD}  Options:${RESET}`)
   console.log(
-    `    ${TEXT}--port${RESET}, ${TEXT}-p${RESET}     Port to run the server on ${DIM}(default: 3000)${RESET}`,
+    `    ${TEXT}--port${RESET}, ${TEXT}-p${RESET}     Port to run the server on ${DIM}(default: 4321)${RESET}`,
   )
   console.log(
     `    ${TEXT}--help${RESET}, ${TEXT}-h${RESET}     Show this help message`,
@@ -659,6 +659,18 @@ function runTest(targetDir) {
 // start command
 // ---------------------------------------------------------------------------
 
+function spawnNext(nextCli, args, opts) {
+  return nextCli.mode === "node"
+    ? spawn(process.execPath, [nextCli.path, ...args], opts)
+    : spawn(nextCli.path, args, opts)
+}
+
+function spawnNextSync(nextCli, args, opts) {
+  return nextCli.mode === "node"
+    ? spawnSync(process.execPath, [nextCli.path, ...args], opts)
+    : spawnSync(nextCli.path, args, opts)
+}
+
 function runStart(targetDir, port) {
   const dir = resolve(targetDir || ".")
 
@@ -681,18 +693,27 @@ function runStart(targetDir, port) {
     process.exit(1)
   }
 
-  const child =
-    nextCli.mode === "node"
-      ? spawn(process.execPath, [nextCli.path, "dev", "--port", String(port)], {
-          cwd: PACKAGE_DIR,
-          env,
-          stdio: "inherit",
-        })
-      : spawn(nextCli.path, ["dev", "--port", String(port)], {
-          cwd: PACKAGE_DIR,
-          env,
-          stdio: "inherit",
-        })
+  const buildId = join(PACKAGE_DIR, ".next", "BUILD_ID")
+  if (!existsSync(buildId)) {
+    console.log(`${DIM}  Building production bundle (first run)...${RESET}`)
+    console.log()
+    const result = spawnNextSync(nextCli, ["build"], {
+      cwd: PACKAGE_DIR,
+      env,
+      stdio: "inherit",
+    })
+    if (result.status !== 0) {
+      console.error(`${RED}  Build failed${RESET}`)
+      process.exit(1)
+    }
+    console.log()
+  }
+
+  const child = spawnNext(nextCli, ["start", "--port", String(port)], {
+    cwd: PACKAGE_DIR,
+    env,
+    stdio: "inherit",
+  })
 
   child.on("error", (err) => {
     console.error(`${RED}  Failed to start: ${err.message}${RESET}`)
@@ -712,13 +733,13 @@ function runStart(targetDir, port) {
 // ---------------------------------------------------------------------------
 
 function parseArgs(args) {
-  const result = { command: null, dir: null, port: 3000 }
+  const result = { command: null, dir: null, port: 4321 }
   let i = 0
 
   while (i < args.length) {
     const arg = args[i]
     if (arg === "--port" || arg === "-p") {
-      result.port = parseInt(args[++i], 10) || 3000
+      result.port = parseInt(args[++i], 10) || 4321
     } else if (arg === "--help" || arg === "-h") {
       result.command = "help"
     } else if (arg === "--version" || arg === "-v") {

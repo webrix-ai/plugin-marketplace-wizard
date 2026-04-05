@@ -42,19 +42,21 @@
     "create-plugin-marketplace-wizard": "./bin/create.mjs"
   },
   "files": [
+    ".next",
     "bin",
     "src",
     "public",
-    "next.config.ts",
+    "next.config.mjs",
     "tsconfig.json",
     "postcss.config.mjs",
     "components.json",
     "README.md"
   ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 4321",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 4321",
+    "prepack": "next build",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
