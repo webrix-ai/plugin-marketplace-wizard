@@ -1,6 +1,6 @@
 {
   "name": "plugin-marketplace-wizard",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Visual editor for building and managing agent plugin marketplaces",
   "license": "MIT",
   "author": {
