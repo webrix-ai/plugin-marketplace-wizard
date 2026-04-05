@@ -7,8 +7,8 @@ import {
   writeFileSync,
   readFileSync,
   readdirSync,
-  statSync,
 } from "fs"
+import { createRequire } from "module"
 import { resolve, join, dirname } from "path"
 import { fileURLToPath } from "url"
 
@@ -37,6 +37,24 @@ function getVersion() {
 }
 
 const VERSION = getVersion()
+
+/**
+ * Resolve the Next.js CLI (works when dependencies are hoisted, e.g. npx / npm).
+ * @returns {{ mode: "node", path: string } | { mode: "shim", path: string } | null}
+ */
+function resolveNextCli() {
+  const require = createRequire(import.meta.url)
+  try {
+    const nextRoot = dirname(require.resolve("next/package.json"))
+    const js = join(nextRoot, "dist", "bin", "next")
+    if (existsSync(js)) return { mode: "node", path: js }
+  } catch {
+    // next not resolvable from this package
+  }
+  const shim = join(PACKAGE_DIR, "node_modules", ".bin", "next")
+  if (existsSync(shim)) return { mode: "shim", path: shim }
+  return null
+}
 
 function showBanner() {
   console.log()
@@ -655,13 +673,26 @@ function runStart(targetDir, port) {
     PORT: String(port),
   }
 
-  const nextBin = join(PACKAGE_DIR, "node_modules", ".bin", "next")
+  const nextCli = resolveNextCli()
+  if (!nextCli) {
+    console.error(
+      `${RED}  Failed to start: could not find Next.js (next). Reinstall dependencies.${RESET}`,
+    )
+    process.exit(1)
+  }
 
-  const child = spawn(nextBin, ["dev", "--port", String(port)], {
-    cwd: PACKAGE_DIR,
-    env,
-    stdio: "inherit",
-  })
+  const child =
+    nextCli.mode === "node"
+      ? spawn(process.execPath, [nextCli.path, "dev", "--port", String(port)], {
+          cwd: PACKAGE_DIR,
+          env,
+          stdio: "inherit",
+        })
+      : spawn(nextCli.path, ["dev", "--port", String(port)], {
+          cwd: PACKAGE_DIR,
+          env,
+          stdio: "inherit",
+        })
 
   child.on("error", (err) => {
     console.error(`${RED}  Failed to start: ${err.message}${RESET}`)
